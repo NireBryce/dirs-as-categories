@@ -32,10 +32,10 @@ let
             flake = mkFlake "main";
             prefix = "${toString (fixture "main")}/";
             run = class: name:
-                let ev = evalHost flake class name; in {
-                    probe  = ev.config.probe;
-                    scalar = ev.config.scalar;
-                    files  = map (d: lib.removePrefix prefix d.file) ev.options.probe.definitionsWithLocations;
+                let evaluated = evalHost flake class name; in {
+                    probe  = evaluated.config.probe;
+                    scalar = evaluated.config.scalar;
+                    files  = map (definition: lib.removePrefix prefix definition.file) evaluated.options.probe.definitionsWithLocations;
                 };
         in {
             names = lib.mapAttrs (_: builtins.attrNames) flake.modules;
@@ -84,11 +84,11 @@ let
                 systems = [ ];
                 imports = [ flake-parts.flakeModules.modules (tree ../templates/default/modules) ];
             };
-            g = flake.moduleGraph;
+            graph = flake.moduleGraph;
         in {
-            categories = builtins.attrNames g.categories;
-            members    = g.categories.base.members;
-            inherit (g) includes admin;
+            categories = builtins.attrNames graph.categories;
+            members    = graph.categories.base.members;
+            inherit (graph) includes admin;
         };
 in
 {

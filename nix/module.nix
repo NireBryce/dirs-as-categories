@@ -2,54 +2,55 @@
 { settings, root, files }:
 { lib, config, inputs, ... }:
 let
-    inherit (lib) filter elem optional listToAttrs nameValuePair genAttrs;
+    inherit (lib) filter optional listToAttrs nameValuePair genAttrs;
     inherit (settings) classes;
 
     scan = import ./scan.nix { inherit lib inputs settings root files; };
     inherit (scan) modules categories;
 
-    get = class: n: config.flake.modules.${class}.${n};
+    get = class: name: config.flake.modules.${class}.${name};
 
     # A module that names `enables` gets `enabled.<class>.<name>` among its
     # arguments. setFunctionArgs keeps the module system from looking it up
     # in _module.args, and passes every other argument through unchanged.
-    enabledOf   = m: lib.mapAttrs (class: names: genAttrs names (get class)) (m.value.enables or { });
-    withEnabled = m: mod:
-        if !(m.value ? enables) || !builtins.isFunction mod then mod
-        else lib.setFunctionArgs (args: mod (args // { enabled = enabledOf m; }))
-                                 (removeAttrs (lib.functionArgs mod) [ "enabled" ]);
+    enabledOf   = mod: lib.mapAttrs (class: names: genAttrs names (get class)) (mod.value.enables or { });
+    withEnabled = mod: classModule:
+        if !(mod.value ? enables) || !builtins.isFunction classModule then classModule
+        else lib.setFunctionArgs (args: classModule (args // { enabled = enabledOf mod; }))
+                                 (removeAttrs (lib.functionArgs classModule) [ "enabled" ]);
 
     # `key` makes each one load once, however many routes reach it.
-    defaultsFor = q: class:
-        map (D: {
-            key     = "dirs-as-categories:defaults:${D.path}:${class}";
-            _file   = toString D.file;
-            imports = [ D.value.${class} ];
-        }) (filter (D: D.value ? ${class} && scan.appliesTo D q) scan.defaults);
+    defaultsFor = target: class:
+        map (defaultsFile: {
+            key     = "dirs-as-categories:defaults:${defaultsFile.path}:${class}";
+            _file   = toString defaultsFile.file;
+            imports = [ defaultsFile.value.${class} ];
+        }) (filter (defaultsFile: defaultsFile.value ? ${class} && scan.appliesTo defaultsFile target) scan.defaults);
 
-    moduleFor = class: m: {
-        key     = "dirs-as-categories:module:${class}:${m.name}";
-        _file   = toString m.file;
-        imports = optional (m.value ? ${class}) (withEnabled m m.value.${class})
-               ++ map (get class) (m.value.includes.${class} or [ ])
-               ++ defaultsFor m.path class;
+    moduleFor = class: mod: {
+        key     = "dirs-as-categories:module:${class}:${mod.name}";
+        _file   = toString mod.file;
+        imports = optional (mod.value ? ${class}) (withEnabled mod mod.value.${class})
+               ++ map (get class) (mod.value.includes.${class} or [ ])
+               ++ defaultsFor mod.path class;
     };
 
-    categoryFor = class: d: {
-        key     = "dirs-as-categories:category:${class}:${d}";
-        _file   = "${scan.rootStr}/${d}";
-        imports = map (m: get class m.name) (filter (m: elem class m.classesOf) (scan.ownModules d))
-               ++ map (c: get class (baseNameOf c)) (scan.nestedIn d)
-               ++ defaultsFor d class;
+    categoryFor = class: category: {
+        key     = "dirs-as-categories:category:${class}:${category}";
+        _file   = "${scan.rootStr}/${category}";
+        imports = map (mod: get class mod.name) (filter (scan.hasClass class) (scan.ownModules category))
+               ++ map (nested: get class (baseNameOf nested)) (scan.nestedIn category)
+               ++ defaultsFor category class;
     };
-    pathOf = n: (lib.findFirst (m: m.name == n) null modules).path;
+
+    pathOf = name: (lib.findFirst (mod: mod.name == name) null modules).path;
     orphanReport = "dirs-as-categories: reached by no includes or enables (include it, "
         + "or a category above it): "
-        + lib.concatMapStringsSep ", " (n: "${n} (${pathOf n})") scan.orphans;
+        + lib.concatMapStringsSep ", " (name: "${name} (${pathOf name})") scan.orphans;
 in
 assert scan.checked;
 {
-    imports = map (e: e.file) scan.admin;
+    imports = map (entry: entry.file) scan.admin;
 
     options.dirsAsCategories.checkOrphans = lib.mkOption {
         description = ''
@@ -70,8 +71,8 @@ assert scan.checked;
 
     config = {
         flake.modules = genAttrs classes (class:
-            listToAttrs (map (m: nameValuePair m.name (moduleFor class m)) (filter (m: elem class m.classesOf) modules)
-                      ++ map (d: nameValuePair (baseNameOf d) (categoryFor class d)) categories));
+            listToAttrs (map (mod: nameValuePair mod.name (moduleFor class mod)) (scan.modulesOf class)
+                      ++ map (category: nameValuePair (baseNameOf category) (categoryFor class category)) categories));
 
         flake.moduleGraph = import ./publish.nix { inherit lib classes scan; };
 

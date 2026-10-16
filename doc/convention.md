@@ -137,6 +137,25 @@ dirs-as-categories creates carries a `key`.
 Definitions keep their file: errors and `options.<x>.definitionsWithLocations`
 name `defaults.nix`, not dirs-as-categories.
 
+## Orphans
+
+A module inside a category that no `includes` or `enables` reaches is valid
+and evaluates, and installs nothing -- so evaluation can't report it. A
+module is reached when some `includes`/`enables` names it, or names a
+category above it (a category includes everything beneath it). Modules
+outside every category are entry points (hosts, home aggregates), which
+nothing is meant to name, so they are never orphans.
+
+`flake.moduleGraph.orphans` lists them. With
+
+```nix
+dirsAsCategories.checkOrphans = true;
+```
+
+`nix flake check` also runs `checks.<system>.module-orphans`, which fails
+naming each orphan and its path. Off by default: it adds a check to your
+flake.
+
 ## Errors
 
 Each stops evaluation with `dirs-as-categories: <path>: <what>`.

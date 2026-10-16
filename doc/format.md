@@ -23,7 +23,8 @@ across modules and categories.
   "defaults": [
     { "path": "shared/base/defaults.nix", "dir": "shared/base", "category": "shared/base", "classes": ["nixos"] }
   ],
-  "admin": ["hosts/hosts.nix"]
+  "admin": ["hosts/hosts.nix"],
+  "orphans": []
 }
 ```
 
@@ -44,6 +45,7 @@ across modules and categories.
 | `defaults[].category` | the nearest category at or above `dir`, or `null` |
 | `defaults[].classes` | the classes it has parts for |
 | `admin` | files loaded as ordinary flake-parts modules |
+| `orphans` | modules inside a category that no `includes`/`enables` reaches ([convention](convention.md#orphans)); added after version 1's first release, so a reader should treat it as optional |
 
 Top-level folders (areas) are the first component of any path.
 

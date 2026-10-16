@@ -107,7 +107,9 @@ exist in that class, files disagreeing on `folderIsCategory`.
 ## What it publishes
 
 `flake.moduleGraph` describes what was built: categories, folders, modules
-and their classes, includes, enables, defaults and the other files.
+and their classes, includes, enables, defaults, the other files, and any
+module nothing reaches (`orphans`; `dirsAsCategories.checkOrphans = true`
+makes `nix flake check` fail on one).
 [doc/format.md](doc/format.md) is the format;
 [flake-module-graph](https://github.com/NireBryce/flake-module-graph) draws it.
 

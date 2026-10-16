@@ -32,4 +32,7 @@ in
     }) scan.defaults;
 
     admin = map (e: e.path) scan.admin;
+
+    # modules inside a category that no `includes`/`enables` reaches
+    inherit (scan) orphans;
 }

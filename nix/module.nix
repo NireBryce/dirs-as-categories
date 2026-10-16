@@ -22,13 +22,13 @@ let
     # `key` makes each one load once, however many routes reach it.
     defaultsFor = q: class:
         map (D: {
-            key     = "category-tree:defaults:${D.path}:${class}";
+            key     = "dirs-as-categories:defaults:${D.path}:${class}";
             _file   = toString D.file;
             imports = [ D.value.${class} ];
         }) (filter (D: D.value ? ${class} && scan.appliesTo D q) scan.defaults);
 
     moduleFor = class: m: {
-        key     = "category-tree:module:${class}:${m.name}";
+        key     = "dirs-as-categories:module:${class}:${m.name}";
         _file   = toString m.file;
         imports = optional (m.value ? ${class}) (withEnabled m m.value.${class})
                ++ map (get class) (m.value.includes.${class} or [ ])
@@ -36,7 +36,7 @@ let
     };
 
     categoryFor = class: d: {
-        key     = "category-tree:category:${class}:${d}";
+        key     = "dirs-as-categories:category:${class}:${d}";
         _file   = "${scan.rootStr}/${d}";
         imports = map (m: get class m.name) (filter (m: elem class m.classesOf) (scan.ownModules d))
                ++ map (c: get class (baseNameOf c)) (scan.nestedIn d)
@@ -48,7 +48,7 @@ assert scan.checked;
     imports = map (e: e.file) scan.admin;
 
     options.flake.moduleGraph = lib.mkOption {
-        description = "What category-tree built from the modules tree. Format: doc/format.md in category-tree.";
+        description = "What dirs-as-categories built from the modules tree. Format: doc/format.md in dirs-as-categories.";
         type        = lib.types.raw;
         readOnly    = true;
     };

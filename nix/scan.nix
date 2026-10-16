@@ -6,7 +6,7 @@ let
     inherit (lib) filter concatMap unique hasPrefix optional length elem attrNames concatStringsSep;
     inherit (settings) classes;
 
-    fail = msg: throw "category-tree: ${msg}";
+    fail = msg: throw "dirs-as-categories: ${msg}";
 
     # ── paths ───────────────────────────────────────────────────────────────
     rootStr    = toString root;

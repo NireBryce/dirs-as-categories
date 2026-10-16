@@ -1,10 +1,10 @@
-# category-tree
+# dirs-as-categories
 
 Modules and categories from a folder tree, for
 [flake-parts](https://github.com/hercules-ci/flake-parts) flakes. An
 [import-tree](https://github.com/denful/import-tree) preset.
 
-You file modules in folders. category-tree names each module after its file,
+You file modules in folders. dirs-as-categories names each module after its file,
 makes folders that group modules into importable **categories**, and fills in
 `flake.modules.<class>.<name>`. Hosts pick categories or modules by name.
 There is nothing to register and no name to repeat inside a file.
@@ -30,22 +30,22 @@ including `ssh` alone gives it `ssh` and the same defaults.
 ## Quick start
 
 ```sh
-nix flake init -t github:NireBryce/category-tree
+nix flake init -t github:NireBryce/dirs-as-categories
 ```
 
 or add it to an existing flake-parts flake:
 
 ```nix
 {
-    inputs.category-tree.url = "github:NireBryce/category-tree";
-    inputs.category-tree.inputs.import-tree.follows = "import-tree";   # if you have them
-    inputs.category-tree.inputs.flake-parts.follows = "flake-parts";
+    inputs.dirs-as-categories.url = "github:NireBryce/dirs-as-categories";
+    inputs.dirs-as-categories.inputs.import-tree.follows = "import-tree";   # if you have them
+    inputs.dirs-as-categories.inputs.flake-parts.follows = "flake-parts";
 
     outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } {
         imports = [
             inputs.flake-parts.flakeModules.modules
-            (inputs.category-tree.lib.tree ./modules)
-            # other classes: (inputs.category-tree.lib.tree.withClasses [ "nixos" "homeManager" "darwin" "nixOnDroid" ] ./modules)
+            (inputs.dirs-as-categories.lib.tree ./modules)
+            # other classes: (inputs.dirs-as-categories.lib.tree.withClasses [ "nixos" "homeManager" "darwin" "nixOnDroid" ] ./modules)
         ];
     };
 }

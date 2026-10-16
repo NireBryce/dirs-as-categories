@@ -1,6 +1,6 @@
 # The convention
 
-Every rule category-tree applies, and every error it raises. Paths are
+Every rule dirs-as-categories applies, and every error it raises. Paths are
 relative to the folder passed to `lib.tree`.
 
 All of it is decided from file paths and from the shape of what each file
@@ -95,14 +95,14 @@ Its class parts apply whenever anything in its folder's subtree is reached:
 - through a direct include of any module or category inside its folder.
 
 Each loads once per configuration however many routes reach it: every module
-category-tree creates carries a `key`.
+dirs-as-categories creates carries a `key`.
 
 Definitions keep their file: errors and `options.<x>.definitionsWithLocations`
-name `defaults.nix`, not category-tree.
+name `defaults.nix`, not dirs-as-categories.
 
 ## Errors
 
-Each stops evaluation with `category-tree: <path>: <what>`.
+Each stops evaluation with `dirs-as-categories: <path>: <what>`.
 
 | Error | Raised when |
 |---|---|

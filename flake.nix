@@ -19,18 +19,18 @@
             check = system: name: t:
                 if t.ok then builtins.derivation {
                     inherit system;
-                    name    = "category-tree-test-${name}";
+                    name    = "dirs-as-categories-test-${name}";
                     builder = "/bin/sh";
                     args    = [ "-c" "echo ok > $out" ];
                 }
-                else throw "category-tree test ${name} failed: ${t.detail}";
+                else throw "dirs-as-categories test ${name} failed: ${t.detail}";
         in
         {
             lib.tree = tree;
 
             templates.default = {
                 path        = ./templates/default;
-                description = "A flake-parts flake whose modules come from category-tree";
+                description = "A flake-parts flake whose modules come from dirs-as-categories";
             };
 
             checks = lib.genAttrs systems (system: lib.mapAttrs (check system) tests.checks);

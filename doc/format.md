@@ -1,6 +1,6 @@
 # flake.moduleGraph, version 1
 
-What category-tree built, as data. `nix eval --json .#moduleGraph` prints it.
+What dirs-as-categories built, as data. `nix eval --json .#moduleGraph` prints it.
 Paths are relative to the folder passed to `lib.tree`. Every name is unique
 across modules and categories.
 

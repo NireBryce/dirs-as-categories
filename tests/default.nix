@@ -41,6 +41,7 @@ let
             names = lib.mapAttrs (_: builtins.attrNames) flake.modules;
             admin = flake.adminProbe or "admin NOT loaded";
             configAdmin = flake.configAdminProbe or "config admin NOT loaded";
+            plainAdmin = flake.plainAdminProbe or "plain admin NOT loaded";
             hosts = lib.genAttrs [ "h1" "h2" "h3" "h4" "h5" ] (run "nixos");
             hm    = run "homeManager" "hm-agg";
             graph = flake.moduleGraph;

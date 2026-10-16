@@ -60,7 +60,9 @@ let
         # a function's result decides: class keys make it a module, anything
         # else (perSystem, imports, flake.*) an ordinary flake-parts module
         else if builtins.isFunction e.raw then (if callable e.raw && isModuleShaped e.value then "module" else "admin")
-        else if builtins.isAttrs e.value then "module"
+        # a plain attribute set the same way: `{ perSystem = …; }` is an
+        # ordinary flake-parts module
+        else if builtins.isAttrs e.value then (if isModuleShaped e.value then "module" else "admin")
         else fail "${e.path}: expected an attribute set (a module) or a function (a module of lib/inputs, or a flake-parts module)";
 
     ofShape  = s: filter (e: shapeOf e == s) entries;

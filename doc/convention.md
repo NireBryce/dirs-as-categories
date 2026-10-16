@@ -15,7 +15,8 @@ starting with `_`.
 | A file that evaluates to | is |
 |---|---|
 | an attribute set, named `defaults.nix` | a [defaults file](#defaultsnix) |
-| any other attribute set | a [module file](#module-files) |
+| any other attribute set with a class or reserved key | a [module file](#module-files) |
+| an attribute set with neither (`{ perSystem = …; }`) | a flake-parts module, imported as it is |
 | a function of only `lib` and/or `inputs` that returns a class or reserved key | a module file (or defaults file), called with those |
 | any other function | a flake-parts module, imported as it is |
 | anything else | an error |
@@ -48,11 +49,11 @@ arguments decide:
 - anything else, such as `config` or `withSystem`: never called; a
   flake-parts module.
 
-One consequence: a function-form file whose only class key is mistyped
-(`{ lib, ... }: { nixOS = …; }`) has no class key, so it is loaded as a
-flake-parts module, and flake-parts rejects the unknown option `nixOS`. A
-plain attribute set with the same typo is caught by dirs-as-categories
-itself, naming the file.
+One consequence, for both forms: a file whose only class key is mistyped
+(`{ nixOS = …; }`) has no class key, so it is loaded as a flake-parts module,
+and flake-parts rejects the unknown option `nixOS`. A mistyped key beside a
+real one (`{ nixos = …; nixOS = …; }`) is caught by dirs-as-categories itself,
+naming the file.
 
 ## Module files
 

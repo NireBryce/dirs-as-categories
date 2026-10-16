@@ -1,1 +1,1 @@
-{ nixOS = { }; }
+{ nixos = { }; nixOS = { }; }

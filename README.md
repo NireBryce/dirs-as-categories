@@ -78,10 +78,10 @@ its body can use them:
 }
 ```
 
-Any other file that evaluates to a **function** -- one asking for `config`,
-or returning no class key -- is loaded as an ordinary flake-parts module, for
-anything that isn't a module of a class: `nixosConfigurations`, `perSystem`,
-checks.
+Any other file -- a function asking for `config`, or anything with no class
+key, such as `{ perSystem = …; }` -- is loaded as an ordinary flake-parts
+module, for anything that isn't a module of a class: `nixosConfigurations`,
+`perSystem`, checks.
 
 ## The rules
 

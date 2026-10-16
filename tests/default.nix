@@ -76,8 +76,7 @@ let
         in {
             categories = builtins.attrNames g.categories;
             members    = g.categories.base.members;
-            includes   = g.includes;
-            admin      = g.admin;
+            inherit (g) includes admin;
         };
 in
 {

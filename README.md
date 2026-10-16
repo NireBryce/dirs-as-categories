@@ -37,9 +37,11 @@ or add it to an existing flake-parts flake:
 
 ```nix
 {
-    inputs.dirs-as-categories.url = "github:NireBryce/dirs-as-categories";
-    inputs.dirs-as-categories.inputs.import-tree.follows = "import-tree";   # if you have them
-    inputs.dirs-as-categories.inputs.flake-parts.follows = "flake-parts";
+    inputs.dirs-as-categories = {
+        url = "github:NireBryce/dirs-as-categories";
+        inputs.import-tree.follows = "import-tree";   # if you have them
+        inputs.flake-parts.follows = "flake-parts";
+    };
 
     outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } {
         imports = [

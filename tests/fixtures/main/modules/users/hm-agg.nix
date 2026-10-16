@@ -1,0 +1,1 @@
+{ includes.homeManager = [ "y" "micro" ]; }

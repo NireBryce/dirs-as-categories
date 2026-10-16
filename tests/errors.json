@@ -1,0 +1,16 @@
+{
+    "err-area-flag":     "a: a top-level folder is an area and can't be a category",
+    "err-clash":         "names used more than once: c (a/b/c.nix, a/c)",
+    "err-default-twin":  "names used more than once: x (a/c/one/x.nix, a/c/x/default.nix)",
+    "err-defaults-fn":   "a/c/defaults.nix: defaults.nix must be an attribute set",
+    "err-defaults-key":  "a/c/defaults.nix: unknown key `includes`",
+    "err-duplicate":     "names used more than once: x (a/c/one/x.nix, a/c/two/x.nix)",
+    "err-enables":       "a/c/one/x.nix: enables.homeManager: unknown name `ghost`",
+    "err-flag-type":     "a/c/one: folderIsCategory must be true or false",
+    "err-flags":         "a/c/one: files disagree on folderIsCategory",
+    "err-include-class": "h/host.nix: includes.nixOS: unknown class",
+    "err-plain-folder":  "h/host.nix: includes.nixos: unknown name `one`",
+    "err-typo":          "a/c/one/x.nix: unknown key `nixOS`",
+    "err-unknown-name":  "h/host.nix: includes.nixos: unknown name `nope`",
+    "err-wrong-class":   "h/host.nix: includes.nixos: `x` has no nixos module"
+}

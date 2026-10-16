@@ -1,0 +1,1 @@
+{ homeManager = { probe = [ "micro" ]; }; }

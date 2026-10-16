@@ -1,0 +1,1 @@
+{ nixos = { probe = [ "defaults:nested" ]; }; }

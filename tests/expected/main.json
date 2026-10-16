@@ -1,0 +1,378 @@
+{
+  "admin": "admin loaded",
+  "graph": {
+    "admin": [
+      "general/cat1/admin.nix"
+    ],
+    "categories": {
+      "cat1": {
+        "dir": "general/cat1",
+        "flag": null,
+        "members": [
+          "hm-enable",
+          "x",
+          "y"
+        ],
+        "nested": [
+          "nested"
+        ]
+      },
+      "editors": {
+        "dir": "general/editors",
+        "flag": null,
+        "members": [
+          "micro"
+        ],
+        "nested": []
+      },
+      "flat": {
+        "dir": "general/flat",
+        "flag": true,
+        "members": [
+          "a",
+          "b"
+        ],
+        "nested": []
+      },
+      "nested": {
+        "dir": "general/cat1/nested",
+        "flag": null,
+        "members": [
+          "z"
+        ],
+        "nested": []
+      }
+    },
+    "classes": [
+      "nixos",
+      "homeManager",
+      "darwin"
+    ],
+    "defaults": [
+      {
+        "category": "general/cat1",
+        "classes": [
+          "nixos"
+        ],
+        "dir": "general/cat1",
+        "path": "general/cat1/defaults.nix"
+      },
+      {
+        "category": "general/cat1/nested",
+        "classes": [
+          "nixos"
+        ],
+        "dir": "general/cat1/nested",
+        "path": "general/cat1/nested/defaults.nix"
+      },
+      {
+        "category": "general/cat1",
+        "classes": [
+          "nixos"
+        ],
+        "dir": "general/cat1/sub",
+        "path": "general/cat1/sub/defaults.nix"
+      },
+      {
+        "category": "general/flat",
+        "classes": [],
+        "dir": "general/flat",
+        "path": "general/flat/defaults.nix"
+      },
+      {
+        "category": null,
+        "classes": [
+          "nixos"
+        ],
+        "dir": "general/optout",
+        "path": "general/optout/defaults.nix"
+      }
+    ],
+    "enables": {
+      "hm-enable": {
+        "homeManager": [
+          "hm-agg"
+        ]
+      }
+    },
+    "folders": [
+      {
+        "dir": "general/cat1/nested/inner",
+        "flag": null
+      },
+      {
+        "dir": "general/cat1/sub",
+        "flag": null
+      },
+      {
+        "dir": "general/editors/micro",
+        "flag": null
+      },
+      {
+        "dir": "general/optout/deep",
+        "flag": null
+      },
+      {
+        "dir": "general/optout",
+        "flag": false
+      }
+    ],
+    "includes": {
+      "h1": {
+        "nixos": [
+          "cat1"
+        ]
+      },
+      "h2": {
+        "nixos": [
+          "x"
+        ]
+      },
+      "h3": {
+        "nixos": [
+          "cat1",
+          "nested",
+          "z",
+          "x"
+        ]
+      },
+      "h4": {
+        "nixos": [
+          "m"
+        ]
+      },
+      "h5": {
+        "nixos": [
+          "flat"
+        ]
+      },
+      "hm-agg": {
+        "homeManager": [
+          "y",
+          "micro"
+        ]
+      }
+    },
+    "modules": {
+      "a": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "general/flat/a.nix"
+      },
+      "b": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "general/flat/b.nix"
+      },
+      "h1": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "hosts/h1.nix"
+      },
+      "h2": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "hosts/h2.nix"
+      },
+      "h3": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "hosts/h3.nix"
+      },
+      "h4": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "hosts/h4.nix"
+      },
+      "h5": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "hosts/h5.nix"
+      },
+      "hm-agg": {
+        "classes": [
+          "homeManager"
+        ],
+        "path": "users/hm-agg.nix"
+      },
+      "hm-enable": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "general/cat1/hm-enable.nix"
+      },
+      "m": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "general/optout/deep/m.nix"
+      },
+      "micro": {
+        "classes": [
+          "homeManager"
+        ],
+        "path": "general/editors/micro/default.nix"
+      },
+      "x": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "general/cat1/sub/x.nix"
+      },
+      "y": {
+        "classes": [
+          "nixos",
+          "homeManager"
+        ],
+        "path": "general/cat1/y.nix"
+      },
+      "z": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "general/cat1/nested/inner/z.nix"
+      }
+    },
+    "version": 1
+  },
+  "hm": {
+    "files": [
+      "general/editors/micro/default.nix",
+      "general/cat1/y.nix"
+    ],
+    "probe": [
+      "micro",
+      "y-hm"
+    ],
+    "scalar": "unset"
+  },
+  "hosts": {
+    "h1": {
+      "files": [
+        "general/cat1/nested/inner/z.nix",
+        "general/cat1/nested/defaults.nix",
+        "general/cat1/hm-enable.nix",
+        "general/cat1/y.nix",
+        "general/cat1/sub/x.nix",
+        "general/cat1/hm-enable.nix",
+        "general/cat1/sub/defaults.nix",
+        "general/cat1/defaults.nix",
+        "hosts/h1.nix"
+      ],
+      "probe": [
+        "z",
+        "defaults:nested",
+        "special-arg import",
+        "y",
+        "x",
+        "enabled:hm-agg",
+        "pkgs:from _module.args",
+        "defaults:sub",
+        "defaults:cat1",
+        "h1"
+      ],
+      "scalar": "cat1-default"
+    },
+    "h2": {
+      "files": [
+        "general/cat1/sub/defaults.nix",
+        "general/cat1/defaults.nix",
+        "general/cat1/sub/x.nix"
+      ],
+      "probe": [
+        "defaults:sub",
+        "defaults:cat1",
+        "x"
+      ],
+      "scalar": "cat1-default"
+    },
+    "h3": {
+      "files": [
+        "general/cat1/hm-enable.nix",
+        "general/cat1/y.nix",
+        "general/cat1/hm-enable.nix",
+        "general/cat1/nested/defaults.nix",
+        "general/cat1/sub/defaults.nix",
+        "general/cat1/defaults.nix",
+        "general/cat1/sub/x.nix",
+        "general/cat1/nested/inner/z.nix"
+      ],
+      "probe": [
+        "special-arg import",
+        "y",
+        "enabled:hm-agg",
+        "pkgs:from _module.args",
+        "defaults:nested",
+        "defaults:sub",
+        "defaults:cat1",
+        "x",
+        "z"
+      ],
+      "scalar": "cat1-default"
+    },
+    "h4": {
+      "files": [
+        "general/optout/defaults.nix",
+        "general/optout/deep/m.nix"
+      ],
+      "probe": [
+        "defaults:optout",
+        "m"
+      ],
+      "scalar": "unset"
+    },
+    "h5": {
+      "files": [
+        "general/flat/b.nix",
+        "general/flat/a.nix"
+      ],
+      "probe": [
+        "b",
+        "a"
+      ],
+      "scalar": "unset"
+    }
+  },
+  "names": {
+    "darwin": [
+      "cat1",
+      "editors",
+      "flat",
+      "nested"
+    ],
+    "homeManager": [
+      "cat1",
+      "editors",
+      "flat",
+      "hm-agg",
+      "micro",
+      "nested",
+      "y"
+    ],
+    "nixos": [
+      "a",
+      "b",
+      "cat1",
+      "editors",
+      "flat",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "hm-enable",
+      "m",
+      "nested",
+      "x",
+      "y",
+      "z"
+    ]
+  }
+}

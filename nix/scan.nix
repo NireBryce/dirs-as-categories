@@ -127,6 +127,21 @@ let
             (class: names: map (refProblem m.path kind class) names) (m.value.${kind} or { })))
         [ "includes" "enables" ]) moduleFiles);
 
+    # ── orphans ─────────────────────────────────────────────────────────────
+    # A module inside a category that nothing reaches: valid, evaluates, and
+    # installs nothing, so evaluation can't report it. Reached means some
+    # `includes` or `enables` names the module itself or a category above it
+    # (a category includes everything beneath it). Modules outside every
+    # category are entry points -- hosts, home aggregates -- and nothing is
+    # meant to name them.
+    reachedNames = unique (concatMap (m:
+        concatMap (kind: lib.concatLists (lib.attrValues (m.value.${kind} or { })))
+        [ "includes" "enables" ]) moduleFiles);
+    orphans = map (m: m.name) (filter (m:
+        let above = filter (d: elem d categories) (ancestors m.path); in
+        above != [ ] && !(elem m.name reachedNames) && !(lib.any (d: elem (baseNameOf d) reachedNames) above))
+        modules);
+
     # ── defaults.nix reach ──────────────────────────────────────────────────
     # A defaults.nix in F applies whenever anything in F's subtree is reached:
     # through the nearest category at or above F, or through a direct include
@@ -144,5 +159,5 @@ let
 in
 {
     inherit rootStr depth admin defaults modules categories folders flagOf
-            ownModules nestedIn defaultsReach appliesTo checked;
+            ownModules nestedIn defaultsReach appliesTo orphans checked;
 }

@@ -1,0 +1,3 @@
+{
+    homeManager = { probe = [ "enabled-thing" ]; };
+}

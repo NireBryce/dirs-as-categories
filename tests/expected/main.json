@@ -38,6 +38,15 @@
         ],
         "nested": []
       },
+      "lonely": {
+        "dir": "general/lonely",
+        "flag": null,
+        "members": [
+          "lonely-module",
+          "enabled-thing"
+        ],
+        "nested": []
+      },
       "nested": {
         "dir": "general/cat1/nested",
         "flag": null,
@@ -95,7 +104,8 @@
     "enables": {
       "hm-enable": {
         "homeManager": [
-          "hm-agg"
+          "hm-agg",
+          "enabled-thing"
         ]
       }
     },
@@ -110,6 +120,14 @@
       },
       {
         "dir": "general/editors/micro",
+        "flag": null
+      },
+      {
+        "dir": "general/lonely/inner",
+        "flag": null
+      },
+      {
+        "dir": "general/lonely/turned",
         "flag": null
       },
       {
@@ -170,6 +188,12 @@
         ],
         "path": "general/flat/b.nix"
       },
+      "enabled-thing": {
+        "classes": [
+          "homeManager"
+        ],
+        "path": "general/lonely/turned/enabled-thing.nix"
+      },
       "fn-module": {
         "classes": [
           "nixos"
@@ -218,6 +242,12 @@
         ],
         "path": "general/cat1/hm-enable.nix"
       },
+      "lonely-module": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "general/lonely/inner/lonely-module.nix"
+      },
       "m": {
         "classes": [
           "nixos"
@@ -250,6 +280,9 @@
         "path": "general/cat1/nested/inner/z.nix"
       }
     },
+    "orphans": [
+      "lonely-module"
+    ],
     "version": 1
   },
   "hm": {
@@ -283,7 +316,7 @@
         "special-arg import",
         "y",
         "x",
-        "enabled:hm-agg",
+        "enabled:enabled-thing,hm-agg",
         "pkgs:from _module.args",
         "fn-module:from inputs",
         "defaults:sub",
@@ -320,7 +353,7 @@
       "probe": [
         "special-arg import",
         "y",
-        "enabled:hm-agg",
+        "enabled:enabled-thing,hm-agg",
         "pkgs:from _module.args",
         "fn-module:from inputs",
         "defaults:nested",
@@ -359,13 +392,16 @@
       "cat1",
       "editors",
       "flat",
+      "lonely",
       "nested"
     ],
     "homeManager": [
       "cat1",
       "editors",
+      "enabled-thing",
       "flat",
       "hm-agg",
+      "lonely",
       "micro",
       "nested",
       "y"
@@ -383,6 +419,8 @@
       "h4",
       "h5",
       "hm-enable",
+      "lonely",
+      "lonely-module",
       "m",
       "nested",
       "x",

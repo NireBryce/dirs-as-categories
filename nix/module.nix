@@ -42,10 +42,25 @@ let
                ++ map (c: get class (baseNameOf c)) (scan.nestedIn d)
                ++ defaultsFor d class;
     };
+    pathOf = n: (lib.findFirst (m: m.name == n) null modules).path;
+    orphanReport = "dirs-as-categories: reached by no includes or enables (include it, "
+        + "or a category above it): "
+        + lib.concatMapStringsSep ", " (n: "${n} (${pathOf n})") scan.orphans;
 in
 assert scan.checked;
 {
     imports = map (e: e.file) scan.admin;
+
+    options.dirsAsCategories.checkOrphans = lib.mkOption {
+        description = ''
+            Add `checks.<system>.module-orphans`, which fails while any module
+            inside a category is reached by no `includes` or `enables` --
+            valid, evaluated, and installing nothing. The list is
+            `flake.moduleGraph.orphans` either way.
+        '';
+        type    = lib.types.bool;
+        default = false;
+    };
 
     options.flake.moduleGraph = lib.mkOption {
         description = "What dirs-as-categories built from the modules tree. Format: doc/format.md in dirs-as-categories.";
@@ -53,9 +68,26 @@ assert scan.checked;
         readOnly    = true;
     };
 
-    config.flake.modules = genAttrs classes (class:
-        listToAttrs (map (m: nameValuePair m.name (moduleFor class m)) (filter (m: elem class m.classesOf) modules)
-                  ++ map (d: nameValuePair (baseNameOf d) (categoryFor class d)) categories));
+    config = {
+        flake.modules = genAttrs classes (class:
+            listToAttrs (map (m: nameValuePair m.name (moduleFor class m)) (filter (m: elem class m.classesOf) modules)
+                      ++ map (d: nameValuePair (baseNameOf d) (categoryFor class d)) categories));
 
-    config.flake.moduleGraph = import ./publish.nix { inherit lib classes scan; };
+        flake.moduleGraph = import ./publish.nix { inherit lib classes scan; };
+
+        # A derivation that only writes $out, or fails naming the orphans: no
+        # nixpkgs needed, so it costs a flake using this nothing.
+        perSystem = { system, ... }: {
+            checks = lib.mkIf config.dirsAsCategories.checkOrphans {
+                module-orphans = builtins.derivation {
+                    inherit system;
+                    name    = "module-orphans";
+                    builder = "/bin/sh";
+                    args    = [ "-c" (
+                        if scan.orphans == [ ] then "echo none > $out"
+                        else "echo ${lib.escapeShellArg orphanReport} >&2; exit 1") ];
+                };
+            };
+        };
+    };
 }

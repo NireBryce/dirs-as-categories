@@ -62,6 +62,18 @@ let
 
     unexpectedlyFine = lib.filter (name: (builtins.tryEval (force name)).success) errorCases;
 
+    # ── the orphan check ────────────────────────────────────────────────────
+    # Present only when asked for, and naming each orphan with its path.
+    orphanCheck = on:
+        let flake = flake-parts.lib.mkFlake {
+                inputs = { self = { outPath = ./fixtures/main; }; inherit flake-parts; testMarker = "x"; };
+            } {
+                systems = [ "x86_64-linux" ];
+                imports = [ flake-parts.flakeModules.modules (tree (fixture "main"))
+                            { dirsAsCategories.checkOrphans = on; } ];
+            };
+        in flake.checks.x86_64-linux.module-orphans or null;
+
     # ── the template's tree ─────────────────────────────────────────────────
     # Only the tree: building its host needs nixpkgs, which these tests don't
     # fetch.
@@ -80,7 +92,7 @@ let
         };
 in
 {
-    inherit main force errorCases;
+    inherit main force errorCases orphanCheck;
 
     checks = {
         main = {
@@ -90,6 +102,12 @@ in
         errors = {
             ok     = unexpectedlyFine == [ ];
             detail = "these error fixtures evaluated without an error: ${lib.concatStringsSep ", " unexpectedlyFine}";
+        };
+        orphan-check = {
+            ok = orphanCheck false == null
+              && lib.hasInfix "lonely-module (general/lonely/inner/lonely-module.nix)"
+                              (builtins.elemAt (orphanCheck true).args 1);
+            detail = "checkOrphans: off should add no check, on should name lonely-module with its path";
         };
         template = {
             ok = template == {

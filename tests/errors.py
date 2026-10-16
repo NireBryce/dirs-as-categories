@@ -16,17 +16,17 @@ PREFIX = 'dirs-as-categories: '
 
 
 def message(case):
-    r = subprocess.run(
-        ['nix', 'eval', '--json', f'path:{ROOT}#tests', '--apply', f't: t.force "{case}"'],
+    result = subprocess.run(
+        ['nix', 'eval', '--json', f'path:{ROOT}#tests', '--apply', f'tests: tests.force "{case}"'],
         capture_output=True, text=True)
-    if r.returncode == 0:
+    if result.returncode == 0:
         return None
     # The message is the `error: dirs-as-categories: …` line. Some Nix versions
     # also print the source of the `throw`, which contains the prefix too.
-    for line in r.stderr.splitlines():
+    for line in result.stderr.splitlines():
         if f'error: {PREFIX}' in line:
             return line[line.index(PREFIX) + len(PREFIX):].strip()
-    return r.stderr.strip().splitlines()[-1]
+    return result.stderr.strip().splitlines()[-1]
 
 
 def main():

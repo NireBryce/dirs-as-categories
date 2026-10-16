@@ -16,14 +16,14 @@
 
             # A passing test is a derivation that only writes $out; a failing
             # one stops evaluation with its detail.
-            check = system: name: t:
-                if t.ok then builtins.derivation {
+            check = system: name: test:
+                if test.ok then builtins.derivation {
                     inherit system;
                     name    = "dirs-as-categories-test-${name}";
                     builder = "/bin/sh";
                     args    = [ "-c" "echo ok > $out" ];
                 }
-                else throw "dirs-as-categories test ${name} failed: ${t.detail}";
+                else throw "dirs-as-categories test ${name} failed: ${test.detail}";
         in
         {
             lib.tree = tree;

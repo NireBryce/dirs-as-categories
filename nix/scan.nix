@@ -6,31 +6,31 @@ let
     inherit (lib) filter concatMap unique hasPrefix optional length elem attrNames concatStringsSep;
     inherit (settings) classes;
 
-    fail = msg: throw "dirs-as-categories: ${msg}";
+    fail = message: throw "dirs-as-categories: ${message}";
 
     # ── paths ───────────────────────────────────────────────────────────────
     rootStr    = toString root;
-    rel        = f: lib.removePrefix "${rootStr}/" (toString f);
-    depth      = d: length (lib.splitString "/" d);
-    ancestors  = p: let d = dirOf p; in if d == "." then [ ] else [ d ] ++ ancestors d;
-    within     = d: p: hasPrefix "${d}/" p;              # strictly beneath d
-    isDefaults = p: baseNameOf p == "defaults.nix";
+    rel        = file: lib.removePrefix "${rootStr}/" (toString file);
+    isTopLevel = path: dirOf path == ".";
+    ancestors  = path: let dir = dirOf path; in if dir == "." then [ ] else [ dir ] ++ ancestors dir;
+    within     = dir: path: hasPrefix "${dir}/" path;            # strictly beneath dir
+    isDefaults = path: baseNameOf path == "defaults.nix";
 
-    nameOf = p:
-        let base = lib.removeSuffix ".nix" (baseNameOf p); in
+    nameOf = path:
+        let base = lib.removeSuffix ".nix" (baseNameOf path); in
         if base != "default" then base
-        else if dirOf p == "." then fail "${p}: a default.nix needs a folder to take its name from"
-        else baseNameOf (dirOf p);
+        else if isTopLevel path then fail "${path}: a default.nix needs a folder to take its name from"
+        else baseNameOf (dirOf path);
 
     # ── shape: what each file is ────────────────────────────────────────────
     reserved        = [ "includes" "enables" "folderIsCategory" ];
     moduleKeys      = classes ++ reserved;
     defaultsKeys    = classes ++ [ "folderIsCategory" ];
 
-    checkKeys = allowed: e:
-        let bad = filter (k: !(elem k allowed)) (attrNames e.value); in
-        if bad == [ ] then e
-        else fail ("${e.path}: unknown key ${concatStringsSep ", " (map (k: "`${k}`") bad)}; "
+    checkKeys = allowed: entry:
+        let unknown = filter (key: !(elem key allowed)) (attrNames entry.value); in
+        if unknown == [ ] then entry
+        else fail ("${entry.path}: unknown key ${concatStringsSep ", " (map (key: "`${key}`") unknown)}; "
                  + "expected one of: ${concatStringsSep ", " allowed}");
 
     # A file may be a function of only `lib` and `inputs` -- both exist
@@ -41,91 +41,103 @@ let
     pure = { inherit lib inputs; };
     callable = raw:
         builtins.isFunction raw
-        && lib.all (a: elem a (attrNames pure))
+        && lib.all (arg: elem arg (attrNames pure))
                    (attrNames (lib.filterAttrs (_: hasDefault: !hasDefault) (lib.functionArgs raw)));
     call = raw:
         let wanted = lib.functionArgs raw; in
         raw (if wanted == { } then pure else builtins.intersectAttrs wanted pure);
 
-    isModuleShaped = v: builtins.isAttrs v && lib.any (k: elem k moduleKeys) (attrNames v);
+    isModuleShaped = value: builtins.isAttrs value && lib.any (key: elem key moduleKeys) (attrNames value);
 
-    entries = map (f:
-        let raw = import f; in
-        { path = rel f; file = f; inherit raw; value = if callable raw then call raw else raw; }) files;
+    # `value` is what the file evaluates to: a function of lib/inputs has
+    # been called, any other function is still a function.
+    shapeOf = path: raw: value:
+        if isDefaults path then
+            (if builtins.isAttrs value then "defaults"
+             else fail "${path}: defaults.nix must be an attribute set, or a function of lib/inputs returning one")
+        # class keys make a module; anything else -- `{ perSystem = …; }`, or
+        # a function of `config` -- is an ordinary flake-parts module
+        else if builtins.isAttrs value || builtins.isFunction raw then
+            (if isModuleShaped value then "module" else "admin")
+        else fail "${path}: expected an attribute set (a module) or a function (a module of lib/inputs, or a flake-parts module)";
 
-    shapeOf = e:
-        if isDefaults e.path then
-            (if builtins.isAttrs e.value && !builtins.isFunction e.value then "defaults"
-             else fail "${e.path}: defaults.nix must be an attribute set, or a function of lib/inputs returning one")
-        # a function's result decides: class keys make it a module, anything
-        # else (perSystem, imports, flake.*) an ordinary flake-parts module
-        else if builtins.isFunction e.raw then (if callable e.raw && isModuleShaped e.value then "module" else "admin")
-        # a plain attribute set the same way: `{ perSystem = …; }` is an
-        # ordinary flake-parts module
-        else if builtins.isAttrs e.value then (if isModuleShaped e.value then "module" else "admin")
-        else fail "${e.path}: expected an attribute set (a module) or a function (a module of lib/inputs, or a flake-parts module)";
+    entries = map (file:
+        let path  = rel file;
+            raw   = import file;
+            value = if callable raw then call raw else raw;
+        in { inherit path file value; shape = shapeOf path raw value; }) files;
 
-    ofShape  = s: filter (e: shapeOf e == s) entries;
+    ofShape  = shape: filter (entry: entry.shape == shape) entries;
     admin    = ofShape "admin";
     defaults = map (checkKeys defaultsKeys) (ofShape "defaults");
 
-    moduleFiles = map (e: checkKeys moduleKeys e // {
-        name      = nameOf e.path;
-        classesOf = filter (c: e.value ? ${c} || (e.value.includes or { }) ? ${c}) classes;
+    moduleFiles = map (entry: checkKeys moduleKeys entry // {
+        name      = nameOf entry.path;
+        classesOf = filter (class: entry.value ? ${class} || (entry.value.includes or { }) ? ${class}) classes;
     }) (ofShape "module");
 
     # a file holding only a flag declares no module
-    modules = filter (m: m.classesOf != [ ]) moduleFiles;
+    modules   = filter (mod: mod.classesOf != [ ]) moduleFiles;
+    hasClass  = class: mod: elem class mod.classesOf;
+    modulesOf = class: filter (hasClass class) modules;
 
     # ── categories ──────────────────────────────────────────────────────────
-    moduleDirs = unique (map (m: dirOf m.path) modules);
-    folders    = unique (concatMap (e: ancestors e.path) (moduleFiles ++ defaults));
+    moduleDirs = unique (map (mod: dirOf mod.path) modules);
+    folders    = unique (concatMap (entry: ancestors entry.path) (moduleFiles ++ defaults));
 
-    flagsOf = d: unique (concatMap (e: optional (e.value ? folderIsCategory) e.value.folderIsCategory)
-                                   (filter (e: dirOf e.path == d) (moduleFiles ++ defaults)));
-    flagOf  = d: let f = flagsOf d; in if f == [ ] then null else builtins.head f;
+    # The folderIsCategory the files directly in a folder give it, or null
+    # when none does.
+    flagOf = dir:
+        let flags = unique (concatMap (entry: optional (entry.value ? folderIsCategory) entry.value.folderIsCategory)
+                                      (filter (entry: dirOf entry.path == dir) (moduleFiles ++ defaults)));
+        in
+        if flags == [ ] then null
+        else if length flags > 1 then fail "${dir}: files disagree on folderIsCategory"
+        else if !builtins.isBool (builtins.head flags) then fail "${dir}: folderIsCategory must be true or false"
+        else builtins.head flags;
 
-    isCategory = d:
-        let f = flagsOf d; in
-        if length f > 1 then fail "${d}: files disagree on folderIsCategory"
-        else if f != [ ] && !builtins.isBool (builtins.head f) then fail "${d}: folderIsCategory must be true or false"
-        else if depth d < 2 then
-            (if f == [ true ] then fail "${d}: a top-level folder is an area and can't be a category" else false)
-        else if f == [ true ]  then true
-        else if f == [ false ] then false
-        else lib.any (within d) moduleDirs;      # the rule: a subfolder that holds modules
+    isCategory = dir:
+        let flag = flagOf dir; in
+        if isTopLevel dir then
+            (if flag == true then fail "${dir}: a top-level folder is an area and can't be a category" else false)
+        else if flag != null then flag
+        else lib.any (within dir) moduleDirs;      # the rule: a subfolder that holds modules
 
     categories = filter isCategory folders;
 
     # nearest category strictly above a path; for a file, the one it belongs to
-    categoryAbove     = p: let cs = filter (d: elem d categories) (ancestors p); in
-                           if cs == [ ] then null else builtins.head cs;
-    categoryAtOrAbove = d: if elem d categories then d else categoryAbove d;
+    categoryAbove     = path: let above = filter (dir: elem dir categories) (ancestors path); in
+                              if above == [ ] then null else builtins.head above;
+    categoryAtOrAbove = dir: if elem dir categories then dir else categoryAbove dir;
 
-    ownModules = d: filter (m: categoryAbove m.path == d) modules;
-    nestedIn   = d: filter (c: categoryAbove c == d) categories;
+    ownModules = category: filter (mod: categoryAbove mod.path == category) modules;
+    nestedIn   = category: filter (nested: categoryAbove nested == category) categories;
 
     # ── names: modules and categories share one namespace ──────────────────
-    named   = map (m: { inherit (m) name path; }) modules
-           ++ map (d: { name = baseNameOf d; path = d; }) categories;
-    clashes = lib.filterAttrs (_: ps: length ps > 1)
-                  (lib.groupBy' (acc: x: acc ++ [ x.path ]) [ ] (x: x.name) named);
+    named   = map (mod: { inherit (mod) name path; }) modules
+           ++ map (dir: { name = baseNameOf dir; path = dir; }) categories;
+    clashes = lib.filterAttrs (_: paths: length paths > 1)
+                  (lib.groupBy' (paths: item: paths ++ [ item.path ]) [ ] (item: item.name) named);
 
-    known   = map (x: x.name) named;
-    knownIn = class: map (m: m.name) (filter (m: elem class m.classesOf) modules)
-                  ++ map baseNameOf categories;
+    known   = map (item: item.name) named;
+    knownIn = class: map (mod: mod.name) (modulesOf class) ++ map baseNameOf categories;
 
     # every name in includes/enables, checked up front rather than when a
     # host happens to force it (an unused `enabled` entry never would be)
-    refProblem = from: kind: class: n:
-        if !(elem class classes) then "${from}: ${kind}.${class}: unknown class"
-        else if elem n (knownIn class) then null
-        else if elem n known then "${from}: ${kind}.${class}: `${n}` has no ${class} module"
-        else "${from}: ${kind}.${class}: unknown name `${n}`";
-    refProblems = filter (p: p != null) (concatMap (m:
-        concatMap (kind: lib.concatLists (lib.mapAttrsToList
-            (class: names: map (refProblem m.path kind class) names) (m.value.${kind} or { })))
-        [ "includes" "enables" ]) moduleFiles);
+    references = concatMap (mod: concatMap (kind:
+        lib.concatLists (lib.mapAttrsToList (class: names:
+            map (name: { from = mod.path; inherit kind class name; }) names)
+        (mod.value.${kind} or { })))
+    [ "includes" "enables" ]) moduleFiles;
+
+    referenceProblem = { from, kind, class, name }:
+        let where = "${from}: ${kind}.${class}"; in
+        if !(elem class classes) then "${where}: unknown class"
+        else if elem name (knownIn class) then null
+        else if elem name known then "${where}: `${name}` has no ${class} module"
+        else "${where}: unknown name `${name}`";
+
+    referenceProblems = filter (problem: problem != null) (map referenceProblem references);
 
     # ── orphans ─────────────────────────────────────────────────────────────
     # A module inside a category that nothing reaches: valid, evaluates, and
@@ -134,30 +146,31 @@ let
     # (a category includes everything beneath it). Modules outside every
     # category are entry points -- hosts, home aggregates -- and nothing is
     # meant to name them.
-    reachedNames = unique (concatMap (m:
-        concatMap (kind: lib.concatLists (lib.attrValues (m.value.${kind} or { })))
-        [ "includes" "enables" ]) moduleFiles);
-    orphans = map (m: m.name) (filter (m:
-        let above = filter (d: elem d categories) (ancestors m.path); in
-        above != [ ] && !(elem m.name reachedNames) && !(lib.any (d: elem (baseNameOf d) reachedNames) above))
+    reachedNames = unique (map (reference: reference.name) references);
+    orphans = map (mod: mod.name) (filter (mod:
+        let above = filter (dir: elem dir categories) (ancestors mod.path); in
+        above != [ ] && !(elem mod.name reachedNames) && !(lib.any (category: elem (baseNameOf category) reachedNames) above))
         modules);
 
     # ── defaults.nix reach ──────────────────────────────────────────────────
-    # A defaults.nix in F applies whenever anything in F's subtree is reached:
-    # through the nearest category at or above F, or through a direct include
-    # of any module or category inside F.
-    defaultsReach = D: let F = dirOf D.path; in { dir = F; category = categoryAtOrAbove F; };
-    appliesTo     = D: q: let r = defaultsReach D; in
-                          q == r.dir || within r.dir q || q == r.category;
+    # A defaults.nix in a folder applies whenever anything in that folder's
+    # subtree is reached: through the nearest category at or above the
+    # folder, or through a direct include of any module or category inside it.
+    defaultsReach = defaultsFile:
+        let dir = dirOf defaultsFile.path; in
+        { inherit dir; category = categoryAtOrAbove dir; };
+    appliesTo = defaultsFile: target:
+        let reach = defaultsReach defaultsFile; in
+        target == reach.dir || within reach.dir target || target == reach.category;
 
     checked =
         if clashes != { } then
             fail ("names used more than once: "
-                + concatStringsSep "; " (lib.mapAttrsToList (n: ps: "${n} (${concatStringsSep ", " ps})") clashes))
-        else if refProblems != [ ] then fail (concatStringsSep "; " refProblems)
+                + concatStringsSep "; " (lib.mapAttrsToList (name: paths: "${name} (${concatStringsSep ", " paths})") clashes))
+        else if referenceProblems != [ ] then fail (concatStringsSep "; " referenceProblems)
         else true;
 in
 {
-    inherit rootStr depth admin defaults modules categories folders flagOf
+    inherit rootStr isTopLevel admin defaults modules hasClass modulesOf categories folders flagOf
             ownModules nestedIn defaultsReach appliesTo orphans checked;
 }

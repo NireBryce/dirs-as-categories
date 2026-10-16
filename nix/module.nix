@@ -1,11 +1,11 @@
 # The flake-parts module lib.tree produces.
 { settings, root, files }:
-{ lib, config, ... }:
+{ lib, config, inputs, ... }:
 let
     inherit (lib) filter elem optional listToAttrs nameValuePair genAttrs;
     inherit (settings) classes;
 
-    scan = import ./scan.nix { inherit lib settings root files; };
+    scan = import ./scan.nix { inherit lib inputs settings root files; };
     inherit (scan) modules categories;
 
     get = class: n: config.flake.modules.${class}.${n};

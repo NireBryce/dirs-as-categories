@@ -1,1 +1,4 @@
-{ nixos = { probe = [ "defaults:sub" ]; }; }
+{ lib, ... }:
+{
+    nixos = { probe = [ (lib.concatStrings [ "defaults:" "sub" ]) ]; };
+}

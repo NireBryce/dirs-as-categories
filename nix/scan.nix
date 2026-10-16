@@ -1,7 +1,7 @@
 # What the tree contains, decided from paths and from the shape of what each
 # file evaluates to -- never from `config`, so nothing here can recurse
 # through the module system. doc/convention.md states each rule.
-{ lib, settings, root, files }:
+{ lib, inputs, settings, root, files }:
 let
     inherit (lib) filter concatMap unique hasPrefix optional length elem attrNames concatStringsSep;
     inherit (settings) classes;
@@ -33,15 +33,35 @@ let
         else fail ("${e.path}: unknown key ${concatStringsSep ", " (map (k: "`${k}`") bad)}; "
                  + "expected one of: ${concatStringsSep ", " allowed}");
 
-    entries = map (f: { path = rel f; file = f; value = import f; }) files;
+    # A file may be a function of only `lib` and `inputs` -- both exist
+    # before `config` does (`inputs` is a flake-parts special argument) -- so
+    # it can be called here to see what it returns. A function asking for
+    # anything else (`config`, `withSystem`, …) is never called: it is an
+    # ordinary flake-parts module.
+    pure = { inherit lib inputs; };
+    callable = raw:
+        builtins.isFunction raw
+        && lib.all (a: elem a (attrNames pure))
+                   (attrNames (lib.filterAttrs (_: hasDefault: !hasDefault) (lib.functionArgs raw)));
+    call = raw:
+        let wanted = lib.functionArgs raw; in
+        raw (if wanted == { } then pure else builtins.intersectAttrs wanted pure);
+
+    isModuleShaped = v: builtins.isAttrs v && lib.any (k: elem k moduleKeys) (attrNames v);
+
+    entries = map (f:
+        let raw = import f; in
+        { path = rel f; file = f; inherit raw; value = if callable raw then call raw else raw; }) files;
 
     shapeOf = e:
         if isDefaults e.path then
-            (if builtins.isAttrs e.value then "defaults"
-             else fail "${e.path}: defaults.nix must be an attribute set")
-        else if builtins.isFunction e.value then "admin"
+            (if builtins.isAttrs e.value && !builtins.isFunction e.value then "defaults"
+             else fail "${e.path}: defaults.nix must be an attribute set, or a function of lib/inputs returning one")
+        # a function's result decides: class keys make it a module, anything
+        # else (perSystem, imports, flake.*) an ordinary flake-parts module
+        else if builtins.isFunction e.raw then (if callable e.raw && isModuleShaped e.value then "module" else "admin")
         else if builtins.isAttrs e.value then "module"
-        else fail "${e.path}: expected an attribute set (a module) or a function (a flake-parts module)";
+        else fail "${e.path}: expected an attribute set (a module) or a function (a module of lib/inputs, or a flake-parts module)";
 
     ofShape  = s: filter (e: shapeOf e == s) entries;
     admin    = ofShape "admin";

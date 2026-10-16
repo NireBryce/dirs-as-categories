@@ -9,7 +9,7 @@ let
     fixture = name: ./fixtures + "/${name}/modules";
 
     mkFlake = name: flake-parts.lib.mkFlake {
-        inputs = { self = { outPath = ./fixtures + "/${name}"; }; inherit flake-parts; };
+        inputs = { self = { outPath = ./fixtures + "/${name}"; }; inherit flake-parts; testMarker = "from inputs"; };
     } {
         systems = [ ];
         imports = [ flake-parts.flakeModules.modules (tree (fixture name)) ];
@@ -40,6 +40,7 @@ let
         in {
             names = lib.mapAttrs (_: builtins.attrNames) flake.modules;
             admin = flake.adminProbe or "admin NOT loaded";
+            configAdmin = flake.configAdminProbe or "config admin NOT loaded";
             hosts = lib.genAttrs [ "h1" "h2" "h3" "h4" "h5" ] (run "nixos");
             hm    = run "homeManager" "hm-agg";
             graph = flake.moduleGraph;

@@ -16,8 +16,43 @@ starting with `_`.
 |---|---|
 | an attribute set, named `defaults.nix` | a [defaults file](#defaultsnix) |
 | any other attribute set | a [module file](#module-files) |
-| a function | a flake-parts module, imported as it is |
+| a function of only `lib` and/or `inputs` that returns a class or reserved key | a module file (or defaults file), called with those |
+| any other function | a flake-parts module, imported as it is |
 | anything else | an error |
+
+### Functions of `lib` and `inputs`
+
+A module file can take the flake's `lib` and `inputs`, so its body can use
+them the way a flake-parts module's would:
+
+```nix
+{ lib, inputs, ... }:
+{
+    nixos = {
+        imports = [ inputs.some-flake.nixosModules.default ];
+        services.foo.enable = lib.mkDefault true;
+    };
+}
+```
+
+dirs-as-categories calls such a function to see what it returns. That is
+safe because both arguments exist before `config` does (`inputs` is a
+flake-parts special argument, `lib` is always given), so reading the result's
+keys can't recurse through the module system. The function's required
+arguments decide:
+
+- only `lib` and/or `inputs` (anything else must have a default): called with
+  just those. If the result has a class or reserved key it is a module file
+  (or, for `defaults.nix`, a defaults file); otherwise it is a flake-parts
+  module, imported as written -- `{ lib, ... }: { perSystem = …; }` stays one.
+- anything else, such as `config` or `withSystem`: never called; a
+  flake-parts module.
+
+One consequence: a function-form file whose only class key is mistyped
+(`{ lib, ... }: { nixOS = …; }`) has no class key, so it is loaded as a
+flake-parts module, and flake-parts rejects the unknown option `nixOS`. A
+plain attribute set with the same typo is caught by dirs-as-categories
+itself, naming the file.
 
 ## Module files
 
@@ -85,7 +120,8 @@ modules belong to the nearest category above it.
 
 ## defaults.nix
 
-A `defaults.nix` is never a module. Allowed keys: the classes, and
+A `defaults.nix` is never a module. It is an attribute set, or a function of
+`lib` and/or `inputs` returning one. Allowed keys: the classes, and
 `folderIsCategory` (which applies to its folder as in any other file).
 
 Its class parts apply whenever anything in its folder's subtree is reached:
@@ -114,7 +150,7 @@ Each stops evaluation with `dirs-as-categories: <path>: <what>`.
 | `files disagree on folderIsCategory` | two files in one folder set different values |
 | `folderIsCategory must be true or false` | it is set to something else |
 | `a top-level folder is an area and can't be a category` | `folderIsCategory = true` at the top level |
-| `defaults.nix must be an attribute set` | a `defaults.nix` evaluates to anything else |
+| `defaults.nix must be an attribute set, or a function of lib/inputs returning one` | a `defaults.nix` is anything else, such as a function asking for `config` |
 | `expected an attribute set (a module) or a function` | a file evaluates to neither |
 
 `includes` and `enables` names are checked when the flake is evaluated, not

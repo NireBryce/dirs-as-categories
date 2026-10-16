@@ -1,14 +1,17 @@
 {
   "admin": "admin loaded",
+  "configAdmin": "config admin loaded",
   "graph": {
     "admin": [
-      "general/cat1/admin.nix"
+      "general/cat1/admin.nix",
+      "general/cat1/config-admin.nix"
     ],
     "categories": {
       "cat1": {
         "dir": "general/cat1",
         "flag": null,
         "members": [
+          "fn-module",
           "hm-enable",
           "x",
           "y"
@@ -166,6 +169,12 @@
         ],
         "path": "general/flat/b.nix"
       },
+      "fn-module": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "general/cat1/fn-module.nix"
+      },
       "h1": {
         "classes": [
           "nixos"
@@ -262,6 +271,7 @@
         "general/cat1/y.nix",
         "general/cat1/sub/x.nix",
         "general/cat1/hm-enable.nix",
+        "general/cat1/fn-module.nix",
         "general/cat1/sub/defaults.nix",
         "general/cat1/defaults.nix",
         "hosts/h1.nix"
@@ -274,6 +284,7 @@
         "x",
         "enabled:hm-agg",
         "pkgs:from _module.args",
+        "fn-module:from inputs",
         "defaults:sub",
         "defaults:cat1",
         "h1"
@@ -298,6 +309,7 @@
         "general/cat1/hm-enable.nix",
         "general/cat1/y.nix",
         "general/cat1/hm-enable.nix",
+        "general/cat1/fn-module.nix",
         "general/cat1/nested/defaults.nix",
         "general/cat1/sub/defaults.nix",
         "general/cat1/defaults.nix",
@@ -309,6 +321,7 @@
         "y",
         "enabled:hm-agg",
         "pkgs:from _module.args",
+        "fn-module:from inputs",
         "defaults:nested",
         "defaults:sub",
         "defaults:cat1",
@@ -362,6 +375,7 @@
       "cat1",
       "editors",
       "flat",
+      "fn-module",
       "h1",
       "h2",
       "h3",

@@ -68,9 +68,20 @@ or add it to an existing flake-parts flake:
 | `enables.<class> = [ "name" … ]` | hand another class's module in as the argument `enabled.<class>.<name>` |
 | `folderIsCategory = true \| false` | override whether this file's folder is a category |
 
-A file that evaluates to a **function** is loaded as an ordinary flake-parts
-module instead, for anything that isn't a module of a class:
-`nixosConfigurations`, `perSystem`, checks.
+A module file may also be a function of the flake's `lib` and `inputs`, so
+its body can use them:
+
+```nix
+{ lib, ... }:
+{
+    nixos = { services.openssh.enable = lib.mkDefault true; };
+}
+```
+
+Any other file that evaluates to a **function** -- one asking for `config`,
+or returning no class key -- is loaded as an ordinary flake-parts module, for
+anything that isn't a module of a class: `nixosConfigurations`, `perSystem`,
+checks.
 
 ## The rules
 

@@ -143,6 +143,7 @@ nix eval --json .#moduleGraph
 
 ## Development
 
+[CONTRIBUTING.md](CONTRIBUTING.md) is where to start;
 [Changing dirs-as-categories](wiki/changing-dirs-as-categories.md) walks
 through the checks and the test-first loop.
 

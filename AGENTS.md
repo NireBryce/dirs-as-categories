@@ -71,8 +71,9 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 | `doc/` | the exact rules (`convention.md`) and format (`format.md`); `style.md` for all docs |
 | `wiki/` | guides: `using-the-flake.md`; `styleguide.md` before adding a page |
 | `dev/` | the development shell's own flake (kept out of the main flake's inputs) |
+| `CONTRIBUTING.md` | where a person starts: issues, the contributor wiki page, the code guide |
 | `CHANGELOG.md` | what changed for users, and what breaks; `Unreleased`, then each release |
-| `.github/` | CI (`check`), the nightly test against the latest inputs (`upstream`), weekly lock PRs (`update-flake-lock`), issue and PR templates |
+| `.github/` | CI (`check`), the weekly test against the latest inputs (`upstream`), Dependabot for Actions, weekly lock PRs (`update-flake-lock`), issue and PR templates |
 
 ## Testing discipline
 

@@ -17,7 +17,7 @@ theirs.
 
 `.github/workflows/update-flake-lock.yml` opens one PR per lock file every
 Monday (it needs the `FLAKE_LOCK_TOKEN` secret; its header says how). The
-nightly `upstream` workflow already ran the fixtures and templates against
+weekly `upstream` workflow (Sundays) already ran the fixtures and templates against
 the newest inputs, so a red `upstream` issue is the first sign an update
 will break something. Reviewing such a PR is this skill; so is a bump by
 hand.

@@ -64,3 +64,11 @@ for values, in `module.nix`, lazily.
   check in `nix flake check` covers the tree; evaluate a host from it when
   the change could affect one.
 - `just preflight`.
+
+## Keep the code readable
+
+`nix/` is written for readers who don't know Nix (`nix/README.md`). Give
+a new binding a name that says what it holds, a comment with an example
+value when the shape isn't obvious, and split an expression that does
+several things into named steps. A new piece of Nix syntax or a `lib`
+function the code didn't use before goes in `nix/README.md`'s tables.

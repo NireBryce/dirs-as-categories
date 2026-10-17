@@ -60,6 +60,7 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 
 | Path | Holds |
 |---|---|
+| `nix/README.md` | how the files fit together, and the Nix syntax they use -- for readers new to Nix |
 | `nix/default.nix` | `lib.tree` and `lib.tree.withClasses` |
 | `nix/scan.nix` | the rules: shapes, names, categories, flags, errors |
 | `nix/module.nix` | `flake.modules`: includes, enables, defaults, `key`s |

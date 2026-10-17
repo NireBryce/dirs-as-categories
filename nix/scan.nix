@@ -1,135 +1,213 @@
-# What the tree contains, decided from paths and from the shape of what each
-# file evaluates to -- never from `config`, so nothing here can recurse
-# through the module system. doc/convention.md states each rule.
+# nix/scan.nix: reads the modules tree and decides what everything in it is.
+#
+# In:  `files`, the list of .nix files import-tree found under `root`.
+# Out: the attribute set at the bottom of this file: which files are
+#      modules, which folders are categories, what each module names in
+#      `includes` and `enables`, and the orphans. nix/module.nix turns that
+#      into `flake.modules`; nix/publish.nix into `flake.moduleGraph`.
+#
+# Every decision here comes from a file's path and from the keys of what
+# the file evaluates to -- never from `config`. The module system needs
+# the names this file decides (and the list of files to import) before
+# `config` exists, so reading `config` here would be an infinite recursion.
+#
+# doc/convention.md states each rule in prose. nix/README.md explains the
+# Nix syntax this file uses.
 { lib, inputs, settings, root, files }:
 let
     inherit (lib) filter concatMap unique hasPrefix optional length elem attrNames concatStringsSep;
     inherit (settings) classes;
 
+    # Stops evaluation. Every error message starts the same way, so a user
+    # can tell it came from here.
     fail = message: throw "dirs-as-categories: ${message}";
 
-    # ── paths ───────────────────────────────────────────────────────────────
-    rootStr    = toString root;
-    rel        = file: lib.removePrefix "${rootStr}/" (toString file);
+    # ── 1. Paths ────────────────────────────────────────────────────────────
+    # Every path from here on is a string relative to the tree's root, such
+    # as "shared/base/ssh/ssh.nix". A top-level folder ("shared") is an area.
+
+    rootStr  = toString root;
+    relative = file: lib.removePrefix "${rootStr}/" (toString file);
+
+    # dirOf "shared" is ".", so "shared" is top-level.
     isTopLevel = path: dirOf path == ".";
-    ancestors  = path: let dir = dirOf path; in if dir == "." then [ ] else [ dir ] ++ ancestors dir;
-    within     = dir: path: hasPrefix "${dir}/" path;            # strictly beneath dir
+
+    # Every folder above a path, nearest first:
+    #   ancestors "shared/base/ssh/ssh.nix" == [ "shared/base/ssh" "shared/base" "shared" ]
+    ancestors = path:
+        let parent = dirOf path; in
+        if parent == "." then [ ] else [ parent ] ++ ancestors parent;
+
+    # Whether `path` is strictly beneath the folder `dir` (not `dir` itself).
+    within = dir: path: hasPrefix "${dir}/" path;
+
     isDefaults = path: baseNameOf path == "defaults.nix";
 
+    # A module's name is its filename without `.nix`; a default.nix takes
+    # its folder's name instead:
+    #   nameOf "shared/base/ssh/ssh.nix"         == "ssh"
+    #   nameOf "shared/editors/micro/default.nix" == "micro"
     nameOf = path:
         let base = lib.removeSuffix ".nix" (baseNameOf path); in
         if base != "default" then base
         else if isTopLevel path then fail "${path}: a default.nix needs a folder to take its name from"
         else baseNameOf (dirOf path);
 
-    # ── shape: what each file is ────────────────────────────────────────────
-    reserved        = [ "includes" "enables" "folderIsCategory" ];
-    moduleKeys      = classes ++ reserved;
-    defaultsKeys    = classes ++ [ "folderIsCategory" ];
+    # ── 2. What each file is ────────────────────────────────────────────────
+    # Each file is one of three shapes:
+    #   "module"   -- a set with class keys (or reserved keys), such as { nixos = …; }
+    #   "defaults" -- a defaults.nix
+    #   "admin"    -- anything else that is a set or a function: an ordinary
+    #                 flake-parts module, imported unchanged (hosts.nix)
 
+    reserved     = [ "includes" "enables" "folderIsCategory" ];
+    moduleKeys   = classes ++ reserved;
+    defaultsKeys = classes ++ [ "folderIsCategory" ];
+
+    # Fails, naming the file, if the file's set has a key outside `allowed`.
+    # Otherwise returns the entry unchanged, so it can sit inside a `map`.
     checkKeys = allowed: entry:
-        let unknown = filter (key: !(elem key allowed)) (attrNames entry.value); in
+        let
+            unknown = filter (key: !(elem key allowed)) (attrNames entry.value);
+            quoted  = map (key: "`${key}`") unknown;
+        in
         if unknown == [ ] then entry
-        else fail ("${entry.path}: unknown key ${concatStringsSep ", " (map (key: "`${key}`") unknown)}; "
+        else fail ("${entry.path}: unknown key ${concatStringsSep ", " quoted}; "
                  + "expected one of: ${concatStringsSep ", " allowed}");
 
-    # A file may be a function of only `lib` and `inputs` -- both exist
-    # before `config` does (`inputs` is a flake-parts special argument) -- so
-    # it can be called here to see what it returns. A function asking for
-    # anything else (`config`, `withSystem`, …) is never called: it is an
-    # ordinary flake-parts module.
-    pure = { inherit lib inputs; };
-    callable = raw:
-        builtins.isFunction raw
-        && lib.all (arg: elem arg (attrNames pure))
-                   (attrNames (lib.filterAttrs (_: hasDefault: !hasDefault) (lib.functionArgs raw)));
-    call = raw:
+    # A file may be a function, `{ lib, inputs, ... }: { nixos = …; }`. To
+    # see its keys, this file has to call it -- which is only safe with
+    # arguments that exist before `config` does. `lib` and `inputs` do
+    # (`inputs` is a flake-parts special argument), so they are the
+    # arguments a file can ask for and still be called early.
+    earlyArgs = { inherit lib inputs; };
+
+    # The arguments a function needs: those without a default.
+    #   requiredArgs ({ lib, inputs ? null, ... }: …) == [ "lib" ]
+    requiredArgs = fn: attrNames (lib.filterAttrs (_: hasDefault: !hasDefault) (lib.functionArgs fn));
+
+    # A function asking for anything else (`config`, `withSystem`, …) is
+    # never called here: it is an ordinary flake-parts module.
+    canCallEarly = raw:
+        builtins.isFunction raw && lib.all (arg: elem arg (attrNames earlyArgs)) (requiredArgs raw);
+
+    # A function written `args: …` instead of `{ lib, ... }: …` lists no
+    # arguments, so it gets all of them. One with a list gets only those it
+    # names, because a function without `...` rejects any others.
+    callEarly = raw:
         let wanted = lib.functionArgs raw; in
-        raw (if wanted == { } then pure else builtins.intersectAttrs wanted pure);
+        raw (if wanted == { } then earlyArgs else builtins.intersectAttrs wanted earlyArgs);
 
     isModuleShaped = value: builtins.isAttrs value && lib.any (key: elem key moduleKeys) (attrNames value);
 
-    # `value` is what the file evaluates to: a function of lib/inputs has
-    # been called, any other function is still a function.
+    # `raw` is what the file contains; `value` is what it evaluates to after
+    # an early call (for a function of lib/inputs), or `raw` itself.
     shapeOf = path: raw: value:
         if isDefaults path then
             (if builtins.isAttrs value then "defaults"
              else fail "${path}: defaults.nix must be an attribute set, or a function of lib/inputs returning one")
-        # class keys make a module; anything else -- `{ perSystem = …; }`, or
-        # a function of `config` -- is an ordinary flake-parts module
         else if builtins.isAttrs value || builtins.isFunction raw then
             (if isModuleShaped value then "module" else "admin")
         else fail "${path}: expected an attribute set (a module) or a function (a module of lib/inputs, or a flake-parts module)";
 
+    # One entry per file:
+    #   { path = "shared/base/locale.nix"; file = /nix/store/…/locale.nix;
+    #     value = { nixos = …; }; shape = "module"; }
     entries = map (file:
-        let path  = rel file;
+        let
+            path  = relative file;
             raw   = import file;
-            value = if callable raw then call raw else raw;
-        in { inherit path file value; shape = shapeOf path raw value; }) files;
+            value = if canCallEarly raw then callEarly raw else raw;
+        in
+        { inherit path file value; shape = shapeOf path raw value; }) files;
 
     ofShape  = shape: filter (entry: entry.shape == shape) entries;
     admin    = ofShape "admin";
     defaults = map (checkKeys defaultsKeys) (ofShape "defaults");
 
+    # Module entries gain a `name`, and `classesOf`: the classes the file
+    # declares the module in -- those it has a key for, or `includes` for.
     moduleFiles = map (entry: checkKeys moduleKeys entry // {
         name      = nameOf entry.path;
         classesOf = filter (class: entry.value ? ${class} || (entry.value.includes or { }) ? ${class}) classes;
     }) (ofShape "module");
 
-    # a file holding only a flag declares no module
+    # A module file holding only `folderIsCategory` declares no module.
     modules   = filter (mod: mod.classesOf != [ ]) moduleFiles;
     hasClass  = class: mod: elem class mod.classesOf;
     modulesOf = class: filter (hasClass class) modules;
 
-    # ── categories ──────────────────────────────────────────────────────────
-    moduleDirs = unique (map (mod: dirOf mod.path) modules);
-    folders    = unique (concatMap (entry: ancestors entry.path) (moduleFiles ++ defaults));
+    # ── 3. Which folders are categories ─────────────────────────────────────
 
-    # The folderIsCategory the files directly in a folder give it, or null
-    # when none does.
+    moduleDirs = unique (map (mod: dirOf mod.path) modules);
+
+    # Every folder that holds a module file or a defaults.nix, at any depth.
+    folders = unique (concatMap (entry: ancestors entry.path) (moduleFiles ++ defaults));
+
+    # The `folderIsCategory` that the files directly in `dir` set, or null
+    # when none sets one. Files that disagree are an error.
     flagOf = dir:
-        let flags = unique (concatMap (entry: optional (entry.value ? folderIsCategory) entry.value.folderIsCategory)
-                                      (filter (entry: dirOf entry.path == dir) (moduleFiles ++ defaults)));
+        let
+            filesHere = filter (entry: dirOf entry.path == dir) (moduleFiles ++ defaults);
+            flags     = unique (concatMap (entry: optional (entry.value ? folderIsCategory) entry.value.folderIsCategory)
+                                          filesHere);
         in
         if flags == [ ] then null
         else if length flags > 1 then fail "${dir}: files disagree on folderIsCategory"
         else if !builtins.isBool (builtins.head flags) then fail "${dir}: folderIsCategory must be true or false"
         else builtins.head flags;
 
+    # A folder below the top level is a category when its flag says so, or,
+    # with no flag, when one of its subfolders (at any depth) holds a module.
     isCategory = dir:
         let flag = flagOf dir; in
         if isTopLevel dir then
             (if flag == true then fail "${dir}: a top-level folder is an area and can't be a category" else false)
         else if flag != null then flag
-        else lib.any (within dir) moduleDirs;      # the rule: a subfolder that holds modules
+        else lib.any (within dir) moduleDirs;
 
     categories = filter isCategory folders;
 
-    # nearest category strictly above a path; for a file, the one it belongs to
-    categoryAbove     = path: let above = filter (dir: elem dir categories) (ancestors path); in
-                              if above == [ ] then null else builtins.head above;
+    # The categories above a path, nearest first.
+    categoriesAbove = path: filter (dir: elem dir categories) (ancestors path);
+
+    # The nearest category strictly above a path, or null. For a module
+    # file, this is the category the module belongs to.
+    categoryAbove = path:
+        let above = categoriesAbove path; in
+        if above == [ ] then null else builtins.head above;
+
     categoryAtOrAbove = dir: if elem dir categories then dir else categoryAbove dir;
 
+    # What a category imports directly: its own modules, and the categories
+    # nested in it with no other category between.
     ownModules = category: filter (mod: categoryAbove mod.path == category) modules;
     nestedIn   = category: filter (nested: categoryAbove nested == category) categories;
 
-    # ── names: modules and categories share one namespace ──────────────────
-    named   = map (mod: { inherit (mod) name path; }) modules
-           ++ map (dir: { name = baseNameOf dir; path = dir; }) categories;
-    clashes = lib.filterAttrs (_: paths: length paths > 1)
-                  (lib.groupBy' (paths: item: paths ++ [ item.path ]) [ ] (item: item.name) named);
+    # ── 4. Names ────────────────────────────────────────────────────────────
+    # Modules and categories share one namespace: a name means one thing.
+
+    named = map (mod: { inherit (mod) name path; }) modules
+         ++ map (dir: { name = baseNameOf dir; path = dir; }) categories;
+
+    # { <name> = [ <path> <path> … ]; } for each name more than one thing has.
+    pathsByName = lib.groupBy' (paths: item: paths ++ [ item.path ]) [ ] (item: item.name) named;
+    clashes     = lib.filterAttrs (_: paths: length paths > 1) pathsByName;
 
     known   = map (item: item.name) named;
     knownIn = class: map (mod: mod.name) (modulesOf class) ++ map baseNameOf categories;
 
-    # every name in includes/enables, checked up front rather than when a
-    # host happens to force it (an unused `enabled` entry never would be)
-    references = concatMap (mod: concatMap (kind:
-        lib.concatLists (lib.mapAttrsToList (class: names:
-            map (name: { from = mod.path; inherit kind class name; }) names)
-        (mod.value.${kind} or { })))
-    [ "includes" "enables" ]) moduleFiles;
+    # Every name a file lists in `includes` or `enables`, one record each:
+    #   { from = "hosts/laptop.nix"; kind = "includes"; class = "nixos"; name = "base"; }
+    # They are all checked up front, rather than when a host happens to use
+    # them -- an `enables` entry nothing reads would never be checked.
+    referencesOf = mod: kind:
+        lib.concatLists (lib.mapAttrsToList
+            (class: names: map (name: { from = mod.path; inherit kind class name; }) names)
+            (mod.value.${kind} or { }));
+    references = concatMap (mod: referencesOf mod "includes" ++ referencesOf mod "enables") moduleFiles;
 
+    # What is wrong with one reference, or null when nothing is.
     referenceProblem = { from, kind, class, name }:
         let where = "${from}: ${kind}.${class}"; in
         if !(elem class classes) then "${where}: unknown class"
@@ -139,34 +217,40 @@ let
 
     referenceProblems = filter (problem: problem != null) (map referenceProblem references);
 
-    # ── orphans ─────────────────────────────────────────────────────────────
-    # A module inside a category that nothing reaches: valid, evaluates, and
-    # installs nothing, so evaluation can't report it. Reached means some
-    # `includes` or `enables` names the module itself or a category above it
-    # (a category includes everything beneath it). Modules outside every
-    # category are entry points -- hosts, home aggregates -- and nothing is
-    # meant to name them.
-    reachedNames = unique (map (reference: reference.name) references);
-    orphans = map (mod: mod.name) (filter (mod:
-        let above = filter (dir: elem dir categories) (ancestors mod.path); in
-        above != [ ] && !(elem mod.name reachedNames) && !(lib.any (category: elem (baseNameOf category) reachedNames) above))
-        modules);
+    # ── 5. Orphans ──────────────────────────────────────────────────────────
+    # An orphan is a module inside a category that no `includes` or
+    # `enables` reaches: it evaluates fine and installs nothing, so no error
+    # would ever mention it. Naming the module or any category above it
+    # reaches it, since a category includes everything beneath it. Modules
+    # outside every category are entry points (hosts, home configurations)
+    # that nothing is meant to name, so they are never orphans.
 
-    # ── defaults.nix reach ──────────────────────────────────────────────────
+    reachedNames = unique (map (reference: reference.name) references);
+    isReached    = mod: elem mod.name reachedNames
+                     || lib.any (category: elem (baseNameOf category) reachedNames) (categoriesAbove mod.path);
+    isOrphan     = mod: categoriesAbove mod.path != [ ] && !(isReached mod);
+    orphans      = map (mod: mod.name) (filter isOrphan modules);
+
+    # ── 6. Where each defaults.nix applies ──────────────────────────────────
     # A defaults.nix in a folder applies whenever anything in that folder's
     # subtree is reached: through the nearest category at or above the
-    # folder, or through a direct include of any module or category inside it.
+    # folder, or through including any module or category inside it.
+
     defaultsReach = defaultsFile:
         let dir = dirOf defaultsFile.path; in
         { inherit dir; category = categoryAtOrAbove dir; };
+
+    # `target` is a module's path or a category's folder.
     appliesTo = defaultsFile: target:
         let reach = defaultsReach defaultsFile; in
         target == reach.dir || within reach.dir target || target == reach.category;
 
+    # ── 7. Errors that need the whole tree ──────────────────────────────────
+    # nix/module.nix asserts this, so these errors stop evaluation even
+    # when nothing else happens to look at the names involved.
+    clashMessages = lib.mapAttrsToList (name: paths: "${name} (${concatStringsSep ", " paths})") clashes;
     checked =
-        if clashes != { } then
-            fail ("names used more than once: "
-                + concatStringsSep "; " (lib.mapAttrsToList (name: paths: "${name} (${concatStringsSep ", " paths})") clashes))
+        if clashes != { } then fail "names used more than once: ${concatStringsSep "; " clashMessages}"
         else if referenceProblems != [ ] then fail (concatStringsSep "; " referenceProblems)
         else true;
 in

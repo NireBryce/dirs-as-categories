@@ -12,6 +12,12 @@ is not part of what a release keeps; their meaning is.
 
 ## Unreleased
 
+### Added
+
+- The README's "Requirements" section names the oldest Nix (2.18),
+  flake-parts (`d50b490`, 2024-09-12) and import-tree (`4ebb10a`,
+  2026-07-16) dirs-as-categories works with, and CI tests them.
+
 ## v0.1.0 — 2026-10-17
 
 The first tagged release. Changes before it are in the git log only; the

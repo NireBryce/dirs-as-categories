@@ -368,6 +368,12 @@ folder and what is wrong.
 | `flake.modules has no type: add inputs.flake-parts.flakeModules.modules to imports, beside lib.tree` | add `inputs.flake-parts.flakeModules.modules` to the flake's `imports`, as in [Setting it up](#setting-it-up) |
 | `default.nix: a default.nix needs a folder to take its name from` | a `default.nix` in the tree's root has no folder to name it; move the file into a folder, or rename it |
 
+An import-tree older than 2026-07-16 stops with
+`You need to call withLib before trying to read the tree.` before
+dirs-as-categories reads anything: update import-tree
+(`nix flake update import-tree`). The [README](../README.md#requirements)
+lists the oldest versions dirs-as-categories works with.
+
 A mistake outside the files dirs-as-categories reads -- in a class part's
 own settings, say -- stops with an error from NixOS, Home Manager or
 flake-parts instead. Read such an error to the bottom: Nix prints the

@@ -48,6 +48,16 @@ nix flake update --flake ./dev       # dev/flake.lock
 4. **A template host still evaluates** when flake-parts or import-tree
    changed (skill `change-a-rule`, its templates step).
 
+## The floors
+
+`README.md#requirements` names the oldest Nix, flake-parts and import-tree,
+and CI's `oldest` job tests them. A change that needs something newer
+raises the floor in both, and says so in `CHANGELOG.md` under **Breaks**.
+To find a floor: lock a scratch copy of the repository with
+`--override-input` at a candidate commit, and run `nix flake check` and
+`python3 tests/errors.py`. Restore `flake.lock` from `HEAD` each time,
+not from the index, or the previous step's lock leaks in.
+
 ## Then
 
 The commit message names each input's old and new revision and what was

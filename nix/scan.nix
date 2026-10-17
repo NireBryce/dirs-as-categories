@@ -179,10 +179,12 @@ let
         else "admin";
 
     # A set with no module key is an ordinary flake-parts module -- unless
-    # one of its keys is a near miss of a class or reserved key, the
-    # likeliest reason it has none.
+    # one of its keys is a class or reserved key in another case or
+    # spelling (`nixOS`), the likeliest reason it has none. Only that kind
+    # of near miss: a flake-parts option a letter or two from a class name
+    # is still a flake-parts option.
     setShape = path: value:
-        let nearMisses = filter (key: closest moduleKeys key != null) (attrNames value); in
+        let nearMisses = filter (key: lib.any (looselyEqual key) moduleKeys) (attrNames value); in
         if nearMisses == [ ] then "admin"
         else fail "${path}: unknown key ${concatStringsSep ", " (map (key: quote key + didYouMean moduleKeys key) nearMisses)}";
 

@@ -1,11 +1,12 @@
-# Wiki style guide
-
+# Wiki style guide (mainly for agents)
 _Last modified: 2026-10-17_
 
 This page describes how the wiki is organised and written. The rest of the
 docs follow [`../doc/style.md`](../doc/style.md); this page adds what is
 particular to the wiki. Read this page before adding, splitting or renaming
 a wiki page.
+
+This is more here for automated submissions than humans.
 
 ## Contents
 

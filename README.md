@@ -4,8 +4,8 @@
 > dirs-as-categories is young, and anything here can change without notice:
 > the module file shape, which folders count as categories, the reserved
 > keys, the error messages, and `flake.moduleGraph`'s format. If you use
-> dirs-as-categories anyway, pin a revision in your `flake.lock`, read the
-> [CHANGELOG](CHANGELOG.md) before you update, and compare what your hosts build before and
+> dirs-as-categories anyway, pin a release tag (`github:NireBryce/dirs-as-categories/v0.1.0`),
+> read the [CHANGELOG](CHANGELOG.md) before you move to a newer one, and compare what your hosts build before and
 > after; the
 > [migration steps](wiki/using-the-flake.md#migrating-a-flake-that-names-its-modules-by-hand)
 > show you how.
@@ -54,7 +54,7 @@ Or add dirs-as-categories to an existing flake-parts flake:
 ```nix
 {
     inputs.dirs-as-categories = {
-        url = "github:NireBryce/dirs-as-categories";
+        url = "github:NireBryce/dirs-as-categories/v0.1.0";   # a release tag: see CHANGELOG.md before moving it
         inputs.import-tree.follows = "import-tree";   # if you have them
         inputs.flake-parts.follows = "flake-parts";
     };

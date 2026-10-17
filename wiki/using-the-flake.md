@@ -59,7 +59,7 @@ To use an existing flake-parts flake, add the input and replace
         import-tree.url = "github:denful/import-tree";
 
         dirs-as-categories = {
-            url = "github:NireBryce/dirs-as-categories";
+            url = "github:NireBryce/dirs-as-categories/v0.1.0";   # a release tag: see CHANGELOG.md before moving it
             inputs = {
                 import-tree.follows = "import-tree";
                 flake-parts.follows = "flake-parts";
@@ -77,8 +77,10 @@ To use an existing flake-parts flake, add the input and replace
 }
 ```
 
-`flake-parts.flakeModules.modules` declares `flake.modules`, which
-dirs-as-categories fills. The `follows` lines keep one copy of import-tree
+The `url` names a release tag, so `nix flake update` never moves you to a
+release with breaking changes; to move, change the tag after reading the
+[CHANGELOG](../CHANGELOG.md). `flake-parts.flakeModules.modules` declares
+`flake.modules`, which dirs-as-categories fills. The `follows` lines keep one copy of import-tree
 and flake-parts. For classes beyond `nixos`, `homeManager` and
 `darwin`, use
 `(inputs.dirs-as-categories.lib.tree.addClasses [ "nixOnDroid" ] ./modules)`.

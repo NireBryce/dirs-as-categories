@@ -30,6 +30,7 @@ use it, and the [CHANGELOG](../CHANGELOG.md) says how.
 | record the new result | `just expected-accept` |
 | start an error fixture | `just new-error <name> '<message>'` |
 | check the docs | `just docs` |
+| evaluate the templates' hosts with real nixpkgs | `just templates` |
 
 ## Setting up
 
@@ -104,6 +105,9 @@ message so it says how to fix the mistake, not only what the mistake is.
 ## Before you open a pull request
 
 - `just preflight` passes. CI runs the same recipe on Linux and macOS.
+- For a change a template could notice, `just templates` passes too.
+- The pull request fills in the template's sections, including
+  **Breaks**.
 - The [CHANGELOG](../CHANGELOG.md)'s `Unreleased` section says what
   changed, and under **Breaks**, what a flake using dirs-as-categories has
   to change.

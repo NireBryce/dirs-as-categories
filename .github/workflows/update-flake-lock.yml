@@ -1,0 +1,147 @@
+# Weekly flake.lock update PRs (DeterminateSystems/update-flake-lock),
+# adapted from NireBryce/nixos-configs on 2026-10-17. One PR per lock file
+# (skill `update-inputs`): flake.lock decides what the tests run against,
+# dev/flake.lock only which tools `nix develop ./dev` has, so a failure
+# points at one. The PR is a decision, not an auto-merge: review the lock
+# diff and merge through skill `ship`.
+#
+# NEEDS the repo secret `FLAKE_LOCK_TOKEN`: a fine-grained personal access
+# token scoped to this repository with `Contents: read/write` and
+# `Pull requests: read/write`. Not GITHUB_TOKEN: a PR opened with
+# GITHUB_TOKEN doesn't trigger this repository's `check` workflow, and
+# opening one at all needs the repo setting "Allow GitHub Actions to create
+# and approve pull requests", which also lets workflows approve PRs.
+# Until the secret exists, each run fails at the preflight step and says
+# so on one issue.
+#
+# Third-party actions are pinned by full SHA (the pins nixos-configs used on
+# 2026-09-08): they run with `contents: write`. Bump them deliberately.
+
+name: update-flake-lock
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 9 * * 1' # Mondays 09:17 UTC
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write # only for the notice job
+
+jobs:
+  # Fail fast and legibly on a missing, revoked or expiring token, before
+  # spending a Nix install on a run that can't open a PR.
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      state: ${{ steps.token.outputs.state }}
+      days: ${{ steps.token.outputs.days }}
+      expiry: ${{ steps.token.outputs.expiry }}
+    steps:
+      - name: Check FLAKE_LOCK_TOKEN
+        id: token
+        env:
+          TOKEN: ${{ secrets.FLAKE_LOCK_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          if [[ -z "${TOKEN}" ]]; then
+            echo "::error title=FLAKE_LOCK_TOKEN missing::Create a fine-grained token scoped to ${REPO} with Contents and Pull requests read/write, and add it as the Actions secret FLAKE_LOCK_TOKEN. See this workflow's header."
+            echo "state=missing" >> "${GITHUB_OUTPUT}"
+            exit 1
+          fi
+          headers="$(curl -sS -D - -o /dev/null -H "Authorization: Bearer ${TOKEN}" \
+            -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${REPO}")"
+          status="$(printf '%s' "${headers}" | awk '/^HTTP/{code=$2} END{print code}')"
+          if [[ "${status}" != "200" ]]; then
+            echo "::error title=FLAKE_LOCK_TOKEN rejected::GitHub answered HTTP ${status} for ${REPO}: the token is expired, revoked, or no longer scoped to this repository."
+            echo "state=invalid" >> "${GITHUB_OUTPUT}"
+            exit 1
+          fi
+          # Present only for a token with an expiry; absent means "can't tell".
+          expiry="$(printf '%s' "${headers}" | tr -d '\r' \
+            | awk -F': ' 'tolower($1)=="github-authentication-token-expiration"{print $2}')"
+          if [[ -z "${expiry}" ]] || ! then_ts="$(date -u -d "${expiry}" +%s 2>/dev/null)"; then
+            echo "::notice title=Token expiry unknown::FLAKE_LOCK_TOKEN works; this run can't tell when it lapses."
+            echo "state=ok" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          days=$(( (then_ts - $(date -u +%s)) / 86400 ))
+          echo "FLAKE_LOCK_TOKEN expires ${expiry} (${days} days)"
+          echo "days=${days}" >> "${GITHUB_OUTPUT}"
+          echo "expiry=${expiry}" >> "${GITHUB_OUTPUT}"
+          # Weekly runs: 30 days gives four chances to notice.
+          if (( days <= 30 )); then
+            echo "::warning title=FLAKE_LOCK_TOKEN expires in ${days} days::Replace it before ${expiry}."
+            echo "state=expiring" >> "${GITHUB_OUTPUT}"
+          else
+            echo "state=ok" >> "${GITHUB_OUTPUT}"
+          fi
+
+  update:
+    needs: preflight
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dir: .
+            branch: update-flake-lock
+            title: "chore: update flake.lock"
+          - dir: dev
+            branch: update-dev-flake-lock
+            title: "chore: update dev/flake.lock"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@b074b4ad5f255f9c8a6a2414a2f07e7f4f2925a3 # 2026-09-08
+      - uses: DeterminateSystems/update-flake-lock@daaf842c7377c22fe4dec85d511edcf4d889844a # 2026-09-08
+        with:
+          token: ${{ secrets.FLAKE_LOCK_TOKEN }}
+          base: main
+          branch: ${{ matrix.branch }}
+          path-to-flake-dir: ${{ matrix.dir }}
+          pr-title: ${{ matrix.title }}
+          pr-body: |
+            Automated weekly `nix flake update` of `${{ matrix.dir }}/flake.lock`.
+
+            Review with skill `update-inputs`: read what changed upstream
+            between the old and new revisions in the lock diff, and confirm
+            `check` went green. An input update should move nothing, so
+            `just expected-diff` must show no difference. Merge through
+            skill `ship`; close unmerged if the timing is wrong.
+
+  # A red scheduled run only emails the owner. Any failure, or a token
+  # inside 30 days of expiry, also lands on one reused issue. Uses
+  # GITHUB_TOKEN, which can file issues; files only in this repository.
+  notice:
+    needs: [preflight, update]
+    if: ${{ always() && (contains(needs.*.result, 'failure') || needs.preflight.outputs.state == 'expiring') }}
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          STATE: ${{ needs.preflight.outputs.state }}
+          DAYS: ${{ needs.preflight.outputs.days }}
+          EXPIRY: ${{ needs.preflight.outputs.expiry }}
+        run: |
+          set -uo pipefail
+          title="update-flake-lock: weekly lock PRs need attention"
+          case "${STATE}" in
+            expiring) body="FLAKE_LOCK_TOKEN expires in ${DAYS} days (${EXPIRY}). Replace the secret before then, or the weekly lock PRs stop opening." ;;
+            missing)  body="The Actions secret FLAKE_LOCK_TOKEN doesn't exist, so the weekly lock PRs can't open. Create a fine-grained token scoped to ${REPO} with Contents and Pull requests read/write; see the header of .github/workflows/update-flake-lock.yml." ;;
+            invalid)  body="FLAKE_LOCK_TOKEN is expired, revoked, or no longer scoped to ${REPO}. Replace the secret." ;;
+            *)        body="The weekly update-flake-lock run failed after its token check passed. Read the run's log." ;;
+          esac
+          body="${body}
+
+          Run: ${RUN_URL}"
+          existing="$(gh issue list --repo "${REPO}" --state open \
+            --search "\"${title}\" in:title" --limit 1 --json number --jq '.[0].number')"
+          if [[ -n "${existing}" ]]; then
+            gh issue comment "${existing}" --repo "${REPO}" --body "${body}"
+          else
+            gh issue create --repo "${REPO}" --title "${title}" --body "${body}"
+          fi

@@ -37,7 +37,7 @@ across modules and categories.
 
 | Field | Content |
 |---|---|
-| `version` | the format's version, `1`; any change that breaks readers increments `version` |
+| `version` | the format's version, `1` (in every release since `v0.1.0`); any change that breaks readers increments `version` |
 | `classes` | the classes this tree uses |
 | `categories.<name>.dir` | the category's folder |
 | `categories.<name>.members` | modules beneath the category that belong to no nested category |

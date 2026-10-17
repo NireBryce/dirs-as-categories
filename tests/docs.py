@@ -17,6 +17,9 @@ Each check prints what it found wrong and where. The checks:
 - nix:      every ```nix block parses (as written, or as the body of a set).
 - wiki:     every wiki page has a `_Last modified:` line and is listed in
             wiki/00-INDEX.md.
+- release:  every `github:NireBryce/dirs-as-categories/v…` pin (README,
+            wiki, templates) names the newest release in CHANGELOG.md, so
+            a release can't leave one behind.
 - tracked:  nothing under nix/, tests/ or templates/ is untracked. A flake
             sees only files git knows, so an untracked fixture silently
             doesn't exist -- and an error fixture that doesn't exist still
@@ -184,6 +187,23 @@ def check_wiki():
             problem('wiki/00-INDEX.md', f'does not list {path.name}')
 
 
+# ── release ─────────────────────────────────────────────────────────────
+def check_release():
+    releases = re.findall(r'^## (v\d+\.\d+\.\d+)\b', (ROOT / 'CHANGELOG.md').read_text(), re.M)
+    if not releases:
+        problem('CHANGELOG.md', 'no `## vX.Y.Z` release heading')
+        return
+    newest = releases[0]
+    tracked = subprocess.run(['git', 'ls-files'], cwd=ROOT, capture_output=True, text=True).stdout.splitlines()
+    for name in tracked:
+        if name.startswith('tests/fixtures/') or not name.endswith(('.md', '.nix', '.yml')):
+            continue
+        for line_number, line in enumerate((ROOT / name).read_text().splitlines(), 1):
+            for pinned in re.findall(r'github:NireBryce/dirs-as-categories/(v\d+\.\d+\.\d+)', line):
+                if pinned != newest:
+                    problem(f'{name}:{line_number}', f'pins {pinned}, but the newest release in CHANGELOG.md is {newest}')
+
+
 # ── tracked ─────────────────────────────────────────────────────────────────
 def check_tracked():
     untracked = subprocess.run(['git', 'ls-files', '--others', '--exclude-standard', 'nix', 'tests', 'templates'],
@@ -193,7 +213,7 @@ def check_tracked():
 
 
 def main():
-    for check in (check_skills, check_links, check_errors, check_nix_blocks, check_wiki, check_tracked):
+    for check in (check_skills, check_links, check_errors, check_nix_blocks, check_wiki, check_release, check_tracked):
         check()
     for line in problems:
         print(f'FAIL  {line}')

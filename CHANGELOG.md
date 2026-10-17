@@ -2,11 +2,20 @@
 
 This file lists what changed for a flake using dirs-as-categories, newest
 first. dirs-as-categories is **experimental** (see the
-[README](README.md)), so any change may break a flake: **Breaks** says
-what you have to change. Read the entries since your pinned revision
-before you update. Changes before 2026-10-17 are in the git log only.
+[README](README.md)), so any release may break a flake: **Breaks** says
+what you have to change. Pin a release tag
+(`github:NireBryce/dirs-as-categories/v0.1.0`) and read the entries
+between yours and the one you move to. Until `1.0`, a release that
+breaks something increments the minor number (`v0.2.0`); one that breaks
+nothing increments the patch number (`v0.1.1`). Error messages' wording
+is not part of what a release keeps; their meaning is.
 
 ## Unreleased
+
+## v0.1.0 — 2026-10-17
+
+The first tagged release. Changes before it are in the git log only; the
+entries below are what changed since the commit before it, `f2c4494`.
 
 ### Added
 
@@ -27,6 +36,8 @@ before you update. Changes before 2026-10-17 are in the git log only.
   - A flake without `flake-parts.flakeModules.modules` says to import it.
     Before, a flake without it ended in `infinite recursion encountered`
     once another file defined `flake.modules`.
+- Release tags, from this one on. The README, the wiki and both templates
+  pin `v0.1.0`.
 
 ### Breaks
 

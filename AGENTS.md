@@ -14,7 +14,7 @@ each module after its file, finds categories from the folder tree, and
 fills `flake.modules.<class>.<name>`. It also publishes what it built as
 `flake.moduleGraph`, which
 [flake-module-graph](https://github.com/NireBryce/flake-module-graph) draws.
-`doc/convention.md` is every rule; `doc/format.md` the published graph.
+`doc/convention.md` is every rule; `doc/format.md` the published graph, `doc/format.schema.json` the same as a JSON Schema.
 
 ## Hard rules
 
@@ -49,6 +49,7 @@ just check           # nix flake check: the main fixture, every error fixture, t
 just errors          # each error fixture's message (a Nix check can only see that it failed)
 just lint            # statix and deadnix over the Nix code, actionlint over the workflows
 just docs            # skills listed, links resolve, every error documented and tested, nix blocks parse
+just schema          # every published graph against doc/format.schema.json (needs the dev shell)
 just preflight       # all of the above -- what CI runs
 just expected-diff   # how the main fixture's result differs from tests/expected/main.json
 just expected-accept # record it, once every difference is one you meant
@@ -88,7 +89,8 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 
 ## The contract with flake-module-graph
 
-`flake.moduleGraph` is versioned (`doc/format.md`). Adding a field is fine;
+`flake.moduleGraph` is versioned (`doc/format.md`, and
+`doc/format.schema.json`, which must change with it). Adding a field is fine;
 removing, renaming or changing one's meaning increments `version`, and
 flake-module-graph refuses a version it doesn't know. A change to the
 format is a change to both repositories.

@@ -30,6 +30,7 @@ use it, and the [CHANGELOG](../CHANGELOG.md) says how.
 | record the new result | `just expected-accept` |
 | start an error fixture | `just new-error <name> '<message>'` |
 | check the docs | `just docs` |
+| check every published graph against the schema | `just schema` |
 | evaluate the templates' hosts with real nixpkgs | `just templates` |
 
 ## Setting up

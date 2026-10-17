@@ -91,21 +91,29 @@ let
     # ── the templates' trees ────────────────────────────────────────────────
     # Only the trees: building a host needs nixpkgs, which these tests don't
     # fetch.
+    templateGraph = name:
+        (flake-parts.lib.mkFlake {
+            inputs = { self = { outPath = ../templates + "/${name}"; }; inherit flake-parts; };
+        } {
+            systems = [ ];
+            imports = [ flake-parts.flakeModules.modules (tree (../templates + "/${name}/modules")) ];
+        }).moduleGraph;
+
     template = name:
-        let flake = flake-parts.lib.mkFlake {
-                inputs = { self = { outPath = ../templates + "/${name}"; }; inherit flake-parts; };
-            } {
-                systems = [ ];
-                imports = [ flake-parts.flakeModules.modules (tree (../templates + "/${name}/modules")) ];
-            };
-            graph = flake.moduleGraph;
-        in {
+        let graph = templateGraph name; in {
             categories = lib.mapAttrs (_: category: category.members) graph.categories;
             inherit (graph) includes enables admin orphans;
         };
 in
 {
     inherit main force errorCases orphanCheck;
+
+    # every published graph the tests build, for tests/schema.py
+    graphs = {
+        main                  = main.graph;
+        template-default      = templateGraph "default";
+        template-home-manager = templateGraph "home-manager";
+    };
 
     checks = {
         main = {

@@ -33,8 +33,8 @@ jobs:
             --override-input flake-parts github:hercules-ci/flake-parts/d50b490ccc6308ef2d01def3362b86535e3284ba \
             --override-input import-tree github:denful/import-tree/4ebb10ae17d5f1ad366e7aef5b92cb8eecf24f69
           git diff --stat flake.lock
-      - name: just check errors docs, at the oldest inputs
-        run: nix develop ./dev --command just check errors docs
+      - name: just check errors docs schema, at the oldest inputs
+        run: nix develop ./dev --command just check errors docs schema
   changelog:
     # A change to nix/*.nix changes what users get, so it says so in CHANGELOG.md.
     if: github.event_name == 'pull_request'

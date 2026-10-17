@@ -39,7 +39,7 @@
 
             checks = lib.genAttrs systems (system: lib.mapAttrs (check system) tests.checks);
 
-            # for tests/errors.py and for looking at results by hand
-            tests = { inherit (tests) main errorCases force; };
+            # for tests/errors.py, tests/schema.py and looking at results by hand
+            tests = { inherit (tests) main errorCases force graphs; };
         };
 }

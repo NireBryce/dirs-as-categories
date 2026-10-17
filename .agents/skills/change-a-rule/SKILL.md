@@ -54,7 +54,8 @@ for values, in `module.nix`, lazily.
 - `doc/convention.md`: the rule, and its error in the errors table; a new
   error also needs a row in the wiki's "When evaluation stops" table
   (`just docs` fails until both exist).
-- `doc/format.md` if a published field changed.
+- `doc/format.md` and `doc/format.schema.json` if a published field
+  changed (`just schema` fails until both agree with the graph).
 - `README.md` if a user would notice.
 - **A breaking change to `flake.moduleGraph`** (a field removed, renamed or
   changed in meaning) increments `version` and says so in `doc/format.md`;

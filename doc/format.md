@@ -8,6 +8,11 @@ does not yet promise stability. A breaking change still increments
 `version`, so a reader can refuse a version it doesn't know, but fields may
 come and go between releases.
 
+[`format.schema.json`](format.schema.json) is the same format as a JSON
+Schema (draft 2020-12), which `just schema` checks every graph the tests
+build against. It rejects fields it doesn't know, so validate with the
+schema from the release you read.
+
 Paths are relative to the folder you pass to `lib.tree`. Every name is unique
 across modules and categories.
 

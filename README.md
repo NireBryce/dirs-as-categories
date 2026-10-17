@@ -102,7 +102,9 @@ Mistakes stop evaluation with a message naming the file: two things with one
 name, an unknown key (`nixOS`), a name in `includes` or `enables` that doesn't
 exist in that class, files disagreeing on `folderIsCategory`.
 
-[doc/convention.md](doc/convention.md) states every rule and error.
+[doc/convention.md](doc/convention.md) states every rule and error;
+[wiki/using-the-flake.md](wiki/using-the-flake.md) walks through using it,
+with a worked example, migrating a flake, and what each error means.
 
 ## What it publishes
 

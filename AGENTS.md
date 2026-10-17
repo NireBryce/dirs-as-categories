@@ -58,6 +58,8 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 | `nix/publish.nix` | `flake.moduleGraph` |
 | `tests/` | fixtures, expected results, `errors.py` |
 | `templates/default/` | the `nix flake init -t` starter; checked by `just check` |
+| `doc/` | the exact rules (`convention.md`) and format (`format.md`); `style.md` for all docs |
+| `wiki/` | guides: `using-the-flake.md`; `styleguide.md` before adding a page |
 | `dev/` | the development shell's own flake (kept out of the main flake's inputs) |
 
 ## Testing discipline

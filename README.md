@@ -39,10 +39,11 @@ a host that includes only `ssh` gets `ssh` and the same defaults.
 
 ## Quick start
 
-Start a new flake from the template:
+Start a new flake from a template, then follow the README it creates:
 
 ```sh
-nix flake init -t github:NireBryce/dirs-as-categories
+nix flake init -t github:NireBryce/dirs-as-categories                 # one host, one category
+nix flake init -t github:NireBryce/dirs-as-categories#home-manager    # a host with Home Manager
 ```
 
 Or add dirs-as-categories to an existing flake-parts flake:

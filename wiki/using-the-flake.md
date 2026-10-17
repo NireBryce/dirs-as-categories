@@ -29,7 +29,7 @@ anything you care about.
 
 | You want to | Do |
 |---|---|
-| start a new flake | run `nix flake init -t github:NireBryce/dirs-as-categories` |
+| start a new flake | run `nix flake init -t github:NireBryce/dirs-as-categories`, or `…#home-manager` for Home Manager too |
 | add a module | create a file `{ nixos = …; }` in a category's folder; the filename is the module's name |
 | use `lib` or `inputs` in a module | make the file `{ lib, inputs, ... }: { nixos = …; }` |
 | make a category | give a folder a subfolder holding modules (or set `folderIsCategory = true`) |
@@ -43,7 +43,10 @@ anything you care about.
 ## Setting it up
 
 To start a new flake, run `nix flake init -t github:NireBryce/dirs-as-categories`.
-The template has one host and one category.
+The template has one host and one category, and a README listing the next
+steps: naming the host, adding its hardware configuration, building it.
+`nix flake init -t github:NireBryce/dirs-as-categories#home-manager` starts
+from the tree this page uses instead.
 
 To use an existing flake-parts flake, add the input and replace
 `import-tree`'s line in `imports`:
@@ -82,8 +85,11 @@ and flake-parts. For classes beyond `nixos`, `homeManager` and
 
 ## Laying out the tree
 
-This page uses the tree below throughout. The tree was built as a flake and
-evaluated to a toplevel derivation when the page was written:
+This page uses the tree below throughout. The tree is the `home-manager`
+template ([`../templates/home-manager/`](../templates/home-manager/)):
+`nix flake check` checks the template's tree, and on 2026-10-17 its host
+evaluated to a toplevel derivation, with the user `me` getting git and
+bash from Home Manager:
 
 ```
 modules/

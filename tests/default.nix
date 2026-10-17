@@ -85,21 +85,20 @@ let
             };
         in { inherit (flake.moduleGraph) classes; names = lib.mapAttrs (_: builtins.attrNames) flake.modules; };
 
-    # ── the template's tree ─────────────────────────────────────────────────
-    # Only the tree: building its host needs nixpkgs, which these tests don't
+    # ── the templates' trees ────────────────────────────────────────────────
+    # Only the trees: building a host needs nixpkgs, which these tests don't
     # fetch.
-    template =
+    template = name:
         let flake = flake-parts.lib.mkFlake {
-                inputs = { self = { outPath = ../templates/default; }; inherit flake-parts; };
+                inputs = { self = { outPath = ../templates + "/${name}"; }; inherit flake-parts; };
             } {
                 systems = [ ];
-                imports = [ flake-parts.flakeModules.modules (tree ../templates/default/modules) ];
+                imports = [ flake-parts.flakeModules.modules (tree (../templates + "/${name}/modules")) ];
             };
             graph = flake.moduleGraph;
         in {
-            categories = builtins.attrNames graph.categories;
-            members    = graph.categories.base.members;
-            inherit (graph) includes admin;
+            categories = lib.mapAttrs (_: category: category.members) graph.categories;
+            inherit (graph) includes enables admin orphans;
         };
 in
 {
@@ -129,13 +128,24 @@ in
             detail = "addClasses [ \"nixOnDroid\" ]: ${builtins.toJSON (classesWith (tree.addClasses [ "nixOnDroid" ]))}";
         };
         template = {
-            ok = template == {
-                categories = [ "base" ];
-                members    = [ "locale" "ssh" ];
+            ok = template "default" == {
+                categories = { base = [ "locale" "ssh" ]; };
                 includes   = { example.nixos = [ "base" ]; };
+                enables    = { };
                 admin      = [ "hosts/hosts.nix" ];
+                orphans    = [ ];
             };
-            detail = "templates/default/modules: ${builtins.toJSON template}";
+            detail = "templates/default/modules: ${builtins.toJSON (template "default")}";
+        };
+        template-home-manager = {
+            ok = template "home-manager" == {
+                categories = { base = [ "enable-home-manager" "locale" "ssh" ]; desktop = [ "plasma" ]; shell = [ "bash" "git" ]; };
+                includes   = { laptop.nixos = [ "base" "desktop" ]; me-home.homeManager = [ "shell" ]; };
+                enables    = { enable-home-manager.homeManager = [ "me-home" ]; };
+                admin      = [ "hosts/hosts.nix" ];
+                orphans    = [ ];
+            };
+            detail = "templates/home-manager/modules: ${builtins.toJSON (template "home-manager")}";
         };
     };
 }

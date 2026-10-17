@@ -1,6 +1,11 @@
 # flake.moduleGraph, version 1
 
 What dirs-as-categories built, as data. `nix eval --json .#moduleGraph` prints it.
+
+**Experimental** (see the [README](../README.md)): version 1 is not yet a
+stability promise. A breaking change still increments `version`, so a
+reader can refuse what it doesn't know, but fields may come and go
+between releases.
 Paths are relative to the folder passed to `lib.tree`. Every name is unique
 across modules and categories.
 

@@ -2,8 +2,9 @@
 
 _Last modified: 2026-10-16_
 
-Guides for using and changing dirs-as-categories. The exact rules are in
-[`../doc/`](../doc/); the front door is the [README](../README.md).
+Guides for using and changing dirs-as-categories, which is **experimental**:
+read the [README](../README.md)'s notice before relying on it. The exact
+rules are in [`../doc/`](../doc/).
 
 | Page | For |
 |---|---|

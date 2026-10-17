@@ -6,6 +6,10 @@ A walk-through of dirs-as-categories from an empty flake to hosts with Home
 Manager, then checks, migrating an existing flake, and what each error
 means. For the exact rules, see [`../doc/convention.md`](../doc/convention.md).
 
+**dirs-as-categories is experimental** and may change without notice; read
+the [README](../README.md)'s notice before using it on anything you care
+about.
+
 ## Contents
 
 - [Quick facts](#quick-facts)

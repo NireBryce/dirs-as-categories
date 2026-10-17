@@ -1,6 +1,7 @@
 # The convention
 
-Every rule dirs-as-categories applies, and every error it raises. Paths are
+Every rule dirs-as-categories applies, and every error it raises. These
+rules are **experimental** and may change (see the [README](../README.md)). Paths are
 relative to the folder passed to `lib.tree`.
 
 All of it is decided from file paths and from the shape of what each file

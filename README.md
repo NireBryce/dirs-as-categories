@@ -1,5 +1,14 @@
 # dirs-as-categories
 
+> **Experimental. Don't use this unless you know what you're doing.** It is
+> young, and everything here may change without notice: the module file
+> shape, which folders count as categories, the reserved keys, the error
+> messages, and `flake.moduleGraph`'s format. If you use it anyway, pin a
+> revision in your `flake.lock`, read what changed before updating, and
+> compare what your hosts build before and after (the
+> [migration steps](wiki/using-the-flake.md#migrating-a-flake-that-names-its-modules-by-hand)
+> show how).
+
 Modules and categories from a folder tree, for
 [flake-parts](https://github.com/hercules-ci/flake-parts) flakes. An
 [import-tree](https://github.com/denful/import-tree) preset.
@@ -102,7 +111,9 @@ Mistakes stop evaluation with a message naming the file: two things with one
 name, an unknown key (`nixOS`), a name in `includes` or `enables` that doesn't
 exist in that class, files disagreeing on `folderIsCategory`.
 
-[doc/convention.md](doc/convention.md) states every rule and error.
+[doc/convention.md](doc/convention.md) states every rule and error;
+[wiki/using-the-flake.md](wiki/using-the-flake.md) walks through using it,
+with a worked example, migrating a flake, and what each error means.
 
 ## What it publishes
 

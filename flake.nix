@@ -1,5 +1,5 @@
 {
-    description = "Modules and categories from a folder tree: an import-tree preset for flake-parts";
+    description = "Modules and categories from a folder tree: an import-tree preset for flake-parts (experimental)";
 
     inputs = {
         import-tree.url = "github:denful/import-tree";

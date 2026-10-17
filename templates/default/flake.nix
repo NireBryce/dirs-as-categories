@@ -1,4 +1,6 @@
 {
+    # dirs-as-categories is experimental: keep it pinned in flake.lock and read
+    # what changed before updating it.
     inputs = {
         nixpkgs.url     = "github:NixOS/nixpkgs/nixos-unstable";
         flake-parts.url = "github:hercules-ci/flake-parts";

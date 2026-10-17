@@ -18,6 +18,10 @@ fills `flake.modules.<class>.<name>`. It also publishes what it built as
 
 ## Hard rules
 
+- **This project is experimental.** Never describe it as stable or
+  production-ready; keep the README's notice and the pointers to it in
+  `doc/` and `wiki/`. Say what a change breaks for users, since nothing
+  here promises compatibility yet.
 - **"push" means skill `ship`**: branch, PR, green CI, one confirmation
   covering merge and branch deletion. Never push to `main` directly.
 - **Branching work happens in its own worktree** (skill `use-a-worktree`).
@@ -58,6 +62,8 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 | `nix/publish.nix` | `flake.moduleGraph` |
 | `tests/` | fixtures, expected results, `errors.py` |
 | `templates/default/` | the `nix flake init -t` starter; checked by `just check` |
+| `doc/` | the exact rules (`convention.md`) and format (`format.md`); `style.md` for all docs |
+| `wiki/` | guides: `using-the-flake.md`; `styleguide.md` before adding a page |
 | `dev/` | the development shell's own flake (kept out of the main flake's inputs) |
 
 ## Testing discipline

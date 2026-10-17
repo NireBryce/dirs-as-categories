@@ -5,7 +5,7 @@
 > the module file shape, which folders count as categories, the reserved
 > keys, the error messages, and `flake.moduleGraph`'s format. If you use
 > dirs-as-categories anyway, pin a revision in your `flake.lock`, read the
-> changes before you update, and compare what your hosts build before and
+> [CHANGELOG](CHANGELOG.md) before you update, and compare what your hosts build before and
 > after; the
 > [migration steps](wiki/using-the-flake.md#migrating-a-flake-that-names-its-modules-by-hand)
 > show you how.
@@ -13,6 +13,9 @@
 dirs-as-categories is an [import-tree](https://github.com/denful/import-tree)
 preset for [flake-parts](https://github.com/hercules-ci/flake-parts) flakes.
 It builds modules and categories from a folder tree.
+
+New to flakes or flake-parts? [Words this project uses](wiki/concepts.md)
+defines each term below.
 
 You file modules in folders. dirs-as-categories names each module after its file,
 turns folders that group modules into importable **categories**, and fills in
@@ -139,6 +142,9 @@ nix eval --json .#moduleGraph
 ```
 
 ## Development
+
+[Changing dirs-as-categories](wiki/changing-dirs-as-categories.md) walks
+through the checks and the test-first loop.
 
 ```sh
 nix develop ./dev        # a shell with just, python3 and the linters

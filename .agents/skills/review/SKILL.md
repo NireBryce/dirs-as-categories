@@ -31,6 +31,9 @@ step before saying "done".
 - **`flake.moduleGraph` changed** without `doc/format.md`, or a breaking
   change without a `version` bump.
 - **A rule changed** without `doc/convention.md` (its errors table too).
+- **A user-visible change** without a `CHANGELOG.md` line, or a break not
+  under **Breaks**: a flake that worked before and fails after is a break,
+  however small.
 - **Examples naming real machines or people** (`doc/style.md`).
 - **Public text about a security fix** that says what got past the old
   version instead of what is now enforced.

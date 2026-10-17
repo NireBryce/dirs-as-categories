@@ -70,6 +70,7 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 | `doc/` | the exact rules (`convention.md`) and format (`format.md`); `style.md` for all docs |
 | `wiki/` | guides: `using-the-flake.md`; `styleguide.md` before adding a page |
 | `dev/` | the development shell's own flake (kept out of the main flake's inputs) |
+| `CHANGELOG.md` | what changed for users, and what breaks; `Unreleased` first |
 
 ## Testing discipline
 
@@ -100,6 +101,8 @@ format is a change to both repositories.
 | `docs-sync` | keeping docs true in the same change |
 | `fact-hygiene` | facts, dates and cross-references that stay true |
 | `investigate-bug` | a reported bug, to a failing test |
+| `help-a-user` | someone's own flake erroring or missing a module |
+| `update-inputs` | bumping `flake.lock` or `dev/flake.lock` |
 | `propose-issue` | filing a bug found along the way |
 | `git-archaeology` | when and why something changed |
 | `boyscouting` | small fixes beside a change |

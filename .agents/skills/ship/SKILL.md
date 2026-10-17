@@ -31,6 +31,12 @@ git fetch origin
 just preflight          # what CI runs
 ```
 
+A change a flake using dirs-as-categories would notice has a line in
+`CHANGELOG.md`'s `Unreleased` section, and under **Breaks** whatever such
+a flake has to change. CI fails a pull request that touches `nix/*.nix` without
+touching `CHANGELOG.md`; a refactor with no effect on users says so in
+one line.
+
 A multi-commit branch: each commit should pass on its own; one coherent
 commit beats two artificial ones.
 

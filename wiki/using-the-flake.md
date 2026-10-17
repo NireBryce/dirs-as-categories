@@ -363,6 +363,7 @@ folder and what is wrong.
 | `` <file>: includes.nixos: unknown name `lcoale` (did you mean `locale`?) `` | correct the name |
 | `<file>: defaults.nix must be an attribute set, or a function of lib/inputs returning one` | the `defaults.nix` asks for `config`; only a class part may ask for `config`, as in `nixos = { config, ... }: …` |
 | `<file>: expected an attribute set (a module) or a function (a module of lib/inputs, or a flake-parts module)` | the file evaluates to something else, such as a list or a string; make the file a set of class keys |
+| `flake.modules has no type: add inputs.flake-parts.flakeModules.modules to imports, beside lib.tree` | add `inputs.flake-parts.flakeModules.modules` to the flake's `imports`, as in [Setting it up](#setting-it-up) |
 | `default.nix: a default.nix needs a folder to take its name from` | a `default.nix` in the tree's root has no folder to name it; move the file into a folder, or rename it |
 
 A mistake outside the files dirs-as-categories reads -- in a class part's

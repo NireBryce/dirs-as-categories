@@ -9,7 +9,7 @@
 # flake-parts module itself, which the module system calls with `config`
 # and the rest.
 { settings, root, files }:
-{ lib, config, inputs, ... }:
+{ lib, config, options, inputs, ... }:
 let
     inherit (lib) filter optional listToAttrs nameValuePair genAttrs;
     inherit (settings) classes;
@@ -77,6 +77,17 @@ let
                ++ defaultsFor category class;
     };
 
+    # ── the modules import ──────────────────────────────────────────────────
+    # `flake.modules` gets its type -- modules that merge -- from
+    # flake-parts.flakeModules.modules. Without that import, a tree alone
+    # happens to work, but the first other definition of `flake.modules`
+    # ends in a bare "infinite recursion encountered". Checked lazily, when
+    # something reads `flake.modules`: `options`, like `config`, can't be
+    # read at the top of a module.
+    hasModulesOption = options.flake.type.getSubOptions [ ] ? modules;
+    needsModulesImport = "dirs-as-categories: flake.modules has no type: "
+        + "add inputs.flake-parts.flakeModules.modules to imports, beside lib.tree";
+
     # ── the orphan check ────────────────────────────────────────────────────
     pathOf = name: (lib.findFirst (mod: mod.name == name) null modules).path;
     orphanReport = "dirs-as-categories: reached by no includes or enables (include it, "
@@ -108,9 +119,9 @@ assert scan.checked;
 
     config = {
         # flake.modules.<class> = { <module name> = …; <category name> = …; }
-        flake.modules = genAttrs classes (class:
+        flake.modules = lib.throwIfNot hasModulesOption needsModulesImport (genAttrs classes (class:
             listToAttrs (map (mod: nameValuePair mod.name (moduleFor class mod)) (scan.modulesOf class)
-                      ++ map (category: nameValuePair (baseNameOf category) (categoryFor class category)) categories));
+                      ++ map (category: nameValuePair (baseNameOf category) (categoryFor class category)) categories)));
 
         flake.moduleGraph = import ./publish.nix { inherit lib classes scan; };
 

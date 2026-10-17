@@ -14,6 +14,7 @@
     "err-include-class": "h/host.nix: includes.nixOS: unknown class",
     "err-near-name": "h/host.nix: includes.nixos: unknown name `lcoale` (did you mean `locale`?)",
     "err-nixos-module": "a/c/one/hardware-configuration.nix: asks for `modulesPath`, `pkgs`, which only a NixOS or Home Manager module gets; to keep such a module as it is, rename it `_hardware-configuration.nix` (import-tree skips it) and import it from a class: `nixos.imports = [ ./_hardware-configuration.nix ];`",
+    "err-no-modules-import": "flake.modules has no type: add inputs.flake-parts.flakeModules.modules to imports, beside lib.tree",
     "err-not-a-set": "a/c/one/y.nix: expected an attribute set (a module) or a function",
     "err-plain-folder": "h/host.nix: includes.nixos: unknown name `one` (a/c/one is a plain folder, which has no name; include its category `c`, or make the folder a category with folderIsCategory = true)",
     "err-root-default": "default.nix: a default.nix needs a folder to take its name from",

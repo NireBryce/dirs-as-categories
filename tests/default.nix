@@ -8,11 +8,14 @@
 let
     fixture = name: ./fixtures + "/${name}/modules";
 
+    # A fixture whose name ends in -no-modules-import is evaluated without
+    # flake-parts.flakeModules.modules, the mistake it tests.
     mkFlake = name: flake-parts.lib.mkFlake {
         inputs = { self = { outPath = ./fixtures + "/${name}"; }; inherit flake-parts; testMarker = "from inputs"; };
     } {
         systems = [ ];
-        imports = [ flake-parts.flakeModules.modules (tree (fixture name)) ];
+        imports = lib.optional (!lib.hasSuffix "-no-modules-import" name) flake-parts.flakeModules.modules
+               ++ [ (tree (fixture name)) ];
     };
 
     probeModule = { lib, ... }: {

@@ -198,6 +198,7 @@ Each error stops evaluation with `dirs-as-categories: <path>: <what>`.
 | `a top-level folder is an area and can't be a category` | `folderIsCategory = true` at the top level |
 | `defaults.nix must be an attribute set, or a function of lib/inputs returning one` | a `defaults.nix` is anything else, such as a function asking for `config` |
 | `expected an attribute set (a module) or a function` | a file evaluates to neither |
+| `flake.modules has no type: add inputs.flake-parts.flakeModules.modules to imports, beside lib.tree` | the flake doesn't import `flake-parts.flakeModules.modules` |
 | `a default.nix needs a folder to take its name from` | a `default.nix` sits directly in the tree's root |
 
 dirs-as-categories checks `includes` and `enables` names whenever the flake
@@ -208,4 +209,5 @@ evaluates, not only when a host that uses those names does.
 - A flake can use only one `lib.tree`, because `lib.tree` declares the
   `flake.moduleGraph` option.
 - You must import `flake-parts.flakeModules.modules`, because that module
-  declares `flake.modules`.
+  declares `flake.modules`. Without it, reading `flake.modules` stops with
+  an error.

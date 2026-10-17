@@ -87,6 +87,7 @@ holding it is the one taken.
 | `lib.groupBy' op start key list` | a set of lists, grouping elements by `key element` |
 | `lib.functionArgs f` | `{ <argument> = <has a default>; … }` for a function taking a set |
 | `lib.setFunctionArgs f args` | `f`, reporting `args` as the arguments it takes |
+| `lib.throwIfNot cond msg value` | `value`, or a `throw msg` when `cond` is false |
 | `lib.findFirst pred default list` | the first element passing `pred`, or `default` |
 | `lib.sort less list` | `list` sorted, `less a b` saying whether `a` goes first |
 | `lib.toLower s`, `lib.replaceStrings from to s` | `s` in lower case; `s` with each string in `from` replaced by its partner in `to` |
@@ -104,6 +105,7 @@ holding it is the one taken.
 | `_file` | the file the module system names in errors |
 | `config` | the merged result of every module; only safe to read lazily |
 | `_module.args` | arguments the module system passes to every module, such as `pkgs` |
+| `options` | every declared option, with its type; like `config`, only safe to read lazily |
 
 ## Trying an expression
 

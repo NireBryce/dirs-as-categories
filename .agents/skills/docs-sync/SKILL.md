@@ -35,5 +35,8 @@ file is a live pointer (skill `fact-hygiene`).
 
 ## Then
 
-`just preflight`. Say in the commit message which docs moved with the
+`just preflight`; its `just docs` step catches the mechanical part (a
+skill missing from `AGENTS.md`, a broken link or anchor, an error without
+a fixture or a wiki row, a `nix` block that doesn't parse). Say in the
+commit message which docs moved with the
 code, so a reviewer can check the pair.

@@ -138,8 +138,9 @@ nix eval --json .#moduleGraph
 ## Development
 
 ```sh
-nix flake check          # fixture trees, error fixtures, the template
-python3 tests/errors.py  # each error fixture's message
+nix develop ./dev        # a shell with just, python3 and the linters
+just preflight           # everything CI runs: flake check, error messages, doc checks, lint
+just                     # every recipe
 ```
 
 ## Licence

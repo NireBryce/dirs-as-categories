@@ -14,5 +14,21 @@ errors:
 lint:
     nix shell nixpkgs#statix nixpkgs#deadnix -c sh -c 'statix check . && deadnix --fail --exclude tests/fixtures -- .'
 
+# Mechanical doc checks: skills listed, links resolve, errors documented and tested, nix blocks parse
+docs:
+    python3 tests/docs.py
+
+# Show how the main fixture's result differs from tests/expected/main.json
+expected-diff:
+    python3 tests/expected.py diff
+
+# Record the main fixture's result as tests/expected/main.json (read expected-diff first)
+expected-accept:
+    python3 tests/expected.py accept
+
+# Start an error fixture: just new-error <name> '<expected message>'
+new-error name message:
+    python3 tests/new_error.py {{quote(name)}} {{quote(message)}}
+
 # Everything CI runs
-preflight: check errors lint
+preflight: check errors docs lint

@@ -185,6 +185,7 @@ Each error stops evaluation with `dirs-as-categories: <path>: <what>`.
 | `a top-level folder is an area and can't be a category` | `folderIsCategory = true` at the top level |
 | `defaults.nix must be an attribute set, or a function of lib/inputs returning one` | a `defaults.nix` is anything else, such as a function asking for `config` |
 | `expected an attribute set (a module) or a function` | a file evaluates to neither |
+| `a default.nix needs a folder to take its name from` | a `default.nix` sits directly in the tree's root |
 
 dirs-as-categories checks `includes` and `enables` names whenever the flake
 evaluates, not only when a host that uses those names does.

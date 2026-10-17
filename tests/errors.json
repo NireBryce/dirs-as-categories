@@ -10,7 +10,9 @@
     "err-flags": "a/c/one: files disagree on folderIsCategory",
     "err-fn-key": "a/c/one/x.nix: unknown key `bogus`",
     "err-include-class": "h/host.nix: includes.nixOS: unknown class",
+    "err-not-a-set": "a/c/one/y.nix: expected an attribute set (a module) or a function",
     "err-plain-folder": "h/host.nix: includes.nixos: unknown name `one`",
+    "err-root-default": "default.nix: a default.nix needs a folder to take its name from",
     "err-typo": "a/c/one/x.nix: unknown key `nixOS`",
     "err-unknown-name": "h/host.nix: includes.nixos: unknown name `nope`",
     "err-wrong-class": "h/host.nix: includes.nixos: `x` has no nixos module"

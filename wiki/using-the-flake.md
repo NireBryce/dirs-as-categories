@@ -330,6 +330,8 @@ folder and what is wrong.
 | `<folder>: folderIsCategory must be true or false` | set `folderIsCategory` to `true` or `false` |
 | `a: a top-level folder is an area and can't be a category` | remove `folderIsCategory = true` from the area |
 | `<file>: defaults.nix must be an attribute set, or a function of lib/inputs returning one` | the `defaults.nix` asks for `config`; only a class part may ask for `config`, as in `nixos = { config, ... }: …` |
+| `<file>: expected an attribute set (a module) or a function (a module of lib/inputs, or a flake-parts module)` | the file evaluates to something else, such as a list or a string; make the file a set of class keys |
+| `default.nix: a default.nix needs a folder to take its name from` | a `default.nix` in the tree's root has no folder to name it; move the file into a folder, or rename it |
 
 dirs-as-categories can't catch one mistake: if you mistype a file's *only*
 class key (`{ nixOS = …; }`), the file has no class key, so the file loads

@@ -15,9 +15,9 @@ step before saying "done".
 
 1. `git status --short` -- an untracked fixture doesn't exist to the flake.
 2. `just preflight` -- flake check (main fixture, error fixtures,
-   template), every error message, lint.
-3. `nix eval --json .#tests.main` against `tests/expected/main.json` if the
-   expected result changed: is every difference one the change meant?
+   template), every error message, the doc checks, lint.
+3. If `tests/expected/main.json` changed, `git diff origin/main -- tests/expected/`
+   and ask of each line: is this a difference the change meant?
 
 ## Read for
 

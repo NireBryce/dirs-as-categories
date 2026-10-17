@@ -6,7 +6,7 @@ What dirs-as-categories built, as data. `nix eval --json .#moduleGraph` prints i
 stability promise. A breaking change still increments `version`, so a
 reader can refuse what it doesn't know, but fields may come and go
 between releases.
-Paths are relative to the folder passed to `lib.tree`. Every name is unique
+Paths are relative to the folder you pass to `lib.tree`. Every name is unique
 across modules and categories.
 
 ```json
@@ -45,13 +45,13 @@ across modules and categories.
 | `modules.<name>.path` | the module file |
 | `modules.<name>.classes` | the classes it declares (including those it only has `includes` for) |
 | `includes.<name>.<class>` | names the module imports, as written |
-| `enables.<name>.<class>` | names handed to the module as `enabled` |
+| `enables.<name>.<class>` | names the module receives as `enabled` |
 | `defaults[].path`, `.dir` | the file and its folder |
 | `defaults[].category` | the nearest category at or above `dir`, or `null` |
 | `defaults[].classes` | the classes it has parts for |
-| `admin` | files loaded as ordinary flake-parts modules |
-| `orphans` | modules inside a category that no `includes`/`enables` reaches ([convention](convention.md#orphans)); added after version 1's first release, so a reader should treat it as optional |
+| `admin` | files dirs-as-categories loads as ordinary flake-parts modules |
+| `orphans` | modules inside a category that no `includes`/`enables` reaches ([convention](convention.md#orphans)); added after version 1's first release, so readers treat it as optional |
 
 Top-level folders (areas) are the first component of any path.
 
-A module with `includes` is what a host or a home configuration usually is.
+A host or a home configuration is usually a module with `includes`.

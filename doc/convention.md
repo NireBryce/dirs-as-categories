@@ -2,11 +2,12 @@
 
 Every rule dirs-as-categories applies, and every error it raises. These
 rules are **experimental** and may change (see the [README](../README.md)). Paths are
-relative to the folder passed to `lib.tree`.
+relative to the folder you pass to `lib.tree`.
 
-All of it is decided from file paths and from the shape of what each file
-evaluates to, never from `config`. That is what lets it build `imports` and
-`flake.modules` names without recursing through the module system.
+dirs-as-categories decides everything from file paths and from the shape of
+what each file evaluates to, never from `config`. Because of this, it can
+build `imports` and `flake.modules` names without recursing through the
+module system.
 
 ## Files
 
@@ -37,28 +38,30 @@ them the way a flake-parts module's would:
 }
 ```
 
-dirs-as-categories calls such a function to see what it returns. That is
-safe because both arguments exist before `config` does (`inputs` is a
-flake-parts special argument, `lib` is always given), so reading the result's
-keys can't recurse through the module system. The function's required
-arguments decide:
+dirs-as-categories calls such a function to see what it returns. This is
+safe: both arguments exist before `config` does (`inputs` is a flake-parts
+special argument, and flake-parts always passes `lib`), so reading the
+result's keys can't recurse through the module system. dirs-as-categories
+looks at the function's required arguments:
 
-- only `lib` and/or `inputs` (anything else must have a default): called with
-  just those. If the result has a class or reserved key it is a module file
-  (or, for `defaults.nix`, a defaults file); otherwise it is a flake-parts
-  module, imported as written -- `{ lib, ... }: { perSystem = …; }` stays one.
-- anything else, such as `config` or `withSystem`: never called; a
-  flake-parts module.
+- only `lib` and/or `inputs` (anything else must have a default): it calls
+  the function with just those. If the result has a class or reserved key,
+  the file is a module file (or, for `defaults.nix`, a defaults file);
+  otherwise dirs-as-categories imports it unchanged as a flake-parts module,
+  so `{ lib, ... }: { perSystem = …; }` stays one.
+- anything else, such as `config` or `withSystem`: it never calls the
+  function and imports it as a flake-parts module.
 
-One consequence, for both forms: a file whose only class key is mistyped
-(`{ nixOS = …; }`) has no class key, so it is loaded as a flake-parts module,
-and flake-parts rejects the unknown option `nixOS`. A mistyped key beside a
-real one (`{ nixos = …; nixOS = …; }`) is caught by dirs-as-categories itself,
-naming the file.
+This has one consequence for both forms. If you mistype a file's only class
+key (`{ nixOS = …; }`), the file has no class key, so dirs-as-categories
+loads it as a flake-parts module and flake-parts rejects the unknown option
+`nixOS`. If you mistype a key beside a real one
+(`{ nixos = …; nixOS = …; }`), dirs-as-categories catches it and names the
+file.
 
 ## Module files
 
-Allowed keys:
+A module file may use these keys:
 
 | Key | Value |
 |---|---|
@@ -67,7 +70,7 @@ Allowed keys:
 | `enables` | `{ <class> = [ name … ]; }` |
 | `folderIsCategory` | `true` or `false` |
 
-The classes are `nixos`, `homeManager` and `darwin`, or the list given to
+The classes are `nixos`, `homeManager` and `darwin`, or the list you give
 `lib.tree.withClasses`.
 
 A module file declares the module `<name>` in every class it has a key for,
@@ -79,12 +82,13 @@ folder's name instead. A `default.nix` directly in the tree's root is an
 error.
 
 **`includes.<class>`.** Each name is a module or category of that class; the
-module imports them. Every module and category is one namespace, so a name
+module imports them. Modules and categories share one namespace, so a name
 means one thing.
 
-**`enables.<class>`.** Each name is a module or category of that class. The
-module file's own class modules that are functions receive the argument
-`enabled.<class>.<name>`, the named module, alongside their usual arguments:
+**`enables.<class>`.** Each name is a module or category of that class.
+dirs-as-categories passes each named module to this file's class modules as
+the argument `enabled.<class>.<name>`, alongside their usual arguments; a
+class module must be a function to receive it:
 
 ```nix
 {
@@ -95,8 +99,8 @@ module file's own class modules that are functions receive the argument
 }
 ```
 
-Only what is declared is in `enabled`, so the declaration can't drift from
-the use. `flake.moduleGraph` records the link.
+`enabled` holds only the names you declare, so the declaration can't drift
+from the use. `flake.moduleGraph` records the link.
 
 ## Folders and categories
 
@@ -123,29 +127,30 @@ modules belong to the nearest category above it.
 ## defaults.nix
 
 A `defaults.nix` is never a module. It is an attribute set, or a function of
-`lib` and/or `inputs` returning one. Allowed keys: the classes, and
-`folderIsCategory` (which applies to its folder as in any other file).
+`lib` and/or `inputs` returning one. It may use the class keys and
+`folderIsCategory`, which applies to its folder as in any other file.
 
-Its class parts apply whenever anything in its folder's subtree is reached:
+Its class parts apply whenever a configuration reaches anything in its
+folder's subtree:
 
 - through the nearest category at or above its folder (so a `defaults.nix` in
   a plain folder moves up to the category that holds it), or
-- through a direct include of any module or category inside its folder.
+- by including any module or category inside its folder directly.
 
-Each loads once per configuration however many routes reach it: every module
-dirs-as-categories creates carries a `key`.
+Each one loads once per configuration, however many routes reach it,
+because every module dirs-as-categories creates carries a `key`.
 
 Definitions keep their file: errors and `options.<x>.definitionsWithLocations`
 name `defaults.nix`, not dirs-as-categories.
 
 ## Orphans
 
-A module inside a category that no `includes` or `enables` reaches is valid
-and evaluates, and installs nothing -- so evaluation can't report it. A
-module is reached when some `includes`/`enables` names it, or names a
-category above it (a category includes everything beneath it). Modules
-outside every category are entry points (hosts, home aggregates), which
-nothing is meant to name, so they are never orphans.
+If no `includes` or `enables` reaches a module inside a category, the
+module still evaluates but installs nothing, so evaluation can't report it.
+An `includes` or `enables` reaches a module by naming it or a category above
+it (a category includes everything beneath it). Modules outside every
+category are entry points (hosts, home aggregates); nothing is meant to name
+them, so they are never orphans.
 
 `flake.moduleGraph.orphans` lists them. With
 
@@ -154,12 +159,12 @@ dirsAsCategories.checkOrphans = true;
 ```
 
 `nix flake check` also runs `checks.<system>.module-orphans`, which fails
-naming each orphan and its path. Off by default: it adds a check to your
-flake.
+and names each orphan and its path. It is off by default because it adds a
+check to your flake.
 
 ## Errors
 
-Each stops evaluation with `dirs-as-categories: <path>: <what>`.
+Each error stops evaluation with `dirs-as-categories: <path>: <what>`.
 
 | Error | Raised when |
 |---|---|
@@ -169,16 +174,16 @@ Each stops evaluation with `dirs-as-categories: <path>: <what>`.
 | `<kind>.<class>: unknown name` | a name in `includes`/`enables` isn't a module or category |
 | `<kind>.<class>: <name> has no <class> module` | the name exists, but not in that class |
 | `files disagree on folderIsCategory` | two files in one folder set different values |
-| `folderIsCategory must be true or false` | it is set to something else |
+| `folderIsCategory must be true or false` | it has any other value |
 | `a top-level folder is an area and can't be a category` | `folderIsCategory = true` at the top level |
 | `defaults.nix must be an attribute set, or a function of lib/inputs returning one` | a `defaults.nix` is anything else, such as a function asking for `config` |
 | `expected an attribute set (a module) or a function` | a file evaluates to neither |
 
-`includes` and `enables` names are checked when the flake is evaluated, not
-only when a host that uses them is.
+dirs-as-categories checks `includes` and `enables` names whenever the flake
+evaluates, not only when a host that uses them does.
 
 ## Limits
 
 - One `lib.tree` per flake: it declares the `flake.moduleGraph` option.
-- `flake-parts.flakeModules.modules` must be imported; it declares
+- You must import `flake-parts.flakeModules.modules`; it declares
   `flake.modules`.

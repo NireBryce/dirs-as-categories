@@ -24,6 +24,11 @@ the full statement.
   line ("until 2026-10-16, …") or the commit log, not a narrative.
 - **Plain words.** Define a term at first use. Prefer the word a reader
   would search for.
+- **Say who does what.** Give each sentence an actor -- dirs-as-categories,
+  Nix, flake-parts, or "you" -- in the active voice: "dirs-as-categories
+  loads it as a flake-parts module", not "it is loaded as one". Avoid
+  "X is what Y does" and a document as the subject ("convention.md
+  states"); in guides, speak to the reader.
 - **Exact names.** Options, keys, flags, error messages and commands as
   written, in backticks.
 - **Tables for lookups**, prose for reasoning, code blocks for anything a

@@ -1,22 +1,22 @@
 # dirs-as-categories
 
 > **Experimental. Don't use this unless you know what you're doing.** It is
-> young, and everything here may change without notice: the module file
+> young, and anything here can change without notice: the module file
 > shape, which folders count as categories, the reserved keys, the error
 > messages, and `flake.moduleGraph`'s format. If you use it anyway, pin a
-> revision in your `flake.lock`, read what changed before updating, and
-> compare what your hosts build before and after (the
+> revision in your `flake.lock`, read the changes before you update, and
+> compare what your hosts build before and after; the
 > [migration steps](wiki/using-the-flake.md#migrating-a-flake-that-names-its-modules-by-hand)
-> show how).
+> show you how.
 
 Modules and categories from a folder tree, for
 [flake-parts](https://github.com/hercules-ci/flake-parts) flakes. An
 [import-tree](https://github.com/denful/import-tree) preset.
 
 You file modules in folders. dirs-as-categories names each module after its file,
-makes folders that group modules into importable **categories**, and fills in
+turns folders that group modules into importable **categories**, and fills in
 `flake.modules.<class>.<name>`. Hosts pick categories or modules by name.
-There is nothing to register and no name to repeat inside a file.
+You register nothing, and no file repeats its own name.
 
 ```
 modules/
@@ -33,8 +33,8 @@ modules/
       └─ kde/default.nix   module `kde` (default.nix takes its folder's name)
 ```
 
-Including `base` gives a host `locale`, `ssh` and base's `defaults.nix`;
-including `ssh` alone gives it `ssh` and the same defaults.
+A host that includes `base` gets `locale`, `ssh` and base's `defaults.nix`;
+a host that includes only `ssh` gets `ssh` and the same defaults.
 
 ## Quick start
 
@@ -79,8 +79,8 @@ or add it to an existing flake-parts flake:
 | `enables.<class> = [ "name" … ]` | hand another class's module in as the argument `enabled.<class>.<name>` |
 | `folderIsCategory = true \| false` | override whether this file's folder is a category |
 
-A module file may also be a function of the flake's `lib` and `inputs`, so
-its body can use them:
+To use the flake's `lib` or `inputs` in a module file, make the file a
+function of them:
 
 ```nix
 { lib, ... }:
@@ -89,39 +89,40 @@ its body can use them:
 }
 ```
 
-Any other file -- a function asking for `config`, or anything with no class
-key, such as `{ perSystem = …; }` -- is loaded as an ordinary flake-parts
-module, for anything that isn't a module of a class: `nixosConfigurations`,
-`perSystem`, checks.
+dirs-as-categories loads any other file -- a function that asks for
+`config`, or a set with no class key such as `{ perSystem = …; }` -- as an
+ordinary flake-parts module. Put `nixosConfigurations`, `perSystem` and
+checks in files like these.
 
 ## The rules
 
 - A module's name is its filename; `default.nix` takes its folder's name.
 - A folder is a category when one of its subfolders holds modules, or when a
-  file directly in it sets `folderIsCategory = true`. `false` opts a folder
-  out. Top-level folders are areas and never categories.
+  file directly in it sets `folderIsCategory = true`. Setting it to `false`
+  keeps a folder out. Top-level folders are areas and never categories.
 - A category includes every module beneath it, at any depth.
-- `defaults.nix` is never a module. Its class parts apply whenever anything
-  in its folder's subtree is reached: through the nearest category at or above
-  the folder, or through a direct include of anything inside it. It loads once
-  however many routes reach it.
-- `_`-prefixed files and folders are skipped, as in import-tree.
+- `defaults.nix` is never a module. Its class parts apply whenever a
+  configuration reaches anything in its folder's subtree, either through the
+  nearest category at or above the folder or by including something inside
+  it directly. It loads once, however many routes reach it.
+- dirs-as-categories skips `_`-prefixed files and folders, as import-tree does.
 
-Mistakes stop evaluation with a message naming the file: two things with one
-name, an unknown key (`nixOS`), a name in `includes` or `enables` that doesn't
-exist in that class, files disagreeing on `folderIsCategory`.
+On a mistake, dirs-as-categories stops evaluation and names the file: two
+things with one name, an unknown key (`nixOS`), a name in `includes` or
+`enables` that doesn't exist in that class, files disagreeing on
+`folderIsCategory`.
 
-[doc/convention.md](doc/convention.md) states every rule and error;
-[wiki/using-the-flake.md](wiki/using-the-flake.md) walks through using it,
-with a worked example, migrating a flake, and what each error means.
+For every rule and error, read [doc/convention.md](doc/convention.md). For
+a walk-through with a worked example, migrating a flake, and what each
+error means, read [wiki/using-the-flake.md](wiki/using-the-flake.md).
 
 ## What it publishes
 
-`flake.moduleGraph` describes what was built: categories, folders, modules
+`flake.moduleGraph` describes what dirs-as-categories built: categories, folders, modules
 and their classes, includes, enables, defaults, the other files, and any
 module nothing reaches (`orphans`; `dirsAsCategories.checkOrphans = true`
 makes `nix flake check` fail on one).
-[doc/format.md](doc/format.md) is the format;
+[doc/format.md](doc/format.md) specifies the format, and
 [flake-module-graph](https://github.com/NireBryce/flake-module-graph) draws it.
 
 ```sh

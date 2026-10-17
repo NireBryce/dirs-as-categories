@@ -1,17 +1,18 @@
 # dirs-as-categories
 
-> **Experimental. Don't use this unless you know what you're doing.** It is
-> young, and anything here can change without notice: the module file
-> shape, which folders count as categories, the reserved keys, the error
-> messages, and `flake.moduleGraph`'s format. If you use it anyway, pin a
-> revision in your `flake.lock`, read the changes before you update, and
-> compare what your hosts build before and after; the
+> **Experimental. Don't use this unless you know what you're doing.**
+> dirs-as-categories is young, and anything here can change without notice:
+> the module file shape, which folders count as categories, the reserved
+> keys, the error messages, and `flake.moduleGraph`'s format. If you use
+> dirs-as-categories anyway, pin a revision in your `flake.lock`, read the
+> changes before you update, and compare what your hosts build before and
+> after; the
 > [migration steps](wiki/using-the-flake.md#migrating-a-flake-that-names-its-modules-by-hand)
 > show you how.
 
-Modules and categories from a folder tree, for
-[flake-parts](https://github.com/hercules-ci/flake-parts) flakes. An
-[import-tree](https://github.com/denful/import-tree) preset.
+dirs-as-categories is an [import-tree](https://github.com/denful/import-tree)
+preset for [flake-parts](https://github.com/hercules-ci/flake-parts) flakes.
+It builds modules and categories from a folder tree.
 
 You file modules in folders. dirs-as-categories names each module after its file,
 turns folders that group modules into importable **categories**, and fills in
@@ -38,11 +39,13 @@ a host that includes only `ssh` gets `ssh` and the same defaults.
 
 ## Quick start
 
+Start a new flake from the template:
+
 ```sh
 nix flake init -t github:NireBryce/dirs-as-categories
 ```
 
-or add it to an existing flake-parts flake:
+Or add dirs-as-categories to an existing flake-parts flake:
 
 ```nix
 {
@@ -80,7 +83,7 @@ or add it to an existing flake-parts flake:
 | `folderIsCategory = true \| false` | override whether this file's folder is a category |
 
 To use the flake's `lib` or `inputs` in a module file, make the file a
-function of them:
+function of `lib` and `inputs`:
 
 ```nix
 { lib, ... }:
@@ -98,13 +101,15 @@ checks in files like these.
 
 - A module's name is its filename; `default.nix` takes its folder's name.
 - A folder is a category when one of its subfolders holds modules, or when a
-  file directly in it sets `folderIsCategory = true`. Setting it to `false`
-  keeps a folder out. Top-level folders are areas and never categories.
+  file directly in the folder sets `folderIsCategory = true`. Setting
+  `folderIsCategory = false` keeps a folder out. Top-level folders are areas
+  and never categories.
 - A category includes every module beneath it, at any depth.
-- `defaults.nix` is never a module. Its class parts apply whenever a
-  configuration reaches anything in its folder's subtree, either through the
-  nearest category at or above the folder or by including something inside
-  it directly. It loads once, however many routes reach it.
+- `defaults.nix` is never a module. A `defaults.nix`'s class parts apply
+  whenever a configuration reaches anything in the file's folder's subtree,
+  either through the nearest category at or above the folder or by
+  including something inside the folder directly. Each `defaults.nix` loads
+  once, however many routes reach the file.
 - dirs-as-categories skips `_`-prefixed files and folders, as import-tree does.
 
 On a mistake, dirs-as-categories stops evaluation and names the file: two
@@ -118,12 +123,13 @@ error means, read [wiki/using-the-flake.md](wiki/using-the-flake.md).
 
 ## What it publishes
 
-`flake.moduleGraph` describes what dirs-as-categories built: categories, folders, modules
-and their classes, includes, enables, defaults, the other files, and any
-module nothing reaches (`orphans`; `dirsAsCategories.checkOrphans = true`
-makes `nix flake check` fail on one).
-[doc/format.md](doc/format.md) specifies the format, and
-[flake-module-graph](https://github.com/NireBryce/flake-module-graph) draws it.
+`flake.moduleGraph` describes what dirs-as-categories built: categories,
+folders, modules and their classes, includes, enables, defaults, the other
+files, and any module nothing reaches (`orphans`). Setting
+`dirsAsCategories.checkOrphans = true` makes `nix flake check` fail on an
+orphan. [doc/format.md](doc/format.md) specifies the format, and
+[flake-module-graph](https://github.com/NireBryce/flake-module-graph) draws
+the graph.
 
 ```sh
 nix eval --json .#moduleGraph
@@ -138,4 +144,4 @@ python3 tests/errors.py  # each error fixture's message
 
 ## Licence
 
-Apache-2.0. Copyright Nire Bryce.
+dirs-as-categories is licensed under Apache-2.0. Copyright Nire Bryce.

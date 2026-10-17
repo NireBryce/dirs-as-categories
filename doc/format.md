@@ -1,11 +1,13 @@
 # flake.moduleGraph, version 1
 
-What dirs-as-categories built, as data. `nix eval --json .#moduleGraph` prints it.
+dirs-as-categories publishes what it built, as data, in `flake.moduleGraph`.
+To print the graph, run `nix eval --json .#moduleGraph`.
 
-**Experimental** (see the [README](../README.md)): version 1 is not yet a
-stability promise. A breaking change still increments `version`, so a
-reader can refuse what it doesn't know, but fields may come and go
-between releases.
+**This format is experimental** (see the [README](../README.md)): version 1
+does not yet promise stability. A breaking change still increments
+`version`, so a reader can refuse a version it doesn't know, but fields may
+come and go between releases.
+
 Paths are relative to the folder you pass to `lib.tree`. Every name is unique
 across modules and categories.
 
@@ -35,23 +37,23 @@ across modules and categories.
 
 | Field | Content |
 |---|---|
-| `version` | `1`. A change that breaks readers increments it. |
+| `version` | the format's version, `1`; any change that breaks readers increments `version` |
 | `classes` | the classes this tree uses |
 | `categories.<name>.dir` | the category's folder |
-| `categories.<name>.members` | modules beneath it that belong to no nested category |
-| `categories.<name>.nested` | categories directly nested in it (no other category between) |
-| `categories.<name>.flag` | its `folderIsCategory`, or `null` when the subfolder rule decided |
-| `folders[]` | plain folders (not categories) below the top level, with their `folderIsCategory` or `null` |
+| `categories.<name>.members` | modules beneath the category that belong to no nested category |
+| `categories.<name>.nested` | categories directly nested in this category (no other category between) |
+| `categories.<name>.flag` | the category's `folderIsCategory`, or `null` when the subfolder rule decided |
+| `folders[]` | plain folders (not categories) below the top level, each with the folder's `folderIsCategory` or `null` |
 | `modules.<name>.path` | the module file |
-| `modules.<name>.classes` | the classes it declares (including those it only has `includes` for) |
+| `modules.<name>.classes` | the classes the module declares, including classes where the module only has `includes` |
 | `includes.<name>.<class>` | names the module imports, as written |
 | `enables.<name>.<class>` | names the module receives as `enabled` |
-| `defaults[].path`, `.dir` | the file and its folder |
+| `defaults[].path`, `.dir` | the defaults file and its folder |
 | `defaults[].category` | the nearest category at or above `dir`, or `null` |
-| `defaults[].classes` | the classes it has parts for |
+| `defaults[].classes` | the classes the defaults file has parts for |
 | `admin` | files dirs-as-categories loads as ordinary flake-parts modules |
-| `orphans` | modules inside a category that no `includes`/`enables` reaches ([convention](convention.md#orphans)); added after version 1's first release, so readers treat it as optional |
+| `orphans` | modules inside a category that no `includes`/`enables` reaches ([convention](convention.md#orphans)); optional when reading, because this field arrived after version 1's first release |
 
-Top-level folders (areas) are the first component of any path.
+The first component of every path is a top-level folder (an area).
 
 A host or a home configuration is usually a module with `includes`.

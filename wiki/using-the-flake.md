@@ -7,8 +7,8 @@ covers checks, migrating an existing flake, and what each error means. For
 the exact rules, see [`../doc/convention.md`](../doc/convention.md).
 
 **dirs-as-categories is experimental** and may change without notice; read
-the [README](../README.md)'s notice before using it on anything you care
-about.
+the [README](../README.md)'s notice before using dirs-as-categories on
+anything you care about.
 
 ## Contents
 
@@ -29,23 +29,23 @@ about.
 
 | You want to | Do |
 |---|---|
-| start a new flake | `nix flake init -t github:NireBryce/dirs-as-categories` |
-| add a module | a file `{ nixos = …; }` in a category's folder; its name is its filename |
-| use `lib` or `inputs` in it | make the file `{ lib, inputs, ... }: { nixos = …; }` |
-| make a category | a folder with a subfolder holding modules (or `folderIsCategory = true`) |
-| give a host modules | `includes.nixos = [ "category" "module" ];` in the host's file |
-| hand a module of another class over | `enables.homeManager = [ "name" ];`, then `enabled.homeManager.name` |
-| set defaults for a folder | `defaults.nix` with class keys, in that folder |
-| catch modules nothing uses | `dirsAsCategories.checkOrphans = true;` |
-| see what was built | `nix eval --json .#moduleGraph` |
+| start a new flake | run `nix flake init -t github:NireBryce/dirs-as-categories` |
+| add a module | create a file `{ nixos = …; }` in a category's folder; the filename is the module's name |
+| use `lib` or `inputs` in a module | make the file `{ lib, inputs, ... }: { nixos = …; }` |
+| make a category | give a folder a subfolder holding modules (or set `folderIsCategory = true`) |
+| give a host modules | add `includes.nixos = [ "category" "module" ];` to the host's file |
+| hand a module of another class over | add `enables.homeManager = [ "name" ];`, then use `enabled.homeManager.name` |
+| set defaults for a folder | put a `defaults.nix` with class keys in that folder |
+| catch modules nothing uses | set `dirsAsCategories.checkOrphans = true;` |
+| see what dirs-as-categories built | run `nix eval --json .#moduleGraph` |
 
 ## Setting it up
 
-New flake: `nix flake init -t github:NireBryce/dirs-as-categories` writes a
-flake with one host and one category.
+To start a new flake, run `nix flake init -t github:NireBryce/dirs-as-categories`.
+The template has one host and one category.
 
-Existing flake-parts flake: add the input and replace `import-tree`'s line
-in `imports`:
+To use an existing flake-parts flake, add the input and replace
+`import-tree`'s line in `imports`:
 
 ```nix
 {
@@ -81,7 +81,7 @@ and flake-parts. For classes other than `nixos`, `homeManager` and
 
 ## Laying out the tree
 
-This page uses the tree below throughout. It was built as a flake and
+This page uses the tree below throughout. The tree was built as a flake and
 evaluated to a toplevel derivation when the page was written:
 
 ```
@@ -104,13 +104,13 @@ modules/
       └─ plasma/plasma.nix
 ```
 
-- **Top-level folders are areas** (`hosts`, `users`, `shared`): grouping
-  only, never categories.
+- **Top-level folders are areas** (`hosts`, `users`, `shared`). Areas only
+  group files and are never categories.
 - **A folder with a subfolder holding modules is a category**, named after
-  the folder: `base`, `shell`, `desktop`. Including it includes every module
-  beneath it, at any depth.
-- **Other folders are plain folders** (`ssh/`, `git/`): grouping inside a
-  category.
+  the folder: `base`, `shell`, `desktop`. Including a category includes
+  every module beneath the category, at any depth.
+- **Other folders are plain folders** (`ssh/`, `git/`). Plain folders group
+  files inside a category.
 - **A file directly in an area is in no category.** Put hosts and home
   configurations there, so nothing includes them by accident.
 
@@ -136,10 +136,10 @@ the filename. Each key is a class, and a file can carry several:
 }
 ```
 
-A class's value is an ordinary module -- an attribute set, or a function
+A class's value is an ordinary module: an attribute set, or a function
 taking `pkgs`, `config` and the rest from that class's evaluation. When the
-file itself needs the flake's `lib` or `inputs`, make it a function of
-those two:
+file itself needs the flake's `lib` or `inputs`, make the file a function of
+`lib` and `inputs`:
 
 ```nix
 { lib, ... }:
@@ -203,8 +203,8 @@ A Home Manager configuration is a module with `includes` too:
 }
 ```
 
-A NixOS module hands it to Home Manager with `enables`, which delivers the
-named module as the argument `enabled`:
+A NixOS module hands `me-home` to Home Manager with `enables`, which
+delivers the named module as the argument `enabled`:
 
 ```nix
 # shared/base/home-manager/enable-home-manager.nix
@@ -238,11 +238,11 @@ settings.
 }
 ```
 
-`defaults.nix` is never a module and has no name. Its class parts apply
-whenever a configuration reaches anything in its folder, either through the
-category (here, `base`) or by including a module inside it by name. It
-loads once, however many routes reach it. Use `mkDefault` so a host can
-override it.
+`defaults.nix` is never a module and has no name. A `defaults.nix`'s class
+parts apply whenever a configuration reaches anything in the file's folder,
+either through the category (here, `base`) or by including a module inside
+the folder by name. The file loads once, however many routes reach it. Use
+`mkDefault` so a host can override each setting.
 
 ## Choosing which folders are categories
 
@@ -253,15 +253,15 @@ By default, the subfolder rule decides. To choose yourself, put a
 { folderIsCategory = false; }   # keep a folder of folders plain
 ```
 
-Set `true` to make a flat folder of files a category. Promoting or demoting a
-folder changes which names exist, and promoting one can change the order
-of list options such as package lists -- the same packages, a different
-hash. Compare your hosts before and after.
+Set `folderIsCategory = true` to make a flat folder of files a category.
+Promoting or demoting a folder changes which names exist, and promoting a
+folder can change the order of list options such as package lists: the
+same packages, a different hash. Compare your hosts before and after.
 
 ## Files that are not modules
 
 A file is a module file when its keys are classes (or `includes`,
-`enables`, `folderIsCategory`). dirs-as-categories loads anything else
+`enables`, `folderIsCategory`). dirs-as-categories loads any other file
 unchanged, as an ordinary flake-parts module:
 
 - a function asking for `config`, `withSystem` and the like (`hosts.nix`);
@@ -272,30 +272,31 @@ helpers that other files `import` there.
 
 ## Checking and drawing the tree
 
-- **Orphans** -- modules inside a category that nothing includes or
-  enables -- evaluate fine and install nothing. Turn on the check:
+- **Orphans** are modules inside a category that nothing includes or
+  enables. Orphans evaluate fine and install nothing. To catch them, turn
+  on the check:
 
   ```nix
   # in any flake-parts module, for example hosts.nix
   dirsAsCategories.checkOrphans = true;
   ```
 
-  `nix flake check` then fails naming each one and its path.
-- **What dirs-as-categories built**: `nix eval --json .#moduleGraph` -- categories,
-  modules and their classes, includes, enables, defaults, orphans
-  ([format](../doc/format.md)).
+  `nix flake check` then fails and names each orphan and its path.
+- **What dirs-as-categories built**: run `nix eval --json .#moduleGraph` to
+  print the categories, modules and their classes, includes, enables,
+  defaults and orphans ([format](../doc/format.md)).
 - **A picture**:
   [flake-module-graph](https://github.com/NireBryce/flake-module-graph)
-  draws that graph: `nix run github:NireBryce/flake-module-graph -- html --flake . > modules.html`.
+  draws the graph: `nix run github:NireBryce/flake-module-graph -- html --flake . > modules.html`.
 
 ## Migrating a flake that names its modules by hand
 
 If each file in your flake writes `flake.modules.<class>.<name> = …`,
-convert it one file at a time:
+convert the flake one file at a time:
 
 1. **Record what each host builds**, before changing anything:
    `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`
-   for each, and the same for Home Manager generations.
+   for each host, and the same for Home Manager generations.
 2. **Unwrap each module**: change `flake.modules.nixos.<name> = X;` to
    `nixos = X;`, and delete any binding that derives the name from the
    filename (`__curPos.file`). If the name differed from the filename,
@@ -308,9 +309,9 @@ convert it one file at a time:
    `config.flake.modules.<class>.<name>` inside a module into `includes`
    (same class) or `enables` (another class), and read the flake's own
    outputs through `inputs.self.…`.
-5. **Compare** every drvPath with step 1. A difference with identical
-   contents is usually list order: check whether a folder became a
-   category, and pin it with `folderIsCategory`.
+5. **Compare** every drvPath with the drvPaths from step 1. A difference
+   with identical contents usually comes from list order: check whether a
+   folder became a category, and pin that folder with `folderIsCategory`.
 
 ## When evaluation stops
 
@@ -319,18 +320,18 @@ folder and what is wrong.
 
 | Message | Fix |
 |---|---|
-| `names used more than once: x (a/one/x.nix, a/two/x.nix)` | rename one; modules and categories share one namespace, and `x/default.nix` beside `x.nix` counts as a clash too |
+| `names used more than once: x (a/one/x.nix, a/two/x.nix)` | rename one of the files; modules and categories share one namespace, and `x/default.nix` beside `x.nix` counts as a clash too |
 | `` <file>: unknown key `nixOS`; expected one of: … `` | correct the typo in the class or reserved key |
-| `` <file>: includes.nixos: unknown name `nope` `` | no module or category has that name; you can't include a plain folder -- include its category, or make it one |
+| `` <file>: includes.nixos: unknown name `nope` `` | no module or category has that name; you can't include a plain folder, so include the folder's category or make the folder a category |
 | `` <file>: includes.nixos: `x` has no nixos module `` | the name exists, but not in that class |
 | `<file>: includes.nixOS: unknown class` | correct the class after `includes.` |
 | `` <file>: enables.homeManager: unknown name `ghost` `` | as for `includes` |
-| `<folder>: files disagree on folderIsCategory` | two files in one folder set different values; make them agree |
-| `<folder>: folderIsCategory must be true or false` | set it to `true` or `false` |
+| `<folder>: files disagree on folderIsCategory` | two files in one folder set different values; make the values agree |
+| `<folder>: folderIsCategory must be true or false` | set `folderIsCategory` to `true` or `false` |
 | `a: a top-level folder is an area and can't be a category` | remove `folderIsCategory = true` from the area |
-| `<file>: defaults.nix must be an attribute set, or a function of lib/inputs returning one` | a `defaults.nix` asking for `config` |
+| `<file>: defaults.nix must be an attribute set, or a function of lib/inputs returning one` | the `defaults.nix` asks for `config`; only a class part may ask for `config`, as in `nixos = { config, ... }: …` |
 
 dirs-as-categories can't catch one mistake: if you mistype a file's *only*
-class key (`{ nixOS = …; }`), the file has no class key, so it loads as a
-flake-parts module and flake-parts rejects the unknown option `nixOS`
+class key (`{ nixOS = …; }`), the file has no class key, so the file loads
+as a flake-parts module and flake-parts rejects the unknown option `nixOS`
 instead.

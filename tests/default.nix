@@ -74,6 +74,17 @@ let
             };
         in flake.checks.x86_64-linux.module-orphans or null;
 
+    # ── extra classes ───────────────────────────────────────────────────────
+    # addClasses keeps the default classes; withClasses replaces them.
+    classesWith = make:
+        let flake = flake-parts.lib.mkFlake {
+                inputs = { self = { outPath = ./fixtures/classes; }; inherit flake-parts; };
+            } {
+                systems = [ ];
+                imports = [ flake-parts.flakeModules.modules (make (fixture "classes")) ];
+            };
+        in { inherit (flake.moduleGraph) classes; names = lib.mapAttrs (_: builtins.attrNames) flake.modules; };
+
     # ── the template's tree ─────────────────────────────────────────────────
     # Only the tree: building its host needs nixpkgs, which these tests don't
     # fetch.
@@ -108,6 +119,14 @@ in
               && lib.hasInfix "lonely-module (general/lonely/inner/lonely-module.nix)"
                               (builtins.elemAt (orphanCheck true).args 1);
             detail = "checkOrphans: off should add no check, on should name lonely-module with its path";
+        };
+        classes = {
+            ok = classesWith (tree.addClasses [ "nixOnDroid" ]) == {
+                    classes = [ "nixos" "homeManager" "darwin" "nixOnDroid" ];
+                    names   = { nixos = [ "c" "x" ]; homeManager = [ "c" ]; darwin = [ "c" ]; nixOnDroid = [ "c" "x" ]; };
+                }
+              && (classesWith (tree.withClasses [ "nixos" "nixOnDroid" ])).classes == [ "nixos" "nixOnDroid" ];
+            detail = "addClasses [ \"nixOnDroid\" ]: ${builtins.toJSON (classesWith (tree.addClasses [ "nixOnDroid" ]))}";
         };
         template = {
             ok = template == {

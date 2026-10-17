@@ -59,7 +59,7 @@ Or add dirs-as-categories to an existing flake-parts flake:
         imports = [
             inputs.flake-parts.flakeModules.modules
             (inputs.dirs-as-categories.lib.tree ./modules)
-            # other classes: (inputs.dirs-as-categories.lib.tree.withClasses [ "nixos" "homeManager" "darwin" "nixOnDroid" ] ./modules)
+            # more classes: (inputs.dirs-as-categories.lib.tree.addClasses [ "nixOnDroid" ] ./modules)
         ];
     };
 }
@@ -112,10 +112,12 @@ checks in files like these.
   once, however many routes reach the file.
 - dirs-as-categories skips `_`-prefixed files and folders, as import-tree does.
 
-On a mistake, dirs-as-categories stops evaluation and names the file: two
-things with one name, an unknown key (`nixOS`), a name in `includes` or
-`enables` that doesn't exist in that class, files disagreeing on
-`folderIsCategory`.
+On a mistake, dirs-as-categories stops evaluation, names the file, and
+says how to fix it: two things with one name, an unknown key (`nixOS`,
+with the key it resembles), a name in `includes` or `enables` that doesn't
+exist in that class, `{ pkgs, ... }:` at the top of a file instead of
+inside a class, a NixOS module such as `hardware-configuration.nix` in the
+tree, files disagreeing on `folderIsCategory`.
 
 For every rule and error, read [doc/convention.md](doc/convention.md). For
 a walk-through with a worked example, migrating a flake, and what each

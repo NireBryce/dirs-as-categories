@@ -22,6 +22,33 @@ let
     # can tell it came from here.
     fail = message: throw "dirs-as-categories: ${message}";
 
+    quote     = word: "`${word}`";
+    quoteAll  = words: concatStringsSep ", " (map quote words);
+
+    # The candidate a mistyped word most likely meant, or null. Two kinds
+    # of near miss count: the same word in another case or spelling
+    # (`nixOS`, `home-manager`, `include` for `includes`), and a word at
+    # most a couple of letters off (`lcoale` for `locale`).
+    looselyEqual = word: candidate:
+        let squash = text: lib.toLower (lib.replaceStrings [ "-" "_" ] [ "" "" ] text); in
+        squash word == squash candidate || squash word + "s" == squash candidate
+        || (word == "hm" && candidate == "homeManager");
+    closest = candidates: word:
+        let
+            loose  = filter (looselyEqual word) candidates;
+            limit  = lib.max 1 (lib.stringLength word / 3);
+            near   = filter (lib.strings.levenshteinAtMost limit word) candidates;
+            byDistance = lib.sort (a: b: lib.strings.levenshtein word a < lib.strings.levenshtein word b) near;
+        in
+        if loose != [ ] then builtins.head loose
+        else if byDistance != [ ] then builtins.head byDistance
+        else null;
+
+    # " (did you mean `x`?)", or "" when nothing is close.
+    didYouMean = candidates: word:
+        let match = closest candidates word; in
+        if match == null then "" else " (did you mean ${quote match}?)";
+
     # ── 1. Paths ────────────────────────────────────────────────────────────
     # Every path from here on is a string relative to the tree's root, such
     # as "shared/base/ssh/ssh.nix". A top-level folder ("shared") is an area.
@@ -69,7 +96,7 @@ let
     checkKeys = allowed: entry:
         let
             unknown = filter (key: !(elem key allowed)) (attrNames entry.value);
-            quoted  = map (key: "`${key}`") unknown;
+            quoted  = map (key: quote key + didYouMean allowed key) unknown;
         in
         if unknown == [ ] then entry
         else fail ("${entry.path}: unknown key ${concatStringsSep ", " quoted}; "
@@ -98,6 +125,67 @@ let
         let wanted = lib.functionArgs raw; in
         raw (if wanted == { } then earlyArgs else builtins.intersectAttrs wanted earlyArgs);
 
+    # ── a function that can't be called early ──
+    # A function asking for `config` is usually an ordinary flake-parts
+    # module (hosts.nix). Two mistakes look the same from outside, and both
+    # end in a confusing error deep in flake-parts:
+    #   { pkgs, ... }: { nixos = …; }    -- the arguments belong inside the class
+    #   hardware-configuration.nix       -- a NixOS module, not a module file
+    # To tell them apart, `peekKeys` calls the function with stand-ins for
+    # the arguments that don't exist yet. A stand-in throws if anything
+    # reads it, and `tryEval` catches the throw, so `config` is never read:
+    # the peek sees the result's keys only when they don't depend on it.
+
+    # Arguments flake-parts passes to every module, besides `lib` and
+    # `inputs`; a function written `args@{ config, ... }:` may read any.
+    flakePartsArgs = [ "config" "options" "self" "withSystem" "moduleWithSystem"
+                       "flake-parts-lib" "getSystem" "specialArgs" ];
+
+    # Arguments only a NixOS, nix-darwin or Home Manager module is given,
+    # never a flake-parts one.
+    classModuleArgs = [ "pkgs" "modulesPath" "osConfig" "nixosConfig" "darwinConfig" "utils" ];
+
+    standIn  = name: throw "dirs-as-categories read `${name}` while scanning";
+    peekKeys = raw:
+        let
+            wanted  = lib.functionArgs raw;
+            all     = lib.genAttrs (flakePartsArgs ++ requiredArgs raw) standIn // earlyArgs;
+            args    = if wanted == { } then all else builtins.intersectAttrs wanted all;
+            result  = raw args;
+            peeked  = builtins.tryEval (if builtins.isAttrs result then attrNames result else [ ]);
+        in
+        if peeked.success then peeked.value else [ ];
+
+    # Fails with advice when a function that can't be called early is one
+    # of the two mistakes above; otherwise it is an ordinary flake-parts
+    # module, "admin".
+    lateShape = path: raw:
+        let
+            late      = filter (arg: !(elem arg (attrNames earlyArgs))) (requiredArgs raw);
+            keys      = peekKeys raw;
+            classKeys = filter (key: elem key classes) keys;
+            example   = if classKeys != [ ] then builtins.head classKeys else builtins.head classes;
+            onlyClass = filter (arg: elem arg classModuleArgs) late;
+            them      = if length late == 1 then "it" else "them";
+            hidden    = "_${baseNameOf path}";
+        in
+        if lib.any (key: elem key moduleKeys) keys then
+            fail ("${path}: asks for ${quoteAll late} at the top of the file, where only `lib` and `inputs` exist; "
+                + "move ${them} into the class: `${example} = { ${concatStringsSep ", " late}, ... }: { … };`")
+        else if onlyClass != [ ] then
+            fail ("${path}: asks for ${quoteAll onlyClass}, which only a NixOS or Home Manager module gets; "
+                + "to keep such a module as it is, rename it `${hidden}` (import-tree skips it) "
+                + "and import it from a class: `${builtins.head classes}.imports = [ ./${hidden} ];`")
+        else "admin";
+
+    # A set with no module key is an ordinary flake-parts module -- unless
+    # one of its keys is a near miss of a class or reserved key, the
+    # likeliest reason it has none.
+    setShape = path: value:
+        let nearMisses = filter (key: closest moduleKeys key != null) (attrNames value); in
+        if nearMisses == [ ] then "admin"
+        else fail "${path}: unknown key ${concatStringsSep ", " (map (key: quote key + didYouMean moduleKeys key) nearMisses)}";
+
     isModuleShaped = value: builtins.isAttrs value && lib.any (key: elem key moduleKeys) (attrNames value);
 
     # `raw` is what the file contains; `value` is what it evaluates to after
@@ -106,8 +194,9 @@ let
         if isDefaults path then
             (if builtins.isAttrs value then "defaults"
              else fail "${path}: defaults.nix must be an attribute set, or a function of lib/inputs returning one")
-        else if builtins.isAttrs value || builtins.isFunction raw then
-            (if isModuleShaped value then "module" else "admin")
+        else if isModuleShaped value then "module"
+        else if builtins.isAttrs value then setShape path value
+        else if builtins.isFunction raw then lateShape path raw
         else fail "${path}: expected an attribute set (a module) or a function (a module of lib/inputs, or a flake-parts module)";
 
     # One entry per file:
@@ -208,12 +297,24 @@ let
     references = concatMap (mod: referencesOf mod "includes" ++ referencesOf mod "enables") moduleFiles;
 
     # What is wrong with one reference, or null when nothing is.
+    plainFolders = filter (dir: !isTopLevel dir && !(elem dir categories)) folders;
+
+    # Advice for a name that is a plain folder's: such a folder has no name.
+    plainFolderHint = name:
+        let
+            dir      = lib.findFirst (folder: baseNameOf folder == name) null plainFolders;
+            category = categoryAbove dir;
+            include  = if category == null then "" else "include its category ${quote (baseNameOf category)}, or ";
+        in
+        " (${dir} is a plain folder, which has no name; ${include}make the folder a category with folderIsCategory = true)";
+
     referenceProblem = { from, kind, class, name }:
         let where = "${from}: ${kind}.${class}"; in
-        if !(elem class classes) then "${where}: unknown class"
+        if !(elem class classes) then "${where}: unknown class${didYouMean classes class}"
         else if elem name (knownIn class) then null
         else if elem name known then "${where}: `${name}` has no ${class} module"
-        else "${where}: unknown name `${name}`";
+        else if lib.any (dir: baseNameOf dir == name) plainFolders then "${where}: unknown name `${name}`${plainFolderHint name}"
+        else "${where}: unknown name `${name}`${didYouMean (knownIn class) name}";
 
     referenceProblems = filter (problem: problem != null) (map referenceProblem references);
 

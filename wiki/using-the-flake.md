@@ -36,6 +36,7 @@ anything you care about.
 | give a host modules | add `includes.nixos = [ "category" "module" ];` to the host's file |
 | hand a module of another class over | add `enables.homeManager = [ "name" ];`, then use `enabled.homeManager.name` |
 | set defaults for a folder | put a `defaults.nix` with class keys in that folder |
+| keep a NixOS module as it is (`hardware-configuration.nix`) | name it `_hardware.nix` and add `nixos.imports = [ ./_hardware.nix ];` |
 | catch modules nothing uses | set `dirsAsCategories.checkOrphans = true;` |
 | see what dirs-as-categories built | run `nix eval --json .#moduleGraph` |
 
@@ -75,9 +76,9 @@ To use an existing flake-parts flake, add the input and replace
 
 `flake-parts.flakeModules.modules` declares `flake.modules`, which
 dirs-as-categories fills. The `follows` lines keep one copy of import-tree
-and flake-parts. For classes other than `nixos`, `homeManager` and
+and flake-parts. For classes beyond `nixos`, `homeManager` and
 `darwin`, use
-`(inputs.dirs-as-categories.lib.tree.withClasses [ "nixos" "nixOnDroid" ] ./modules)`.
+`(inputs.dirs-as-categories.lib.tree.addClasses [ "nixOnDroid" ] ./modules)`.
 
 ## Laying out the tree
 
@@ -270,6 +271,26 @@ unchanged, as an ordinary flake-parts module:
 import-tree skips every path with a component starting with `_`. Put
 helpers that other files `import` there.
 
+### A NixOS module you want to keep as it is
+
+`nixos-generate-config` writes `hardware-configuration.nix` as a NixOS
+module: a function of `config`, `lib`, `pkgs` and `modulesPath`. A NixOS
+module isn't a module file, so dirs-as-categories stops with an error if
+you put one in the tree under its own name. Give the file a leading `_`,
+so import-tree skips it, and import it from the host's class part:
+
+```nix
+# hosts/laptop.nix, beside hosts/_laptop-hardware.nix
+{
+    includes.nixos = [ "base" ];
+
+    nixos = {
+        imports = [ ./_laptop-hardware.nix ];
+        networking.hostName = "laptop";
+    };
+}
+```
+
 ## Checking and drawing the tree
 
 - **Orphans** are modules inside a category that nothing includes or
@@ -322,18 +343,23 @@ folder and what is wrong.
 |---|---|
 | `names used more than once: x (a/one/x.nix, a/two/x.nix)` | rename one of the files; modules and categories share one namespace, and `x/default.nix` beside `x.nix` counts as a clash too |
 | `` <file>: unknown key `nixOS`; expected one of: … `` | correct the typo in the class or reserved key |
-| `` <file>: includes.nixos: unknown name `nope` `` | no module or category has that name; you can't include a plain folder, so include the folder's category or make the folder a category |
+| `` <file>: includes.nixos: unknown name `nope` `` | no module or category has that name |
+| `` <file>: includes.nixos: unknown name `one` (a/c/one is a plain folder, which has no name; …) `` | you can't include a plain folder: include the folder's category, or make the folder a category |
 | `` <file>: includes.nixos: `x` has no nixos module `` | the name exists, but not in that class |
 | `<file>: includes.nixOS: unknown class` | correct the class after `includes.` |
 | `` <file>: enables.homeManager: unknown name `ghost` `` | as for `includes` |
 | `<folder>: files disagree on folderIsCategory` | two files in one folder set different values; make the values agree |
 | `<folder>: folderIsCategory must be true or false` | set `folderIsCategory` to `true` or `false` |
 | `a: a top-level folder is an area and can't be a category` | remove `folderIsCategory = true` from the area |
+| `` <file>: unknown key `nixOS` (did you mean `nixos`?) `` | the file's only class key is mistyped; correct it |
+| `` <file>: asks for `pkgs` at the top of the file, where only `lib` and `inputs` exist; move it into the class: … `` | move `{ pkgs, ... }:` from the top of the file into the class, as the message shows; the top of a module file may ask only for `lib` and `inputs` |
+| `` <file>: asks for `modulesPath`, `pkgs`, which only a NixOS or Home Manager module gets; … `` | the file is a NixOS module; [keep it as it is](#a-nixos-module-you-want-to-keep-as-it-is) |
+| `` <file>: includes.nixos: unknown name `lcoale` (did you mean `locale`?) `` | correct the name |
 | `<file>: defaults.nix must be an attribute set, or a function of lib/inputs returning one` | the `defaults.nix` asks for `config`; only a class part may ask for `config`, as in `nixos = { config, ... }: …` |
 | `<file>: expected an attribute set (a module) or a function (a module of lib/inputs, or a flake-parts module)` | the file evaluates to something else, such as a list or a string; make the file a set of class keys |
 | `default.nix: a default.nix needs a folder to take its name from` | a `default.nix` in the tree's root has no folder to name it; move the file into a folder, or rename it |
 
-dirs-as-categories can't catch one mistake: if you mistype a file's *only*
-class key (`{ nixOS = …; }`), the file has no class key, so the file loads
-as a flake-parts module and flake-parts rejects the unknown option `nixOS`
-instead.
+A mistake outside the files dirs-as-categories reads -- in a class part's
+own settings, say -- stops with an error from NixOS, Home Manager or
+flake-parts instead. Read such an error to the bottom: Nix prints the
+innermost cause last.

@@ -1,7 +1,8 @@
 # nix/default.nix: `lib.tree`, the entry point a flake imports.
 #
 #   imports = [ (inputs.dirs-as-categories.lib.tree ./modules) ];
-#   imports = [ (inputs.dirs-as-categories.lib.tree.withClasses [ "nixos" "homeManager" "darwin" "nixOnDroid" ] ./modules) ];
+#   imports = [ (inputs.dirs-as-categories.lib.tree.addClasses [ "nixOnDroid" ] ./modules) ];   # the defaults, and more
+#   imports = [ (inputs.dirs-as-categories.lib.tree.withClasses [ "nixos" ] ./modules) ];       # exactly these
 #
 # import-tree finds the files (every `.nix`, skipping paths with a `_`
 # component) and hands the list to ./module.nix, which turns it into one
@@ -22,5 +23,6 @@ in
     # `__functor` makes this set callable like a function, so `lib.tree ./modules`
     # works while `lib.tree.withClasses` is still an attribute of it.
     __functor   = _: make defaults;
+    addClasses  = extra: make (defaults // { classes = defaults.classes ++ extra; });
     withClasses = classes: make (defaults // { inherit classes; });
 }

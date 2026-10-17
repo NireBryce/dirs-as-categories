@@ -26,7 +26,9 @@ def message(case):
     for line in result.stderr.splitlines():
         if f'error: {PREFIX}' in line:
             return line[line.index(PREFIX) + len(PREFIX):].strip()
-    return result.stderr.strip().splitlines()[-1]
+    # Not ours: show Nix's innermost error, which it prints last.
+    errors = [line.strip() for line in result.stderr.splitlines() if line.strip().startswith('error:')]
+    return errors[-1] if errors else result.stderr.strip().splitlines()[-1]
 
 
 def main():

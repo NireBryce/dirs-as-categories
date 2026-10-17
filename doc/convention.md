@@ -22,6 +22,8 @@ evaluates to:
 | any other attribute set with a class or reserved key | a [module file](#module-files) |
 | an attribute set with neither (`{ perSystem = …; }`) | a flake-parts module, imported unchanged |
 | a function of only `lib` and/or `inputs` that returns a class or reserved key | a module file (or defaults file), called with `lib` and `inputs` |
+| a function asking for more than `lib` and `inputs` whose result has a class or reserved key | an error: the arguments belong inside the class |
+| a function asking for `pkgs`, `modulesPath`, `osConfig`, `nixosConfig`, `darwinConfig` or `utils` (a NixOS or Home Manager module) | an error |
 | any other function | a flake-parts module, imported unchanged |
 | anything else | an error |
 
@@ -53,15 +55,23 @@ dirs-as-categories looks at the function's required arguments:
   file unchanged as a flake-parts module, so `{ lib, ... }: { perSystem = …; }`
   stays a flake-parts module.
 - If the function requires anything else, such as `config` or `withSystem`,
-  dirs-as-categories never calls the function and imports the file as a
-  flake-parts module.
+  the file is a flake-parts module, imported unchanged -- with two
+  exceptions, both mistakes. dirs-as-categories calls the function with
+  stand-ins for the arguments that don't exist yet; a stand-in throws if
+  anything reads it, and dirs-as-categories catches the throw, so `config`
+  is never read. If the result's keys can be seen and include a class or
+  reserved key (`{ pkgs, ... }: { nixos = …; }`), that is an error: the
+  arguments belong inside the class, `nixos = { pkgs, ... }: …`. If the
+  function asks for an argument only a NixOS or Home Manager module gets
+  (`pkgs`, `modulesPath`, `osConfig`, `nixosConfig`, `darwinConfig`,
+  `utils`), the file is a NixOS module, such as a `hardware-configuration.nix`,
+  and that is an error too: give the file a leading `_` and import it from
+  a class.
 
-Both forms share one consequence. If you mistype a file's only class key
-(`{ nixOS = …; }`), the file has no class key, so dirs-as-categories loads
-the file as a flake-parts module and flake-parts rejects the unknown option
-`nixOS`. If you mistype a key beside a real one
-(`{ nixos = …; nixOS = …; }`), dirs-as-categories catches the typo and names
-the file.
+A key that differs from a class or reserved key only in case or spelling
+(`nixOS`, `home-manager`, `include`) is an error, naming the key it
+resembles, even when it is the file's only key. Without that check, such a
+file would have no class key and load as a flake-parts module.
 
 ## Module files
 
@@ -74,8 +84,9 @@ A module file may use these keys:
 | `enables` | `{ <class> = [ name … ]; }` |
 | `folderIsCategory` | `true` or `false` |
 
-The classes are `nixos`, `homeManager` and `darwin`, or the list you give
-`lib.tree.withClasses`.
+The classes are `nixos`, `homeManager` and `darwin`. `lib.tree.addClasses
+[ "nixOnDroid" ]` adds to them; `lib.tree.withClasses [ "nixos" ]`
+replaces them.
 
 A module file declares the module `<name>` in every class the file has a key
 for, and in every class the file has `includes` for. A file with neither
@@ -176,9 +187,11 @@ Each error stops evaluation with `dirs-as-categories: <path>: <what>`.
 | Error | Raised when |
 |---|---|
 | `names used more than once: <name> (<paths>)` | two modules, two categories, or a module and a category share a name (including `x.nix` beside `x/default.nix`) |
-| `unknown key` | a module file or `defaults.nix` has a key that isn't allowed |
+| `unknown key` | a module file or `defaults.nix` has a key that isn't allowed, or any file has a near miss of one (`nixOS`); the message suggests the key meant |
+| `` asks for <args> at the top of the file, where only `lib` and `inputs` exist `` | a function asking for `config`, `pkgs` or the like returns class keys |
+| `asks for <args>, which only a NixOS or Home Manager module gets` | a function asking for `pkgs`, `modulesPath` or the like has no class keys: a NixOS module in the tree |
 | `<kind>.<class>: unknown class` | `includes` or `enables` names a class not in the list |
-| `<kind>.<class>: unknown name` | a name in `includes`/`enables` isn't a module or category |
+| `<kind>.<class>: unknown name` | a name in `includes`/`enables` isn't a module or category; the message suggests a close name, or says the name is a plain folder's |
 | `<kind>.<class>: <name> has no <class> module` | the name exists, but not in that class |
 | `files disagree on folderIsCategory` | two files in one folder set different values |
 | `folderIsCategory must be true or false` | `folderIsCategory` has any other value |

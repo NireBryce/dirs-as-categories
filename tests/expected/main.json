@@ -5,6 +5,7 @@
     "admin": [
       "general/cat1/admin.nix",
       "general/cat1/config-admin.nix",
+      "general/forcing-admin.nix",
       "general/plain-admin.nix"
     ],
     "categories": {

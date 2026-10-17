@@ -63,6 +63,8 @@ holding it is the one taken.
 | `''…''` | a multi-line string | the option description in `module.nix` |
 | `if c then a else b` | an expression, like `c ? a : b` elsewhere; there is no `if` without `else` | `nameOf` |
 | `throw "msg"` | stop evaluation with an error | `fail` in `scan.nix` |
+| `builtins.tryEval e` | `{ success = true; value = e; }`, or `success = false` if evaluating `e` throws; only a `throw` or `assert` is caught | `peekKeys` in `scan.nix` |
+| `args@{ config, ... }: …` | as `{ config, ... }: …`, with the whole argument set also named `args` | the comment on `flakePartsArgs` |
 | `assert c; body` | stop evaluation unless `c` is true, else `body` | `assert scan.checked;` in `module.nix` |
 | `import ./file.nix` | the value of that file's expression | `import ./scan.nix { … }`: import, then call the function the file is |
 
@@ -85,6 +87,10 @@ holding it is the one taken.
 | `lib.groupBy' op start key list` | a set of lists, grouping elements by `key element` |
 | `lib.functionArgs f` | `{ <argument> = <has a default>; … }` for a function taking a set |
 | `lib.setFunctionArgs f args` | `f`, reporting `args` as the arguments it takes |
+| `lib.findFirst pred default list` | the first element passing `pred`, or `default` |
+| `lib.sort less list` | `list` sorted, `less a b` saying whether `a` goes first |
+| `lib.toLower s`, `lib.replaceStrings from to s` | `s` in lower case; `s` with each string in `from` replaced by its partner in `to` |
+| `lib.strings.levenshtein a b`, `lib.strings.levenshteinAtMost k a b` | how many single-letter edits turn `a` into `b`; whether that is at most `k` |
 | `dirOf "a/b/c.nix"`, `baseNameOf "a/b/c.nix"` | `"a/b"`, and `"c.nix"` |
 
 ### Module-system words

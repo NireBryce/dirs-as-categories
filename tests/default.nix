@@ -8,11 +8,14 @@
 let
     fixture = name: ./fixtures + "/${name}/modules";
 
+    # A fixture whose name ends in -no-modules-import is evaluated without
+    # flake-parts.flakeModules.modules, the mistake it tests.
     mkFlake = name: flake-parts.lib.mkFlake {
         inputs = { self = { outPath = ./fixtures + "/${name}"; }; inherit flake-parts; testMarker = "from inputs"; };
     } {
         systems = [ ];
-        imports = [ flake-parts.flakeModules.modules (tree (fixture name)) ];
+        imports = lib.optional (!lib.hasSuffix "-no-modules-import" name) flake-parts.flakeModules.modules
+               ++ [ (tree (fixture name)) ];
     };
 
     probeModule = { lib, ... }: {
@@ -74,21 +77,31 @@ let
             };
         in flake.checks.x86_64-linux.module-orphans or null;
 
-    # ── the template's tree ─────────────────────────────────────────────────
-    # Only the tree: building its host needs nixpkgs, which these tests don't
-    # fetch.
-    template =
+    # ── extra classes ───────────────────────────────────────────────────────
+    # addClasses keeps the default classes; withClasses replaces them.
+    classesWith = make:
         let flake = flake-parts.lib.mkFlake {
-                inputs = { self = { outPath = ../templates/default; }; inherit flake-parts; };
+                inputs = { self = { outPath = ./fixtures/classes; }; inherit flake-parts; };
             } {
                 systems = [ ];
-                imports = [ flake-parts.flakeModules.modules (tree ../templates/default/modules) ];
+                imports = [ flake-parts.flakeModules.modules (make (fixture "classes")) ];
+            };
+        in { inherit (flake.moduleGraph) classes; names = lib.mapAttrs (_: builtins.attrNames) flake.modules; };
+
+    # ── the templates' trees ────────────────────────────────────────────────
+    # Only the trees: building a host needs nixpkgs, which these tests don't
+    # fetch.
+    template = name:
+        let flake = flake-parts.lib.mkFlake {
+                inputs = { self = { outPath = ../templates + "/${name}"; }; inherit flake-parts; };
+            } {
+                systems = [ ];
+                imports = [ flake-parts.flakeModules.modules (tree (../templates + "/${name}/modules")) ];
             };
             graph = flake.moduleGraph;
         in {
-            categories = builtins.attrNames graph.categories;
-            members    = graph.categories.base.members;
-            inherit (graph) includes admin;
+            categories = lib.mapAttrs (_: category: category.members) graph.categories;
+            inherit (graph) includes enables admin orphans;
         };
 in
 {
@@ -109,14 +122,33 @@ in
                               (builtins.elemAt (orphanCheck true).args 1);
             detail = "checkOrphans: off should add no check, on should name lonely-module with its path";
         };
+        classes = {
+            ok = classesWith (tree.addClasses [ "nixOnDroid" ]) == {
+                    classes = [ "nixos" "homeManager" "darwin" "nixOnDroid" ];
+                    names   = { nixos = [ "c" "x" ]; homeManager = [ "c" ]; darwin = [ "c" ]; nixOnDroid = [ "c" "x" ]; };
+                }
+              && (classesWith (tree.withClasses [ "nixos" "nixOnDroid" ])).classes == [ "nixos" "nixOnDroid" ];
+            detail = "addClasses [ \"nixOnDroid\" ]: ${builtins.toJSON (classesWith (tree.addClasses [ "nixOnDroid" ]))}";
+        };
         template = {
-            ok = template == {
-                categories = [ "base" ];
-                members    = [ "locale" "ssh" ];
+            ok = template "default" == {
+                categories = { base = [ "locale" "ssh" ]; };
                 includes   = { example.nixos = [ "base" ]; };
+                enables    = { };
                 admin      = [ "hosts/hosts.nix" ];
+                orphans    = [ ];
             };
-            detail = "templates/default/modules: ${builtins.toJSON template}";
+            detail = "templates/default/modules: ${builtins.toJSON (template "default")}";
+        };
+        template-home-manager = {
+            ok = template "home-manager" == {
+                categories = { base = [ "enable-home-manager" "locale" "ssh" ]; desktop = [ "plasma" ]; shell = [ "bash" "git" ]; };
+                includes   = { laptop.nixos = [ "base" "desktop" ]; me-home.homeManager = [ "shell" ]; };
+                enables    = { enable-home-manager.homeManager = [ "me-home" ]; };
+                admin      = [ "hosts/hosts.nix" ];
+                orphans    = [ ];
+            };
+            detail = "templates/home-manager/modules: ${builtins.toJSON (template "home-manager")}";
         };
     };
 }

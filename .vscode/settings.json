@@ -1,4 +1,6 @@
 {
+    "nix.enableLanguageServer": true,
+    "nix.serverPath": "nixd",
     "workbench.colorCustomizations": {
         "notebook.outputContainerBackgroundColor": "#a57b5aa5",
         "gitlens.trailingLineForegroundColor": "#000000",

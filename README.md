@@ -5,7 +5,7 @@
 > the module file shape, which folders count as categories, the reserved
 > keys, the error messages, and `flake.moduleGraph`'s format. If you use
 > dirs-as-categories anyway, pin a revision in your `flake.lock`, read the
-> changes before you update, and compare what your hosts build before and
+> [CHANGELOG](CHANGELOG.md) before you update, and compare what your hosts build before and
 > after; the
 > [migration steps](wiki/using-the-flake.md#migrating-a-flake-that-names-its-modules-by-hand)
 > show you how.
@@ -13,6 +13,9 @@
 dirs-as-categories is an [import-tree](https://github.com/denful/import-tree)
 preset for [flake-parts](https://github.com/hercules-ci/flake-parts) flakes.
 It builds modules and categories from a folder tree.
+
+New to flakes or flake-parts? [Words this project uses](wiki/concepts.md)
+defines each term below.
 
 You file modules in folders. dirs-as-categories names each module after its file,
 turns folders that group modules into importable **categories**, and fills in
@@ -39,10 +42,11 @@ a host that includes only `ssh` gets `ssh` and the same defaults.
 
 ## Quick start
 
-Start a new flake from the template:
+Start a new flake from a template, then follow the README it creates:
 
 ```sh
-nix flake init -t github:NireBryce/dirs-as-categories
+nix flake init -t github:NireBryce/dirs-as-categories                 # one host, one category
+nix flake init -t github:NireBryce/dirs-as-categories#home-manager    # a host with Home Manager
 ```
 
 Or add dirs-as-categories to an existing flake-parts flake:
@@ -59,7 +63,7 @@ Or add dirs-as-categories to an existing flake-parts flake:
         imports = [
             inputs.flake-parts.flakeModules.modules
             (inputs.dirs-as-categories.lib.tree ./modules)
-            # other classes: (inputs.dirs-as-categories.lib.tree.withClasses [ "nixos" "homeManager" "darwin" "nixOnDroid" ] ./modules)
+            # more classes: (inputs.dirs-as-categories.lib.tree.addClasses [ "nixOnDroid" ] ./modules)
         ];
     };
 }
@@ -112,10 +116,12 @@ checks in files like these.
   once, however many routes reach the file.
 - dirs-as-categories skips `_`-prefixed files and folders, as import-tree does.
 
-On a mistake, dirs-as-categories stops evaluation and names the file: two
-things with one name, an unknown key (`nixOS`), a name in `includes` or
-`enables` that doesn't exist in that class, files disagreeing on
-`folderIsCategory`.
+On a mistake, dirs-as-categories stops evaluation, names the file, and
+says how to fix it: two things with one name, an unknown key (`nixOS`,
+with the key it resembles), a name in `includes` or `enables` that doesn't
+exist in that class, `{ pkgs, ... }:` at the top of a file instead of
+inside a class, a NixOS module such as `hardware-configuration.nix` in the
+tree, files disagreeing on `folderIsCategory`.
 
 For every rule and error, read [doc/convention.md](doc/convention.md). For
 a walk-through with a worked example, migrating a flake, and what each
@@ -137,9 +143,13 @@ nix eval --json .#moduleGraph
 
 ## Development
 
+[Changing dirs-as-categories](wiki/changing-dirs-as-categories.md) walks
+through the checks and the test-first loop.
+
 ```sh
-nix flake check          # fixture trees, error fixtures, the template
-python3 tests/errors.py  # each error fixture's message
+nix develop ./dev        # a shell with just, python3 and the linters
+just preflight           # everything CI runs: flake check, error messages, doc checks, lint
+just                     # every recipe
 ```
 
 ## Licence

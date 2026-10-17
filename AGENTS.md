@@ -48,7 +48,11 @@ just                 # list recipes
 just check           # nix flake check: the main fixture, every error fixture, the template
 just errors          # each error fixture's message (a Nix check can only see that it failed)
 just lint            # statix and deadnix over the Nix code
+just docs            # skills listed, links resolve, every error documented and tested, nix blocks parse
 just preflight       # all of the above -- what CI runs
+just expected-diff   # how the main fixture's result differs from tests/expected/main.json
+just expected-accept # record it, once every difference is one you meant
+just new-error <name> '<message>'   # start an error fixture and its tests/errors.json entry
 nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 ```
 
@@ -56,15 +60,17 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 
 | Path | Holds |
 |---|---|
-| `nix/default.nix` | `lib.tree` and `lib.tree.withClasses` |
+| `nix/README.md` | how the files fit together, and the Nix syntax they use -- for readers new to Nix |
+| `nix/default.nix` | `lib.tree`, `lib.tree.addClasses` and `lib.tree.withClasses` |
 | `nix/scan.nix` | the rules: shapes, names, categories, flags, errors |
 | `nix/module.nix` | `flake.modules`: includes, enables, defaults, `key`s |
 | `nix/publish.nix` | `flake.moduleGraph` |
-| `tests/` | fixtures, expected results, `errors.py` |
-| `templates/default/` | the `nix flake init -t` starter; checked by `just check` |
+| `tests/` | fixtures, expected results, and the scripts behind `just errors`, `docs`, `expected-*`, `new-error` |
+| `templates/` | the `nix flake init -t` starters, `default` and `home-manager`; their trees are checked by `just check` |
 | `doc/` | the exact rules (`convention.md`) and format (`format.md`); `style.md` for all docs |
 | `wiki/` | guides: `using-the-flake.md`; `styleguide.md` before adding a page |
 | `dev/` | the development shell's own flake (kept out of the main flake's inputs) |
+| `CHANGELOG.md` | what changed for users, and what breaks; `Unreleased` first |
 
 ## Testing discipline
 
@@ -95,6 +101,8 @@ format is a change to both repositories.
 | `docs-sync` | keeping docs true in the same change |
 | `fact-hygiene` | facts, dates and cross-references that stay true |
 | `investigate-bug` | a reported bug, to a failing test |
+| `help-a-user` | someone's own flake erroring or missing a module |
+| `update-inputs` | bumping `flake.lock` or `dev/flake.lock` |
 | `propose-issue` | filing a bug found along the way |
 | `git-archaeology` | when and why something changed |
 | `boyscouting` | small fixes beside a change |

@@ -1,6 +1,7 @@
 name: check
 on:
   push:
+    branches: [main]
   pull_request:
 jobs:
   check:
@@ -11,5 +12,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
-      - name: just preflight (flake check, error messages, lint)
+      - name: just preflight (flake check, error messages, doc checks, lint)
         run: nix develop ./dev --command just preflight
+  changelog:
+    # A change to nix/*.nix changes what users get, so it says so in CHANGELOG.md.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: CHANGELOG.md changes with nix/
+        run: |
+          changed=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          if echo "$changed" | grep -q '^nix/.*\.nix$' && ! echo "$changed" | grep -qx 'CHANGELOG.md'; then
+            echo "::error::this pull request changes nix/*.nix but not CHANGELOG.md; add a line under Unreleased"
+            exit 1
+          fi

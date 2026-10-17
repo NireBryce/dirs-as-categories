@@ -36,29 +36,41 @@ for values, in `module.nix`, lazily.
 
 1. **Write the case first.** A behaviour: add files to the main fixture
    whose `probe` strings show it (what reached which host, how many times,
-   from which file). An error: a new `tests/fixtures/err-<name>/` tree and
-   its message in `tests/errors.json`.
+   from which file). An error: `just new-error <name> '<message>'` starts
+   a `tests/fixtures/err-<name>/` tree and its `tests/errors.json` entry;
+   edit the tree so it makes exactly one mistake, and `git add` it.
 2. **Watch it fail** against the current code (`nix flake check`, `python3
    tests/errors.py`).
 3. Change the code.
-4. **Diff the result before recording it.** `nix eval --json .#tests.main`
-   against `tests/expected/main.json`: every difference must be one you
-   meant. Then write it to `tests/expected/main.json`. Never record output
-   you haven't read.
+4. **Diff the result before recording it.** `just expected-diff`: every
+   difference must be one you meant. Then `just expected-accept`. Never
+   record output you haven't read.
 5. **Break it on purpose**: undo the core of your change and confirm a check
    fails *for that reason* -- not because the mutation made something else
    invalid.
 
 ## Then
 
-- `doc/convention.md`: the rule, and its error in the errors table.
+- `doc/convention.md`: the rule, and its error in the errors table; a new
+  error also needs a row in the wiki's "When evaluation stops" table
+  (`just docs` fails until both exist).
 - `doc/format.md` if a published field changed.
 - `README.md` if a user would notice.
 - **A breaking change to `flake.moduleGraph`** (a field removed, renamed or
   changed in meaning) increments `version` and says so in `doc/format.md`;
   readers such as flake-module-graph refuse a version they don't know.
   Adding a field is not breaking.
-- The template (`templates/default`) must still be a working flake: its
-  check in `nix flake check` covers the tree; evaluate a host from it when
-  the change could affect one.
+- The templates (`templates/default`, `templates/home-manager`) must still
+  be working flakes: `nix flake check` covers their trees; evaluate a host
+  from one when the change could affect it, with
+  `--override-input dirs-as-categories path:<this checkout>` (the template
+  points at GitHub).
 - `just preflight`.
+
+## Keep the code readable
+
+`nix/` is written for readers who don't know Nix (`nix/README.md`). Give
+a new binding a name that says what it holds, a comment with an example
+value when the shape isn't obvious, and split an expression that does
+several things into named steps. A new piece of Nix syntax or a `lib`
+function the code didn't use before goes in `nix/README.md`'s tables.

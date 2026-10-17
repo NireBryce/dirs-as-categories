@@ -10,9 +10,9 @@ check:
 errors:
     python3 tests/errors.py
 
-# statix and deadnix over the Nix code (fixtures excluded: some are wrong on purpose)
+# statix and deadnix over the Nix code (fixtures excluded: some are wrong on purpose), actionlint over the workflows
 lint:
-    nix shell nixpkgs#statix nixpkgs#deadnix -c sh -c 'statix check . && deadnix --fail --exclude tests/fixtures -- .'
+    nix shell nixpkgs#statix nixpkgs#deadnix nixpkgs#actionlint -c sh -c 'statix check . && deadnix --fail --exclude tests/fixtures -- . && actionlint'
 
 # Mechanical doc checks: skills listed, links resolve, errors documented and tested, nix blocks parse
 docs:
@@ -32,3 +32,7 @@ new-error name message:
 
 # Everything CI runs
 preflight: check errors docs lint
+
+# Each template's host, evaluated with real nixpkgs and home-manager (network; not in preflight)
+templates:
+    bash tests/templates.sh

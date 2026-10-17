@@ -1,0 +1,63 @@
+# Adapted from NireBryce/nixos-configs' bug template (2026-10-17): the
+# fields are what skills `help-a-user` and `investigate-bug` ask for first.
+name: Bug report
+description: dirs-as-categories stops with a wrong or confusing error, or builds something other than what the rules say.
+labels: [bug]
+body:
+  - type: input
+    id: revision
+    attributes:
+      label: dirs-as-categories revision
+      description: The tag or commit your flake.lock pins -- `nix flake metadata --json | jq -r '.locks.nodes."dirs-as-categories".locked.rev'`.
+    validations:
+      required: true
+
+  - type: input
+    id: nix
+    attributes:
+      label: Nix version
+      description: The output of `nix --version`.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: rung
+    attributes:
+      label: How far did it get?
+      description: Evaluating, building and running are different claims -- say which you saw.
+      options:
+        - evaluation stops with a dirs-as-categories error
+        - evaluation stops with another error (NixOS, Home Manager, flake-parts, Nix)
+        - it evaluates, but a module is missing, extra, or applied twice
+        - it builds, but the result is wrong
+        - the docs are wrong (nothing was run)
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened vs what was expected
+      description: Actual behaviour, expected behaviour, and the command that shows it. If a rule in doc/convention.md says otherwise, quote it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tree
+    attributes:
+      label: The modules tree
+      description: The output of `find modules -name '*.nix' | sort`, and the contents of the files involved. Rename anything private; generic names (`laptop`, `base`) are fine.
+      render: text
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Error output
+      description: The whole error, to the bottom -- Nix prints the innermost cause last. Add `--show-trace` if the cause isn't named.
+      render: shell
+
+  - type: input
+    id: searched
+    attributes:
+      label: Already reported?
+      description: What you searched the issues and the wiki's "When evaluation stops" table for, or "nothing found".

@@ -1,0 +1,23 @@
+name: Feature or rule change
+description: A new key, rule, error message or published field, or a change to an existing one.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: want
+    attributes:
+      label: What you want to write, and what it should do
+      description: The modules tree or module file you would like to work, and what a host should get from it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: today
+    attributes:
+      label: What happens today
+      description: What dirs-as-categories does with that tree now, and the rule in doc/convention.md that decides it, if you found one.
+
+  - type: textarea
+    id: breaks
+    attributes:
+      label: Who it would break
+      description: A tree that works today and would behave differently. "None that I know of" is a fine answer.

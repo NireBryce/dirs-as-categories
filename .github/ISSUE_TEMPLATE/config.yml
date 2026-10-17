@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "When evaluation stops: every error and its fix"
+    url: https://github.com/NireBryce/dirs-as-categories/blob/main/wiki/using-the-flake.md#when-evaluation-stops
+    about: Each dirs-as-categories error message, and what to change.
+  - name: The rules
+    url: https://github.com/NireBryce/dirs-as-categories/blob/main/doc/convention.md
+    about: Every rule dirs-as-categories applies -- check whether one already covers it.

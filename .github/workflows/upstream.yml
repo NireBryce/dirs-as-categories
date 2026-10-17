@@ -1,0 +1,54 @@
+# Nightly: does dirs-as-categories still work with what users will get?
+#
+# A flake using dirs-as-categories follows its own flake-parts and
+# import-tree, not this repository's flake.lock, and `nix flake init` gives
+# a template the latest nixpkgs and home-manager. So this job tests both at
+# their latest, without committing anything:
+#   1. `nix flake update`, then `just preflight` -- upstream flake-parts and
+#      import-tree against every fixture;
+#   2. `just templates` -- each template's host evaluated with today's
+#      nixpkgs and home-manager, which catches a renamed option.
+# A failure lands on one reused issue (GITHUB_TOKEN; this repository only).
+
+name: upstream
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 4 * * *' # daily 04:41 UTC
+
+permissions:
+  contents: read
+  issues: write # only for the notice step
+
+jobs:
+  latest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: Update the inputs (not committed)
+        run: nix flake update && git diff --stat flake.lock
+      - name: just preflight against the latest flake-parts and import-tree
+        run: nix develop ./dev --command just preflight
+      - name: just templates with the latest nixpkgs and home-manager
+        run: nix develop ./dev --command just templates
+      - name: Notice on failure
+        if: ${{ failure() && github.event_name == 'schedule' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -uo pipefail
+          title="upstream: the nightly check against the latest inputs failed"
+          body="The nightly run of .github/workflows/upstream.yml failed: a new flake-parts, import-tree, nixpkgs or home-manager breaks a fixture or a template. Users get these inputs, so this likely affects them. The step that failed says which; skill \`update-inputs\` says what to read.
+
+          Run: ${RUN_URL}"
+          existing="$(gh issue list --repo "${REPO}" --state open \
+            --search "\"${title}\" in:title" --limit 1 --json number --jq '.[0].number')"
+          if [[ -n "${existing}" ]]; then
+            gh issue comment "${existing}" --repo "${REPO}" --body "${body}"
+          else
+            gh issue create --repo "${REPO}" --title "${title}" --label bug --body "${body}"
+          fi

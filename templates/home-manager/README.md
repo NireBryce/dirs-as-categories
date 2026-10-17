@@ -4,8 +4,9 @@
 this flake: a NixOS host, `laptop`, whose user `me` gets a Home Manager
 configuration. Its modules come from the folder tree under `modules/`,
 through [dirs-as-categories](https://github.com/NireBryce/dirs-as-categories),
-which is **experimental**: keep it pinned in `flake.lock` and read what
-changed before you update it.
+which is **experimental**: `flake.nix` pins a release tag; read the
+[CHANGELOG](https://github.com/NireBryce/dirs-as-categories/blob/main/CHANGELOG.md)
+before you change it.
 
 ```
 modules/

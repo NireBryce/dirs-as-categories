@@ -47,12 +47,13 @@ fills `flake.modules.<class>.<name>`. It also publishes what it built as
 just                 # list recipes
 just check           # nix flake check: the main fixture, every error fixture, the template
 just errors          # each error fixture's message (a Nix check can only see that it failed)
-just lint            # statix and deadnix over the Nix code
+just lint            # statix and deadnix over the Nix code, actionlint over the workflows
 just docs            # skills listed, links resolve, every error documented and tested, nix blocks parse
 just preflight       # all of the above -- what CI runs
 just expected-diff   # how the main fixture's result differs from tests/expected/main.json
 just expected-accept # record it, once every difference is one you meant
 just new-error <name> '<message>'   # start an error fixture and its tests/errors.json entry
+just templates       # each template's host with real nixpkgs and home-manager (network; not in preflight)
 nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 ```
 
@@ -70,7 +71,8 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 | `doc/` | the exact rules (`convention.md`) and format (`format.md`); `style.md` for all docs |
 | `wiki/` | guides: `using-the-flake.md`; `styleguide.md` before adding a page |
 | `dev/` | the development shell's own flake (kept out of the main flake's inputs) |
-| `CHANGELOG.md` | what changed for users, and what breaks; `Unreleased` first |
+| `CHANGELOG.md` | what changed for users, and what breaks; `Unreleased`, then each release |
+| `.github/` | CI (`check`), the nightly test against the latest inputs (`upstream`), weekly lock PRs (`update-flake-lock`), issue and PR templates |
 
 ## Testing discipline
 
@@ -96,6 +98,7 @@ format is a change to both repositories.
 |---|---|
 | `change-a-rule` | changing a rule, key, error or published field |
 | `ship` | landing work on `main` |
+| `release` | tagging and publishing `vX.Y.Z` |
 | `use-a-worktree` | branching work in isolation |
 | `review` | reviewing a change here |
 | `docs-sync` | keeping docs true in the same change |

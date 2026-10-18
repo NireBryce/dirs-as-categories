@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/NireBryce/dirs-as-categories/blob/main/doc/format.schema.json",
+  "title": "flake.moduleGraph, version 1",
+  "description": "What dirs-as-categories built from a modules tree. doc/format.md describes each field; this schema and that table change together. It rejects unknown fields, so it describes exactly what one release publishes: a reader should validate with the schema from the release it reads, or ignore fields it doesn't know.",
+  "type": "object",
+  "required": ["version", "classes", "categories", "folders", "modules", "includes", "enables", "defaults", "admin"],
+  "additionalProperties": false,
+  "$defs": {
+    "name": { "type": "string", "minLength": 1 },
+    "path": { "type": "string", "minLength": 1, "pattern": "^[^/]" },
+    "names": { "type": "array", "items": { "$ref": "#/$defs/name" } },
+    "flag": { "type": ["boolean", "null"] },
+    "byClass": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/names" }
+    }
+  },
+  "properties": {
+    "version": { "const": 1 },
+    "classes": { "$ref": "#/$defs/names", "minItems": 1 },
+    "categories": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["dir", "members", "nested", "flag"],
+        "additionalProperties": false,
+        "properties": {
+          "dir": { "$ref": "#/$defs/path" },
+          "members": { "$ref": "#/$defs/names" },
+          "nested": { "$ref": "#/$defs/names" },
+          "flag": { "$ref": "#/$defs/flag" }
+        }
+      }
+    },
+    "folders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["dir", "flag"],
+        "additionalProperties": false,
+        "properties": {
+          "dir": { "$ref": "#/$defs/path" },
+          "flag": { "$ref": "#/$defs/flag" }
+        }
+      }
+    },
+    "modules": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["path", "classes"],
+        "additionalProperties": false,
+        "properties": {
+          "path": { "$ref": "#/$defs/path" },
+          "classes": { "$ref": "#/$defs/names", "minItems": 1 }
+        }
+      }
+    },
+    "includes": { "type": "object", "additionalProperties": { "$ref": "#/$defs/byClass" } },
+    "enables": { "type": "object", "additionalProperties": { "$ref": "#/$defs/byClass" } },
+    "defaults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "dir", "category", "classes"],
+        "additionalProperties": false,
+        "properties": {
+          "path": { "$ref": "#/$defs/path" },
+          "dir": { "$ref": "#/$defs/path" },
+          "category": { "anyOf": [{ "$ref": "#/$defs/path" }, { "type": "null" }] },
+          "classes": { "$ref": "#/$defs/names" }
+        }
+      }
+    },
+    "admin": { "type": "array", "items": { "$ref": "#/$defs/path" } },
+    "orphans": { "$ref": "#/$defs/names" }
+  }
+}

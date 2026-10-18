@@ -1,4 +1,4 @@
-# Nightly: does dirs-as-categories still work with what users will get?
+# Weekly: does dirs-as-categories still work with what users will get?
 #
 # A flake using dirs-as-categories follows its own flake-parts and
 # import-tree, not this repository's flake.lock, and `nix flake init` gives
@@ -8,6 +8,9 @@
 #      import-tree against every fixture;
 #   2. `just templates` -- each template's host evaluated with today's
 #      nixpkgs and home-manager, which catches a renamed option.
+# It runs on Sundays, the day before update-flake-lock opens its Monday PRs,
+# so a red result is on its issue before a lock bump needs reviewing.
+# Weekly, not nightly: the schedule only decides how soon breakage is seen.
 # A failure lands on one reused issue (GITHUB_TOKEN; this repository only).
 
 name: upstream
@@ -15,7 +18,7 @@ name: upstream
 on:
   workflow_dispatch:
   schedule:
-    - cron: '41 4 * * *' # daily 04:41 UTC
+    - cron: '41 4 * * 0' # Sundays 04:41 UTC
 
 permissions:
   contents: read
@@ -41,8 +44,8 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -uo pipefail
-          title="upstream: the nightly check against the latest inputs failed"
-          body="The nightly run of .github/workflows/upstream.yml failed: a new flake-parts, import-tree, nixpkgs or home-manager breaks a fixture or a template. Users get these inputs, so this likely affects them. The step that failed says which; skill \`update-inputs\` says what to read.
+          title="upstream: the weekly check against the latest inputs failed"
+          body="The weekly run of .github/workflows/upstream.yml failed: a new flake-parts, import-tree, nixpkgs or home-manager breaks a fixture or a template. Users get these inputs, so this likely affects them. The step that failed says which; skill \`update-inputs\` says what to read.
 
           Run: ${RUN_URL}"
           existing="$(gh issue list --repo "${REPO}" --state open \

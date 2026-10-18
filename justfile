@@ -18,6 +18,14 @@ lint:
 docs:
     python3 tests/docs.py
 
+# Every published graph the tests build against doc/format.schema.json
+schema:
+    python3 tests/schema.py
+
+# How evaluation time grows with the tree: 2,000 modules against 500 (fails above 6x)
+bench:
+    python3 tests/bench.py
+
 # Show how the main fixture's result differs from tests/expected/main.json
 expected-diff:
     python3 tests/expected.py diff
@@ -31,7 +39,7 @@ new-error name message:
     python3 tests/new_error.py {{quote(name)}} {{quote(message)}}
 
 # Everything CI runs
-preflight: check errors docs lint
+preflight: check errors docs schema bench lint
 
 # Each template's host, evaluated with real nixpkgs and home-manager (network; not in preflight)
 templates:

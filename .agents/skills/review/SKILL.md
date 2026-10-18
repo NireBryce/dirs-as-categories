@@ -23,12 +23,16 @@ step before saying "done".
 
 - **Anything in `nix/scan.nix` reading `config`**, directly or through a
   function it calls -- an infinite recursion waiting for the right tree.
+- **A search repeated per file in `nix/scan.nix`** (`elem`, `filter`,
+  `lib.unique` inside a `map` over files or folders): `just bench` should
+  catch it, but read for it too.
 - **A new behaviour without a fixture**, or a new error without an
   `err-*` tree and a message in `tests/errors.json`.
 - **A check that was never seen failing.** Ask how it was broken on purpose.
 - **Expected output recorded wholesale**: `tests/expected/main.json` changed
   in lines the description doesn't explain.
-- **`flake.moduleGraph` changed** without `doc/format.md`, or a breaking
+- **`flake.moduleGraph` changed** without `doc/format.md` and
+  `doc/format.schema.json`, or a breaking
   change without a `version` bump.
 - **A rule changed** without `doc/convention.md` (its errors table too).
 - **A user-visible change** without a `CHANGELOG.md` line, or a break not

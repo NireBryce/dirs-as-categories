@@ -17,7 +17,7 @@ theirs.
 
 `.github/workflows/update-flake-lock.yml` opens one PR per lock file every
 Monday (it needs the `FLAKE_LOCK_TOKEN` secret; its header says how). The
-nightly `upstream` workflow already ran the fixtures and templates against
+weekly `upstream` workflow (Sundays) already ran the fixtures and templates against
 the newest inputs, so a red `upstream` issue is the first sign an update
 will break something. Reviewing such a PR is this skill; so is a bump by
 hand.
@@ -47,6 +47,16 @@ nix flake update --flake ./dev       # dev/flake.lock
    tables list them.
 4. **A template host still evaluates** when flake-parts or import-tree
    changed (skill `change-a-rule`, its templates step).
+
+## The floors
+
+`README.md#requirements` names the oldest Nix, flake-parts and import-tree,
+and CI's `oldest` job tests them. A change that needs something newer
+raises the floor in both, and says so in `CHANGELOG.md` under **Breaks**.
+To find a floor: lock a scratch copy of the repository with
+`--override-input` at a candidate commit, and run `nix flake check` and
+`python3 tests/errors.py`. Restore `flake.lock` from `HEAD` each time,
+not from the index, or the previous step's lock leaks in.
 
 ## Then
 

@@ -143,6 +143,7 @@ nix eval --json .#moduleGraph
 
 ## Development
 
+[CONTRIBUTING.md](CONTRIBUTING.md) is where to start;
 [Changing dirs-as-categories](wiki/changing-dirs-as-categories.md) walks
 through the checks and the test-first loop.
 
@@ -151,6 +152,21 @@ nix develop ./dev        # a shell with just, python3 and the linters
 just preflight           # everything CI runs: flake check, error messages, doc checks, lint
 just                     # every recipe
 ```
+
+## Requirements
+
+| Needs | Oldest tested |
+|---|---|
+| Nix, with flakes | 2.18 |
+| flake-parts | `d50b490` (2024-09-12), which added `flakeModules.modules`; its nixpkgs `lib` is 24.11.20240901 |
+| import-tree | `4ebb10a` (2026-07-16), which stopped needing `withLib` |
+
+CI runs every fixture and error message against these, in the `oldest`
+job of [`.github/workflows/check.yml`](.github/workflows/check.yml), and
+against the newest flake-parts and import-tree every week. Your flake's
+`follows` decide which versions dirs-as-categories gets. An older
+import-tree stops with `You need to call withLib before trying to read the
+tree.`: update import-tree.
 
 ## Licence
 

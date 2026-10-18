@@ -9,7 +9,8 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-scratch="$(mktemp -d)"
+# pwd -P: on macOS mktemp's /tmp is a symlink, and Nix won't read through one
+scratch="$(cd "$(mktemp -d)" && pwd -P)"
 trap 'rm -rf -- "${scratch:?}"' EXIT
 
 # template:host

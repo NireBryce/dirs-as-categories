@@ -1,0 +1,14 @@
+# Keeps the Actions in .github/workflows current: one PR a week, grouped.
+# Dependabot can't update flake inputs; update-flake-lock.yml does that.
+# It does bump SHA-pinned actions (update-flake-lock.yml's), keeping the
+# date comment beside each pin stale: correct the comment in the PR.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]

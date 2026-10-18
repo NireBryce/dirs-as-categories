@@ -7,13 +7,34 @@ jobs:
   check:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # x86_64-linux, aarch64-linux, aarch64-darwin: the flake's checks
+        # run per system, and a runner checks only its own.
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
       - name: just preflight (flake check, error messages, doc checks, lint)
         run: nix develop ./dev --command just preflight
+  oldest:
+    # The oldest Nix, flake-parts and import-tree that README.md's
+    # "Requirements" names, against every fixture and error message.
+    # Raising a floor changes both places.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.18.9/install
+          extra_nix_config: experimental-features = nix-command flakes
+      - name: Lock the oldest supported inputs (not committed)
+        run: |
+          nix flake lock \
+            --override-input flake-parts github:hercules-ci/flake-parts/d50b490ccc6308ef2d01def3362b86535e3284ba \
+            --override-input import-tree github:denful/import-tree/4ebb10ae17d5f1ad366e7aef5b92cb8eecf24f69
+          git diff --stat flake.lock
+      - name: just check errors docs schema, at the oldest inputs
+        run: nix develop ./dev --command just check errors docs schema
   changelog:
     # A change to nix/*.nix changes what users get, so it says so in CHANGELOG.md.
     if: github.event_name == 'pull_request'

@@ -14,7 +14,7 @@ each module after its file, finds categories from the folder tree, and
 fills `flake.modules.<class>.<name>`. It also publishes what it built as
 `flake.moduleGraph`, which
 [flake-module-graph](https://github.com/NireBryce/flake-module-graph) draws.
-`doc/convention.md` is every rule; `doc/format.md` the published graph.
+`doc/convention.md` is every rule; `doc/format.md` the published graph, `doc/format.schema.json` the same as a JSON Schema.
 
 ## Hard rules
 
@@ -27,6 +27,9 @@ fills `flake.modules.<class>.<name>`. It also publishes what it built as
 - **Branching work happens in its own worktree** (skill `use-a-worktree`).
 - **`git add` before `nix eval` or `nix flake check`**: flakes ignore
   untracked files, so a new fixture silently doesn't exist.
+- **`nix/scan.nix` stays close to linear in the tree's size**: a lookup
+  repeated per file is a set (`setOf`), not a search (`elem`, `filter`,
+  `lib.unique`); `just bench` fails otherwise (issue 6).
 - **Nothing in `nix/scan.nix` reads `config`** -- it decides names and
   imports, which the module system needs before `config` exists (skill
   `change-a-rule`).
@@ -49,6 +52,8 @@ just check           # nix flake check: the main fixture, every error fixture, t
 just errors          # each error fixture's message (a Nix check can only see that it failed)
 just lint            # statix and deadnix over the Nix code, actionlint over the workflows
 just docs            # skills listed, links resolve, every error documented and tested, nix blocks parse
+just schema          # every published graph against doc/format.schema.json (needs the dev shell)
+just bench           # evaluation time at 500 and 2,000 modules; fails when it grows faster than the tree
 just preflight       # all of the above -- what CI runs
 just expected-diff   # how the main fixture's result differs from tests/expected/main.json
 just expected-accept # record it, once every difference is one you meant
@@ -71,8 +76,9 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 | `doc/` | the exact rules (`convention.md`) and format (`format.md`); `style.md` for all docs |
 | `wiki/` | guides: `using-the-flake.md`; `styleguide.md` before adding a page |
 | `dev/` | the development shell's own flake (kept out of the main flake's inputs) |
+| `CONTRIBUTING.md` | where a person starts: issues, the contributor wiki page, the code guide |
 | `CHANGELOG.md` | what changed for users, and what breaks; `Unreleased`, then each release |
-| `.github/` | CI (`check`), the nightly test against the latest inputs (`upstream`), weekly lock PRs (`update-flake-lock`), issue and PR templates |
+| `.github/` | CI (`check`), the weekly test against the latest inputs (`upstream`), Dependabot for Actions, weekly lock PRs (`update-flake-lock`), issue and PR templates |
 
 ## Testing discipline
 
@@ -87,7 +93,8 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 
 ## The contract with flake-module-graph
 
-`flake.moduleGraph` is versioned (`doc/format.md`). Adding a field is fine;
+`flake.moduleGraph` is versioned (`doc/format.md`, and
+`doc/format.schema.json`, which must change with it). Adding a field is fine;
 removing, renaming or changing one's meaning increments `version`, and
 flake-module-graph refuses a version it doesn't know. A change to the
 format is a change to both repositories.

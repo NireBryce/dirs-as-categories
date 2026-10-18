@@ -59,7 +59,7 @@ To use an existing flake-parts flake, add the input and replace
         import-tree.url = "github:denful/import-tree";
 
         dirs-as-categories = {
-            url = "github:NireBryce/dirs-as-categories/v0.1.0";   # a release tag: see CHANGELOG.md before moving it
+            url = "github:NireBryce/dirs-as-categories/v0.1.1";   # a release tag: see CHANGELOG.md before moving it
             inputs = {
                 import-tree.follows = "import-tree";
                 flake-parts.follows = "flake-parts";

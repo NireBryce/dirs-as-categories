@@ -77,7 +77,15 @@ gh pr checks <n> --watch
 gh pr view <n> --json mergeStateStatus,commits,files --jq '.mergeStateStatus'
 ```
 
-Only `CLEAN` is ready (`MERGEABLE` means only "no conflicts"). A red check:
+Only `CLEAN` is ready (`MERGEABLE` means only "no conflicts"). `main`'s
+branch protection requires `check (ubuntu-latest)`, `check (ubuntu-24.04-arm)`,
+`check (macos-latest)`, `oldest` and `changelog`; `gh pr merge` refuses
+until they pass. Those names live in GitHub's settings, not in this
+repository: a PR that renames or removes one of those jobs in
+`.github/workflows/check.yml` leaves every later PR waiting for a check
+that never reports. Such a PR says so, and the protection is updated
+(`gh api repos/NireBryce/dirs-as-categories/branches/main/protection`)
+in the same turn as its merge, with the user's yes. A red check:
 `gh run view <run> --log-failed`, fix, push, wait again; if `just preflight`
 passed locally, the step it missed belongs in `preflight` too.
 

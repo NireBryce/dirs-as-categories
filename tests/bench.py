@@ -55,7 +55,9 @@ def main():
     with tempfile.TemporaryDirectory() as scratch:
         times = {}
         for modules in (SMALL, LARGE):
-            base = pathlib.Path(scratch) / str(modules)
+            # resolve(): on macOS /tmp is a symlink, and Nix won't read a
+            # tree through one ("path '/tmp' (or its ancestor) is a symlink")
+            base = pathlib.Path(scratch).resolve() / str(modules)
             tree(base, modules)
             seconds(base)                       # warm: fetch inputs, fill the eval cache
             times[modules] = min(seconds(base) for _ in range(2))

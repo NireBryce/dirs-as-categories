@@ -28,7 +28,7 @@ jobs:
   latest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: cachix/install-nix-action@v31
       - name: Update the inputs (not committed)
         run: nix flake update && git diff --stat flake.lock

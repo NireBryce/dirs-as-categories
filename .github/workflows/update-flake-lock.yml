@@ -93,9 +93,9 @@ jobs:
             branch: update-dev-flake-lock
             title: "chore: update dev/flake.lock"
     steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@b074b4ad5f255f9c8a6a2414a2f07e7f4f2925a3 # 2026-09-08
-      - uses: DeterminateSystems/update-flake-lock@daaf842c7377c22fe4dec85d511edcf4d889844a # 2026-09-08
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@2cb76beab460be7e44442c7ebdcbc30b638416df # 2026-09-08
+      - uses: DeterminateSystems/update-flake-lock@94ec8663aab64b7339b58aae321906a0e3b9f01f # 2026-09-08
         with:
           token: ${{ secrets.FLAKE_LOCK_TOKEN }}
           base: main

@@ -14,8 +14,10 @@
 # Until the secret exists, each run fails at the preflight step and says
 # so on one issue.
 #
-# Third-party actions are pinned by full SHA (the pins nixos-configs used on
-# 2026-09-08): they run with `contents: write`. Bump them deliberately.
+# Third-party actions are pinned by full SHA, each its repository's main
+# branch on the date beside it: they run with `contents: write`.
+# Dependabot proposes newer pins; check that each is on that repository's
+# main branch, and correct the date, which Dependabot doesn't.
 
 name: update-flake-lock
 
@@ -93,9 +95,9 @@ jobs:
             branch: update-dev-flake-lock
             title: "chore: update dev/flake.lock"
     steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@b074b4ad5f255f9c8a6a2414a2f07e7f4f2925a3 # 2026-09-08
-      - uses: DeterminateSystems/update-flake-lock@daaf842c7377c22fe4dec85d511edcf4d889844a # 2026-09-08
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@2cb76beab460be7e44442c7ebdcbc30b638416df # 2026-10-08
+      - uses: DeterminateSystems/update-flake-lock@94ec8663aab64b7339b58aae321906a0e3b9f01f # 2026-10-08
         with:
           token: ${{ secrets.FLAKE_LOCK_TOKEN }}
           base: main

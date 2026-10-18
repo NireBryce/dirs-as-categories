@@ -27,6 +27,9 @@ fills `flake.modules.<class>.<name>`. It also publishes what it built as
 - **Branching work happens in its own worktree** (skill `use-a-worktree`).
 - **`git add` before `nix eval` or `nix flake check`**: flakes ignore
   untracked files, so a new fixture silently doesn't exist.
+- **`nix/scan.nix` stays close to linear in the tree's size**: a lookup
+  repeated per file is a set (`setOf`), not a search (`elem`, `filter`,
+  `lib.unique`); `just bench` fails otherwise (issue 6).
 - **Nothing in `nix/scan.nix` reads `config`** -- it decides names and
   imports, which the module system needs before `config` exists (skill
   `change-a-rule`).
@@ -50,6 +53,7 @@ just errors          # each error fixture's message (a Nix check can only see th
 just lint            # statix and deadnix over the Nix code, actionlint over the workflows
 just docs            # skills listed, links resolve, every error documented and tested, nix blocks parse
 just schema          # every published graph against doc/format.schema.json (needs the dev shell)
+just bench           # evaluation time at 500 and 2,000 modules; fails when it grows faster than the tree
 just preflight       # all of the above -- what CI runs
 just expected-diff   # how the main fixture's result differs from tests/expected/main.json
 just expected-accept # record it, once every difference is one you meant

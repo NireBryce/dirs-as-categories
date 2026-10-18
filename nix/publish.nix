@@ -6,7 +6,7 @@
 # the format: see "The contract with flake-module-graph" in AGENTS.md.
 { lib, classes, scan }:
 let
-    inherit (lib) filter elem listToAttrs nameValuePair;
+    inherit (lib) filter listToAttrs nameValuePair;
 
     # { <module name> = <that module's value for key>; } for each module
     # that has `key`:  byModule "includes" == { laptop = { nixos = [ "base" ]; }; }
@@ -26,7 +26,7 @@ in
 
     # plain folders: below the top level, and not categories
     folders = map (dir: { inherit dir; flag = scan.flagOf dir; })
-                  (filter (dir: !scan.isTopLevel dir && !(elem dir scan.categories)) scan.folders);
+                  (filter (dir: !scan.isTopLevel dir && !(scan.isCategoryDir dir)) scan.folders);
 
     modules = listToAttrs (map (mod: nameValuePair mod.name {
         inherit (mod) path;

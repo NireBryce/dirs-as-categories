@@ -17,6 +17,9 @@ is not part of what a release keeps; their meaning is.
 - The README's "Requirements" section names the oldest Nix (2.18),
   flake-parts (`d50b490`, 2024-09-12) and import-tree (`4ebb10a`,
   2026-07-16) dirs-as-categories works with, and CI tests them.
+- Evaluation stays fast in a large tree: 2,000 modules evaluate in about
+  0.6 s, where they took about 11 s, and time now grows in proportion to
+  the tree (issue 6). Results are unchanged.
 - `doc/format.schema.json`: `flake.moduleGraph`'s format as a JSON Schema,
   for tools that read the graph.
 

@@ -15,7 +15,7 @@
 # Nix syntax this file uses.
 { lib, inputs, settings, root, files }:
 let
-    inherit (lib) filter concatMap unique hasPrefix optional length elem attrNames concatStringsSep;
+    inherit (lib) filter concatMap unique hasPrefix optional length elem attrNames concatStringsSep listToAttrs nameValuePair;
     inherit (settings) classes;
 
     # Stops evaluation. Every error message starts the same way, so a user
@@ -48,6 +48,26 @@ let
     didYouMean = candidates: word:
         let match = closest candidates word; in
         if match == null then "" else " (did you mean ${quote match}?)";
+
+    # ── lookups that stay fast in a large tree ──────────────────────────────
+    # Asking "is x in this list?" for every file in turn takes time
+    # proportional to files × list (issue 6). A set answers it at once:
+    #   setOf [ "a" "b" ] == { a = true; b = true; }, and then  set ? ${x}
+    setOf = strings: listToAttrs (map (string: nameValuePair string true) strings);
+
+    # `lib.unique` for strings, in the same order, without comparing each
+    # element with every other: an element stays when it is the first with
+    # its value. (listToAttrs keeps the first of several equal names.)
+    #   uniqueStrings [ "b" "a" "b" ] == [ "b" "a" ]
+    uniqueStrings = strings:
+        let firstIndex = listToAttrs (lib.imap0 (index: string: nameValuePair string index) strings); in
+        map (item: item.string)
+            (filter (item: firstIndex.${item.string} == item.index)
+                    (lib.imap0 (index: string: { inherit index string; }) strings));
+
+    # groupBy, keyed by a path that may be null (no category): "" stands for null.
+    groupByPath = pathOf: list: lib.groupBy (item: let path = pathOf item; in if path == null then "" else path) list;
+    inGroup     = groups: path: groups.${if path == null then "" else path} or [ ];
 
     # ── 1. Paths ────────────────────────────────────────────────────────────
     # Every path from here on is a string relative to the tree's root, such
@@ -230,16 +250,23 @@ let
 
     # ── 3. Which folders are categories ─────────────────────────────────────
 
-    moduleDirs = unique (map (mod: dirOf mod.path) modules);
+    moduleDirs = uniqueStrings (map (mod: dirOf mod.path) modules);
+
+    # The folders with a module in one of their subfolders, at any depth:
+    # every folder strictly above a folder that holds a module.
+    hasModuleBelow = setOf (concatMap ancestors moduleDirs);
 
     # Every folder that holds a module file or a defaults.nix, at any depth.
-    folders = unique (concatMap (entry: ancestors entry.path) (moduleFiles ++ defaults));
+    folders = uniqueStrings (concatMap (entry: ancestors entry.path) (moduleFiles ++ defaults));
+
+    # { <folder> = [ the module files and defaults.nix directly in it ]; }
+    filesByDir = lib.groupBy (entry: dirOf entry.path) (moduleFiles ++ defaults);
 
     # The `folderIsCategory` that the files directly in `dir` set, or null
     # when none sets one. Files that disagree are an error.
     flagOf = dir:
         let
-            filesHere = filter (entry: dirOf entry.path == dir) (moduleFiles ++ defaults);
+            filesHere = filesByDir.${dir} or [ ];
             flags     = unique (concatMap (entry: optional (entry.value ? folderIsCategory) entry.value.folderIsCategory)
                                           filesHere);
         in
@@ -255,12 +282,14 @@ let
         if isTopLevel dir then
             (if flag == true then fail "${dir}: a top-level folder is an area and can't be a category" else false)
         else if flag != null then flag
-        else lib.any (within dir) moduleDirs;
+        else hasModuleBelow ? ${dir};
 
-    categories = filter isCategory folders;
+    categories    = filter isCategory folders;
+    categorySet   = setOf categories;
+    isCategoryDir = dir: categorySet ? ${dir};
 
     # The categories above a path, nearest first.
-    categoriesAbove = path: filter (dir: elem dir categories) (ancestors path);
+    categoriesAbove = path: filter isCategoryDir (ancestors path);
 
     # The nearest category strictly above a path, or null. For a module
     # file, this is the category the module belongs to.
@@ -268,12 +297,15 @@ let
         let above = categoriesAbove path; in
         if above == [ ] then null else builtins.head above;
 
-    categoryAtOrAbove = dir: if elem dir categories then dir else categoryAbove dir;
+    categoryAtOrAbove = dir: if isCategoryDir dir then dir else categoryAbove dir;
 
     # What a category imports directly: its own modules, and the categories
-    # nested in it with no other category between.
-    ownModules = category: filter (mod: categoryAbove mod.path == category) modules;
-    nestedIn   = category: filter (nested: categoryAbove nested == category) categories;
+    # nested in it with no other category between. Grouped once, in tree
+    # order, rather than searched for once per category.
+    modulesByCategory    = groupByPath (mod: categoryAbove mod.path) modules;
+    categoriesByCategory = groupByPath categoryAbove categories;
+    ownModules = inGroup modulesByCategory;
+    nestedIn   = inGroup categoriesByCategory;
 
     # ── 4. Names ────────────────────────────────────────────────────────────
     # Modules and categories share one namespace: a name means one thing.
@@ -288,6 +320,10 @@ let
     known   = map (item: item.name) named;
     knownIn = class: map (mod: mod.name) (modulesOf class) ++ map baseNameOf categories;
 
+    # The same, as sets, for checking every reference without a search each.
+    knownSet     = setOf known;
+    knownInClass = lib.genAttrs classes (class: setOf (knownIn class));
+
     # Every name a file lists in `includes` or `enables`, one record each:
     #   { from = "hosts/laptop.nix"; kind = "includes"; class = "nixos"; name = "base"; }
     # They are all checked up front, rather than when a host happens to use
@@ -299,7 +335,7 @@ let
     references = concatMap (mod: referencesOf mod "includes" ++ referencesOf mod "enables") moduleFiles;
 
     # What is wrong with one reference, or null when nothing is.
-    plainFolders = filter (dir: !isTopLevel dir && !(elem dir categories)) folders;
+    plainFolders = filter (dir: !isTopLevel dir && !(isCategoryDir dir)) folders;
 
     # Advice for a name that is a plain folder's: such a folder has no name.
     plainFolderHint = name:
@@ -313,8 +349,8 @@ let
     referenceProblem = { from, kind, class, name }:
         let where = "${from}: ${kind}.${class}"; in
         if !(elem class classes) then "${where}: unknown class${didYouMean classes class}"
-        else if elem name (knownIn class) then null
-        else if elem name known then "${where}: `${name}` has no ${class} module"
+        else if knownInClass.${class} ? ${name} then null
+        else if knownSet ? ${name} then "${where}: `${name}` has no ${class} module"
         else if lib.any (dir: baseNameOf dir == name) plainFolders then "${where}: unknown name `${name}`${plainFolderHint name}"
         else "${where}: unknown name `${name}`${didYouMean (knownIn class) name}";
 
@@ -328,9 +364,9 @@ let
     # outside every category are entry points (hosts, home configurations)
     # that nothing is meant to name, so they are never orphans.
 
-    reachedNames = unique (map (reference: reference.name) references);
-    isReached    = mod: elem mod.name reachedNames
-                     || lib.any (category: elem (baseNameOf category) reachedNames) (categoriesAbove mod.path);
+    reachedNames = setOf (map (reference: reference.name) references);
+    isReached    = mod: reachedNames ? ${mod.name}
+                     || lib.any (category: reachedNames ? ${baseNameOf category}) (categoriesAbove mod.path);
     isOrphan     = mod: categoriesAbove mod.path != [ ] && !(isReached mod);
     orphans      = map (mod: mod.name) (filter isOrphan modules);
 
@@ -358,6 +394,6 @@ let
         else true;
 in
 {
-    inherit rootStr isTopLevel admin defaults modules hasClass modulesOf categories folders flagOf
+    inherit rootStr isTopLevel admin defaults modules hasClass modulesOf categories isCategoryDir folders flagOf
             ownModules nestedIn defaultsReach appliesTo orphans checked;
 }

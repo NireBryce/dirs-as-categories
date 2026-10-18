@@ -87,6 +87,8 @@ holding it is the one taken.
 | `lib.groupBy' op start key list` | a set of lists, grouping elements by `key element` |
 | `lib.functionArgs f` | `{ <argument> = <has a default>; … }` for a function taking a set |
 | `lib.setFunctionArgs f args` | `f`, reporting `args` as the arguments it takes |
+| `lib.imap0 f list` | `map`, with each element's index (from 0) as `f`'s first argument |
+| `lib.groupBy key list` | `{ <key element> = [ the elements with that key, in order ]; }` |
 | `lib.throwIfNot cond msg value` | `value`, or a `throw msg` when `cond` is false |
 | `lib.findFirst pred default list` | the first element passing `pred`, or `default` |
 | `lib.sort less list` | `list` sorted, `less a b` saying whether `a` goes first |

@@ -24,6 +24,9 @@ fills `flake.modules.<class>.<name>`. It also publishes what it built as
   here promises compatibility yet.
 - **"push" means skill `ship`**: branch, PR, green CI, one confirmation
   covering merge and branch deletion. Never push to `main` directly.
+  GitHub enforces it (branch protection since 2026-10-18): `main` takes
+  only pull requests whose required checks pass. An admin can bypass it;
+  an agent never does.
 - **Branching work happens in its own worktree** (skill `use-a-worktree`).
 - **`git add` before `nix eval` or `nix flake check`**: flakes ignore
   untracked files, so a new fixture silently doesn't exist.

@@ -53,7 +53,7 @@ fills `flake.modules.<class>.<name>`. It also publishes what it built as
 just                 # list recipes
 just check           # nix flake check: the main fixture, every error fixture, the template
 just errors          # each error fixture's message (a Nix check can only see that it failed)
-just lint            # statix and deadnix over the Nix code, actionlint over the workflows
+just lint            # statix and deadnix over the Nix code, actionlint over the workflows (needs the dev shell)
 just docs            # skills listed, links resolve, every error documented and tested, nix blocks parse
 just schema          # every published graph against doc/format.schema.json (needs the dev shell)
 just bench           # evaluation time at 500 and 2,000 modules; fails when it grows faster than the tree

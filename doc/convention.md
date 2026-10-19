@@ -94,7 +94,9 @@ for, and in every class the file has `includes` for. A file with neither
 
 **Name.** A module's name is its filename without `.nix`. A file named
 `default.nix` takes its folder's name instead. A `default.nix` directly in
-the tree's root is an error.
+the tree's root is an error, and so is a module or category named
+`outPath`: Nix reads a set with an `outPath` attribute as a path, which
+would turn `flake.moduleGraph.modules` into that one module's record.
 
 **`includes.<class>`.** Each name is a module or category of that class, and
 the module imports every name listed. Modules and categories share one
@@ -157,6 +159,9 @@ anything in the file's folder's subtree:
 
 Each `defaults.nix` loads once per configuration, however many routes reach
 the file, because every module dirs-as-categories creates carries a `key`.
+The key names the tree's root, so two trees imported into one flake that
+both have a module `ssh` both reach a configuration that includes `ssh`;
+the same tree imported twice still loads once.
 
 Definitions keep their file: errors and `options.<x>.definitionsWithLocations`
 name `defaults.nix`, not dirs-as-categories.
@@ -187,6 +192,7 @@ Each error stops evaluation with `dirs-as-categories: <path>: <what>`.
 | Error | Raised when |
 |---|---|
 | `names used more than once: <name> (<paths>)` | two modules, two categories, or a module and a category share a name (including `x.nix` beside `x/default.nix`) |
+| `` `outPath` can't be a name `` | a module file is `outPath.nix`, or a category's folder is `outPath` |
 | `unknown key` | a module file or `defaults.nix` has a key that isn't allowed, or any file has a near miss of one (`nixOS`); the message suggests the key meant |
 | `` asks for <args> at the top of the file, where only `lib` and `inputs` exist `` | a function asking for `config`, `pkgs` or the like returns class keys |
 | `asks for <args>, which only a NixOS or Home Manager module gets` | a function asking for `pkgs`, `modulesPath` or the like has no class keys: a NixOS module in the tree |

@@ -317,6 +317,16 @@ let
     pathsByName = lib.groupBy' (paths: item: paths ++ [ item.path ]) [ ] (item: item.name) named;
     clashes     = lib.filterAttrs (_: paths: length paths > 1) pathsByName;
 
+    # A name Nix itself gives a meaning to. `builtins.toJSON` and string
+    # interpolation read a set with an `outPath` as that one value, so a
+    # module called `outPath` would replace all of `moduleGraph.modules`
+    # with its own record. (Names starting with `_`, such as `__functor`,
+    # never get here: import-tree skips those paths.)
+    reservedNames = setOf [ "outPath" ];
+    reservedUses  = filter (item: reservedNames ? ${item.name}) named;
+    reservedMessage = item: "${item.path}: `${item.name}` can't be a name: Nix reads a set with an `outPath` "
+        + "as a path, so the published graph would lose every other module; rename it";
+
     known   = map (item: item.name) named;
     knownIn = class: map (mod: mod.name) (modulesOf class) ++ map baseNameOf categories;
 
@@ -389,7 +399,8 @@ let
     # when nothing else happens to look at the names involved.
     clashMessages = lib.mapAttrsToList (name: paths: "${name} (${concatStringsSep ", " paths})") clashes;
     checked =
-        if clashes != { } then fail "names used more than once: ${concatStringsSep "; " clashMessages}"
+        if reservedUses != [ ] then fail (reservedMessage (builtins.head reservedUses))
+        else if clashes != { } then fail "names used more than once: ${concatStringsSep "; " clashMessages}"
         else if referenceProblems != [ ] then fail (concatStringsSep "; " referenceProblems)
         else true;
 in

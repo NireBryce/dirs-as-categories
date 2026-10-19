@@ -17,6 +17,7 @@
     "err-no-modules-import": "flake.modules has no type: add inputs.flake-parts.flakeModules.modules to imports, beside lib.tree",
     "err-not-a-set": "a/c/one/y.nix: expected an attribute set (a module) or a function",
     "err-plain-folder": "h/host.nix: includes.nixos: unknown name `one` (a/c/one is a plain folder, which has no name; include its category `c`, or make the folder a category with folderIsCategory = true)",
+    "err-reserved-name": "a/c/one/outPath.nix: `outPath` can't be a name: Nix reads a set with an `outPath` as a path, so the published graph would lose every other module; rename it",
     "err-root-default": "default.nix: a default.nix needs a folder to take its name from",
     "err-typo": "a/c/one/x.nix: unknown key `nixOS` (did you mean `nixos`?); expected one of:",
     "err-typo-only": "a/c/one/y.nix: unknown key `nixOS` (did you mean `nixos`?)",

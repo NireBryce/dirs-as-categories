@@ -14,7 +14,8 @@ is not part of what a release keeps; their meaning is.
 
 ### Fixed
 
-- A flake that imports a tree twice, or two trees, evaluates again. Before,
+- A flake that imports a tree twice, or two trees that don't refer to each
+  other, evaluates again. Before,
   each import declared `dirsAsCategories.checkOrphans` and
   `flake.moduleGraph` again, so every `checks.<system>` and
   `flake.moduleGraph` stopped with ``The option `…' … is already

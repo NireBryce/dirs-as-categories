@@ -217,11 +217,18 @@ evaluates, not only when a host that uses those names does.
 
 ## Limits
 
-- `flake.moduleGraph` describes one tree. A flake that imports two trees
-  gets `flake.modules` and the orphan check from both, but reading
-  `flake.moduleGraph` stops with an error. A tree imported twice counts
-  once. A graph covering several trees would need a new format version;
-  until then, one tree per graph (decided 2026-10-19,
+- A flake can import more than one tree only when no tree refers to
+  another. Each tree checks names against its own files, so a host in one
+  tree that includes another tree's category stops with
+  ``includes.nixos: unknown name `base` ``; the orphan check sees only each
+  tree's own `includes`; and one name in two trees (even a category in one
+  and a module in the other) is no error: the two merge into one
+  `flake.modules.<class>.<name>`, and a host that includes the name gets
+  both. A tree imported twice counts once.
+- `flake.moduleGraph` describes one tree: with two trees, reading it stops
+  with an error. Trees that see each other's names, and a graph covering
+  several trees, would need a new format version; until then, one tree per
+  graph (decided 2026-10-19,
   [issue 20](https://github.com/NireBryce/dirs-as-categories/issues/20)).
 - You must import `flake-parts.flakeModules.modules`, because that module
   declares `flake.modules`. Without it, reading `flake.modules` stops with

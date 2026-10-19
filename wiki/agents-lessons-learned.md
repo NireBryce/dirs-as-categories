@@ -15,6 +15,8 @@ checked. Skill `record-a-lesson` adds to this page.
 - [Calling a user's file early](#calling-a-users-file-early)
 - [A flake-parts module's keys can't depend on `config`](#a-flake-parts-modules-keys-cant-depend-on-config)
 - [Comparing two `tryEval` results](#comparing-two-tryeval-results)
+- [A probe tree follows the convention too](#a-probe-tree-follows-the-convention-too)
+- [Test a combination the way a user combines](#test-a-combination-the-way-a-user-combines)
 
 ## Evaluating without GitHub tarballs
 
@@ -180,3 +182,34 @@ once != false && evaluates (throw "both fail") == once   # false, as it should b
 ```
 
 Checked on 2026-10-19 with Nix 2.34.6.
+
+## A probe tree follows the convention too
+
+A scratch tree written to test two trees together stopped with an error
+that had nothing to do with two trees:
+
+```
+error: dirs-as-categories: hosts/laptop.nix: includes.nixos: unknown name `desktop` (general/desktop is a plain folder, which has no name; make the folder a category with folderIsCategory = true)
+```
+
+The tree held `general/desktop/plasma.nix`. A folder is a category only
+when a module sits in a subfolder below it
+([convention](../doc/convention.md)), so `general/desktop` was a plain
+folder. Lay a probe tree out as the example flakes do, one folder per
+module (`general/desktop/plasma/plasma.nix`), and read the error before
+blaming the change you are testing. Checked on 2026-10-19.
+
+## Test a combination the way a user combines
+
+The `two-trees` test in `tests/default.nix` has passed since it was added
+on 2026-10-18, while the reason anyone would import two trees -- a host in
+one tree including a category from another -- stops with
+``unknown name `base` ``. The test
+imported two trees that never referred to each other, which checks the
+mechanism (module `key`s) rather than the use.
+
+When a test covers combining things (two trees, two classes, a tree
+imported twice), write the case a user would write, and run the same files
+as a single tree as a control: a difference between the two results is
+either the feature or a bug. Checked on 2026-10-19 with probe trees in a
+scratch directory; the results are in issue 20.

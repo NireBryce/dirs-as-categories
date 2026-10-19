@@ -1,9 +1,10 @@
 # Using the flake
 
-_Last modified: 2026-10-17_
+_Last modified: 2026-10-18_
 
-This page takes you from an empty flake to hosts with Home Manager, then
-covers checks, migrating an existing flake, and what each error means. For
+This page walks through how dirs-as-categories works on an example
+flake, adds it to your flake, explains a tree with hosts and Home Manager, then covers checks, migrating a flake that
+names its modules by hand, and what each error means. For
 the exact rules, see [`../doc/convention.md`](../doc/convention.md).
 
 **dirs-as-categories is experimental** and may change without notice; read
@@ -13,6 +14,7 @@ anything you care about.
 ## Contents
 
 - [Quick facts](#quick-facts)
+- [How it works, on the example flake](#how-it-works-on-the-example-flake)
 - [Setting it up](#setting-it-up)
 - [Laying out the tree](#laying-out-the-tree)
 - [Writing a module](#writing-a-module)
@@ -29,7 +31,8 @@ anything you care about.
 
 | You want to | Do |
 |---|---|
-| start a new flake | run `nix flake init -t github:NireBryce/dirs-as-categories`, or `…#home-manager` for Home Manager too |
+| use it in your flake | add the input, and `(inputs.dirs-as-categories.lib.tree ./modules)` to `imports` ([Setting it up](#setting-it-up)) |
+| see it work on an example | read [How it works, on the example flake](#how-it-works-on-the-example-flake) |
 | add a module | create a file `{ nixos = …; }` in a category's folder; the filename is the module's name |
 | use `lib` or `inputs` in a module | make the file `{ lib, inputs, ... }: { nixos = …; }` |
 | make a category | give a folder a subfolder holding modules (or set `folderIsCategory = true`) |
@@ -40,56 +43,126 @@ anything you care about.
 | catch modules nothing uses | set `dirsAsCategories.checkOrphans = true;` |
 | see what dirs-as-categories built | run `nix eval --json .#moduleGraph` |
 
-## Setting it up
+## How it works, on the example flake
 
-To start a new flake, run `nix flake init -t github:NireBryce/dirs-as-categories`.
-The template has one host and one category, and a README listing the next
-steps: naming the host, adding its hardware configuration, building it.
-`nix flake init -t github:NireBryce/dirs-as-categories#home-manager` starts
-from the tree this page uses instead.
+[`example-flake/home-manager/`](../example-flake/home-manager/) is a small
+flake that uses dirs-as-categories: a NixOS host, `laptop`, whose user
+`me` gets a Home Manager configuration. It is an example to read and
+evaluate, not a configuration to switch a machine to. From a clone of
+this repository, ask what dirs-as-categories built from it:
 
-To use an existing flake-parts flake, add the input and replace
-`import-tree`'s line in `imports`:
-
-```nix
-{
-    inputs = {
-        nixpkgs.url     = "github:NixOS/nixpkgs/nixos-unstable";
-        flake-parts.url = "github:hercules-ci/flake-parts";
-        import-tree.url = "github:denful/import-tree";
-
-        dirs-as-categories = {
-            url = "github:NireBryce/dirs-as-categories/v0.1.1";   # a release tag: see CHANGELOG.md before moving it
-            inputs = {
-                import-tree.follows = "import-tree";
-                flake-parts.follows = "flake-parts";
-            };
-        };
-    };
-
-    outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-        systems = [ "x86_64-linux" ];
-        imports = [
-            inputs.flake-parts.flakeModules.modules
-            (inputs.dirs-as-categories.lib.tree ./modules)
-        ];
-    };
-}
+```sh
+nix eval --json --no-write-lock-file ./example-flake/home-manager#moduleGraph
 ```
 
-The `url` names a release tag, so `nix flake update` never moves you to a
-release with breaking changes; to move, change the tag after reading the
-[CHANGELOG](../CHANGELOG.md). `flake-parts.flakeModules.modules` declares
-`flake.modules`, which dirs-as-categories fills. The `follows` lines keep one copy of import-tree
-and flake-parts. For classes beyond `nixos`, `homeManager` and
-`darwin`, use
-`(inputs.dirs-as-categories.lib.tree.addClasses [ "nixOnDroid" ] ./modules)`.
+Its `flake.nix` has the two lines from [Setting it up](#setting-it-up):
+the input, and `(inputs.dirs-as-categories.lib.tree ./modules)` in
+`imports`. Everything else comes from the files under `modules/` (the
+tree is drawn in [Laying out the tree](#laying-out-the-tree)):
+
+1. **Each file is a module, named after the file.**
+   `shared/base/ssh/ssh.nix` holds `{ nixos = …; }`, so it becomes
+   `flake.modules.nixos.ssh`; the graph lists it as `modules.ssh`, with
+   `classes` `[ "nixos" ]`.
+2. **Folders become categories.** `shared/base/` has subfolders that hold
+   modules, so it is the category `base`, and `categories.base.members`
+   is `[ "enable-home-manager" "locale" "ssh" ]`. `ssh/` is a plain
+   folder (listed in `folders`): it only groups files. `shared/` is at the
+   top level, an area, and never a category.
+3. **A host includes things by name.** `hosts/laptop.nix` sets
+   `includes.nixos = [ "base" "desktop" ];`, which the graph shows as
+   `includes.laptop`. Including `base` brings every module beneath it,
+   and `shared/base/defaults.nix` with them (listed in `defaults`).
+4. **A module can hand one of another class over.**
+   `enable-home-manager.nix` sets `enables.homeManager = [ "me-home" ];`
+   and gives `enabled.homeManager.me-home` to Home Manager as the user
+   `me`'s configuration. `users/me-home.nix` includes the category
+   `shell`, so `me` gets git and bash.
+5. **Any other file is ordinary flake-parts.** `hosts/hosts.nix` asks for
+   `config`, so it is not a module file: dirs-as-categories imports it as
+   it is (listed in `admin`), and it builds
+   `nixosConfigurations.laptop` from `flake.modules.nixos.laptop`.
+6. **Draw it** with
+   [flake-module-graph](https://github.com/NireBryce/flake-module-graph):
+
+   ```sh
+   nix run github:NireBryce/flake-module-graph/v0.1.0 -- html --flake ./example-flake/home-manager > modules.html
+   ```
+
+Each step has its own section below. A file added to the tree shows up
+the same way: `shared/shell/fish/fish.nix` holding
+`{ homeManager.programs.fish.enable = true; }` joins `shell`'s members,
+and `me` gets it with no other change.
+[`example-flake/default/`](../example-flake/default/) is a smaller
+example: one host and one category.
+
+## Setting it up
+
+These steps add dirs-as-categories to a flake-parts flake you already
+have.
+
+1. **Add the input**, beside flake-parts and import-tree:
+
+   ```nix
+   {
+       inputs = {
+           nixpkgs.url     = "github:NixOS/nixpkgs/nixos-unstable";
+           flake-parts.url = "github:hercules-ci/flake-parts";
+           import-tree.url = "github:denful/import-tree";
+
+           dirs-as-categories = {
+               url = "github:NireBryce/dirs-as-categories/v0.1.1";   # a release tag: see CHANGELOG.md before moving it
+               inputs = {
+                   import-tree.follows = "import-tree";
+                   flake-parts.follows = "flake-parts";
+               };
+           };
+       };
+   }
+   ```
+
+   The `url` names a release tag, so `nix flake update` never moves you to
+   a release with breaking changes; to move, change the tag after reading
+   the [CHANGELOG](../CHANGELOG.md). The `follows` lines keep one copy of
+   import-tree and flake-parts.
+2. **Import the tree** in `mkFlake`'s `imports`, in place of import-tree's
+   line if you have one:
+
+   ```nix
+   {
+       outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+           systems = [ "x86_64-linux" ];
+           imports = [
+               inputs.flake-parts.flakeModules.modules
+               (inputs.dirs-as-categories.lib.tree ./modules)
+           ];
+       };
+   }
+   ```
+
+   `flake-parts.flakeModules.modules` declares `flake.modules`, which
+   dirs-as-categories fills. For classes beyond `nixos`, `homeManager` and
+   `darwin`, use
+   `(inputs.dirs-as-categories.lib.tree.addClasses [ "nixOnDroid" ] ./modules)`.
+   A flake that doesn't use flake-parts yet needs its outputs inside
+   `mkFlake` first.
+3. **Put your modules under `modules/`**, one file per module, named after
+   it ([Laying out the tree](#laying-out-the-tree),
+   [Writing a module](#writing-a-module)). Files that already set
+   `flake.modules.<class>.<name>` themselves convert one at a time
+   ([Migrating](#migrating-a-flake-that-names-its-modules-by-hand)).
+4. **Build each host from `flake.modules`**, in a file that asks for
+   `config` ([A host](#a-host)):
+   `nixosConfigurations.laptop = inputs.nixpkgs.lib.nixosSystem { modules = [ config.flake.modules.nixos.laptop ]; };`.
+5. **Look before you switch**: `nix eval --json .#moduleGraph` shows what
+   each host includes, and `nixos-rebuild build --flake .#laptop` builds
+   the host without activating it.
 
 ## Laying out the tree
 
-This page uses the tree below throughout. The tree is the `home-manager`
-template ([`../templates/home-manager/`](../templates/home-manager/)):
-`nix flake check` checks the template's tree, and on 2026-10-17 its host
+This page uses the tree below throughout. The tree is the example
+flake's ([`../example-flake/home-manager/`](../example-flake/home-manager/)):
+`nix flake check` checks the example's tree, and on 2026-10-17 its host
 evaluated to a toplevel derivation, with the user `me` getting git and
 bash from Home Manager:
 

@@ -61,11 +61,11 @@ for values, in `module.nix`, lazily.
   changed in meaning) increments `version` and says so in `doc/format.md`;
   readers such as flake-module-graph refuse a version they don't know.
   Adding a field is not breaking.
-- The templates (`templates/default`, `templates/home-manager`) must still
-  be working flakes: `nix flake check` covers their trees; evaluate a host
-  from one when the change could affect it, with
-  `--override-input dirs-as-categories path:<this checkout>` (the template
-  points at GitHub).
+- The example flakes (`example-flake/default`,
+  `example-flake/home-manager`) must still be working flakes: `nix flake
+  check` covers their trees; `just examples` evaluates their hosts with
+  `--override-input dirs-as-categories path:<this checkout>` (each
+  example points at GitHub).
 - `just preflight`.
 
 ## Keep the code readable

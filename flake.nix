@@ -28,15 +28,6 @@
         {
             lib.tree = tree;
 
-            templates.default = {
-                path        = ./templates/default;
-                description = "A flake-parts flake whose modules come from dirs-as-categories";
-            };
-            templates.home-manager = {
-                path        = ./templates/home-manager;
-                description = "A NixOS host with Home Manager, modules from dirs-as-categories";
-            };
-
             checks = lib.genAttrs systems (system: lib.mapAttrs (check system) tests.checks);
 
             # for tests/errors.py, tests/schema.py and looking at results by hand

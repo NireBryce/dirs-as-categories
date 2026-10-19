@@ -2,3 +2,5 @@ result
 result-*
 *.orig
 __pycache__/
+# the example flakes have no lock file: each evaluation takes their inputs at the latest
+example-flake/*/flake.lock

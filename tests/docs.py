@@ -18,9 +18,9 @@ Each check prints what it found wrong and where. The checks:
 - wiki:     every wiki page has a `_Last modified:` line and is listed in
             wiki/00-INDEX.md.
 - release:  every `github:NireBryce/dirs-as-categories/v…` pin (README,
-            wiki, templates) names the newest release in CHANGELOG.md, so
+            wiki, example-flake) names the newest release in CHANGELOG.md, so
             a release can't leave one behind.
-- tracked:  nothing under nix/, tests/ or templates/ is untracked. A flake
+- tracked:  nothing under nix/, tests/ or example-flake/ is untracked. A flake
             sees only files git knows, so an untracked fixture silently
             doesn't exist -- and an error fixture that doesn't exist still
             "fails", for the wrong reason.
@@ -206,7 +206,7 @@ def check_release():
 
 # ── tracked ─────────────────────────────────────────────────────────────────
 def check_tracked():
-    untracked = subprocess.run(['git', 'ls-files', '--others', '--exclude-standard', 'nix', 'tests', 'templates'],
+    untracked = subprocess.run(['git', 'ls-files', '--others', '--exclude-standard', 'nix', 'tests', 'example-flake'],
                                cwd=ROOT, capture_output=True, text=True).stdout.split()
     for path in untracked:
         problem(path, 'untracked: the flake can\'t see it until you `git add` it')

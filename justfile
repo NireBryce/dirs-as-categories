@@ -41,6 +41,6 @@ new-error name message:
 # Everything CI runs
 preflight: check errors docs schema bench lint
 
-# Each template's host, evaluated with real nixpkgs and home-manager (network; not in preflight)
-templates:
-    bash tests/templates.sh
+# Each example flake's host, evaluated with real nixpkgs and home-manager (network; not in preflight)
+examples:
+    bash tests/examples.sh

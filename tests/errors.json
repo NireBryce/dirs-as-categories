@@ -19,6 +19,7 @@
     "err-plain-folder": "h/host.nix: includes.nixos: unknown name `one` (a/c/one is a plain folder, which has no name; include its category `c`, or make the folder a category with folderIsCategory = true)",
     "err-reserved-name": "a/c/one/outPath.nix: `outPath` can't be a name: Nix reads a set with an `outPath` as a path, so the published graph would lose every other module; rename it",
     "err-root-default": "default.nix: a default.nix needs a folder to take its name from",
+    "err-two-trees": "flake.moduleGraph describes one modules tree, and this flake imports 2: /",
     "err-typo": "a/c/one/x.nix: unknown key `nixOS` (did you mean `nixos`?); expected one of:",
     "err-typo-only": "a/c/one/y.nix: unknown key `nixOS` (did you mean `nixos`?)",
     "err-unknown-name": "h/host.nix: includes.nixos: unknown name `nope`",

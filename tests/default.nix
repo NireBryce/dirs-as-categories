@@ -9,13 +9,15 @@ let
     fixture = name: ./fixtures + "/${name}/modules";
 
     # A fixture whose name ends in -no-modules-import is evaluated without
-    # flake-parts.flakeModules.modules, the mistake it tests.
+    # flake-parts.flakeModules.modules, the mistake it tests. One with an
+    # `other/modules` folder imports that second tree too.
     mkFlake = name: flake-parts.lib.mkFlake {
         inputs = { self = { outPath = ./fixtures + "/${name}"; }; inherit flake-parts; testMarker = "from inputs"; };
     } {
         systems = [ ];
         imports = lib.optional (!lib.hasSuffix "-no-modules-import" name) flake-parts.flakeModules.modules
-               ++ [ (tree (fixture name)) ];
+               ++ [ (tree (fixture name)) ]
+               ++ lib.optional (builtins.pathExists (./fixtures + "/${name}/other")) (tree (./fixtures + "/${name}/other/modules"));
     };
 
     probeModule = { lib, ... }: {
@@ -45,6 +47,7 @@ let
             admin = flake.adminProbe or "admin NOT loaded";
             configAdmin = flake.configAdminProbe or "config admin NOT loaded";
             plainAdmin = flake.plainAdminProbe or "plain admin NOT loaded";
+            wrapperAdmin = flake.wrapperAdminProbe or "wrapper admin NOT loaded";
             hosts = lib.genAttrs [ "h1" "h2" "h3" "h4" "h5" ] (run "nixos");
             hm    = run "homeManager" "hm-agg";
             graph = flake.moduleGraph;
@@ -92,16 +95,20 @@ let
     # Two trees that both have an `ssh` module: the host gets both, and a
     # tree imported twice still counts once. The module system loads one
     # module per `key`, so a key that didn't name its tree would drop one.
-    twoTreesProbe =
-        let
-            treeA = tree ./fixtures/two-trees/a/modules;
-            flake = flake-parts.lib.mkFlake {
-                inputs = { self = { outPath = ./fixtures/two-trees; }; inherit flake-parts; };
-            } {
-                systems = [ ];
-                imports = [ flake-parts.flakeModules.modules treeA treeA (tree ./fixtures/two-trees/b/modules) ];
-            };
-        in (evalHost flake "nixos" "ssh").config.probe;
+    # With a system, so that `perSystem` (the orphan check) is evaluated too:
+    # each tree used to declare the options again.
+    twoTreesFlake = trees: flake-parts.lib.mkFlake {
+        inputs = { self = { outPath = ./fixtures/two-trees; }; inherit flake-parts; };
+    } {
+        systems = [ "x86_64-linux" ];
+        imports = [ flake-parts.flakeModules.modules { dirsAsCategories.checkOrphans = true; } ] ++ map tree trees;
+    };
+    treeA = ./fixtures/two-trees/a/modules;
+    twoTrees = twoTreesFlake [ treeA treeA ./fixtures/two-trees/b/modules ];
+    twoTreesProbe = (evalHost twoTrees "nixos" "ssh").config.probe;
+
+    # What a flake's checks and graph evaluate to, or false when they fail.
+    evaluates = value: (builtins.tryEval (builtins.deepSeq value value)).value;
 
     # ── the example flakes' trees ───────────────────────────────────────────
     # Only the trees: building a host needs nixpkgs, which these tests don't
@@ -156,6 +163,12 @@ in
         two-trees = {
             ok     = lib.sort lib.lessThan twoTreesProbe == [ "ssh from tree a" "ssh from tree b" ];
             detail = "two trees with an `ssh` module each, tree a imported twice: ${builtins.toJSON twoTreesProbe}";
+        };
+        two-trees-checks = {
+            ok = let onceGraph = evaluates (twoTreesFlake [ treeA ]).moduleGraph; in
+                 evaluates (builtins.attrNames twoTrees.checks.x86_64-linux) == [ "module-orphans" ]
+              && onceGraph != false && evaluates (twoTreesFlake [ treeA treeA ]).moduleGraph == onceGraph;
+            detail = "two trees: the orphan check should evaluate, and a tree imported twice should publish the graph it publishes once";
         };
         example-default = {
             ok = example "default" == {

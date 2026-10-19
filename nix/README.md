@@ -1,7 +1,7 @@
 # Reading the code
 
 This page is for someone about to read or change the code in `nix/` who
-doesn't write Nix every day. It shows how the four files fit together, then
+doesn't write Nix every day. It shows how the five files fit together, then
 explains each piece of Nix syntax they use, with an example from the code.
 The rules themselves are in [`../doc/convention.md`](../doc/convention.md);
 how to change one is in the skill
@@ -24,7 +24,10 @@ nix/scan.nix       … which decides what each file is: module, defaults.nix,
                                          │  the scan's result
 nix/module.nix     builds flake.modules.<class>.<name> and imports the
                    ordinary flake-parts modules
-nix/publish.nix    builds flake.moduleGraph from the same scan
+nix/publish.nix    builds this tree's flake.moduleGraph from the same scan
+                                         │  one report per tree
+nix/shared.nix     loaded once however many trees a flake imports: declares
+                   the options, publishes the graph, adds the orphan check
 ```
 
 The split between `scan.nix` and `module.nix` is the one design constraint
@@ -64,6 +67,7 @@ holding it is the one taken.
 | `if c then a else b` | an expression, like `c ? a : b` elsewhere; there is no `if` without `else` | `nameOf` |
 | `throw "msg"` | stop evaluation with an error | `fail` in `scan.nix` |
 | `builtins.tryEval e` | `{ success = true; value = e; }`, or `success = false` if evaluating `e` throws; only a `throw` or `assert` is caught | `peekKeys` in `scan.nix` |
+| `builtins.deepSeq a b` | `b`, after evaluating all of `a` (not only its outermost layer) | `openCall` in `scan.nix` |
 | `args@{ config, ... }: …` | as `{ config, ... }: …`, with the whole argument set also named `args` | the comment on `flakePartsArgs` |
 | `assert c; body` | stop evaluation unless `c` is true, else `body` | `assert scan.checked;` in `module.nix` |
 | `import ./file.nix` | the value of that file's expression | `import ./scan.nix { … }`: import, then call the function the file is |
@@ -91,6 +95,7 @@ holding it is the one taken.
 | `lib.groupBy key list` | `{ <key element> = [ the elements with that key, in order ]; }` |
 | `lib.throwIfNot cond msg value` | `value`, or a `throw msg` when `cond` is false |
 | `lib.findFirst pred default list` | the first element passing `pred`, or `default` |
+| `lib.attrValues set` | the set's values, in the order of `attrNames` |
 | `lib.sort less list` | `list` sorted, `less a b` saying whether `a` goes first |
 | `lib.toLower s`, `lib.replaceStrings from to s` | `s` in lower case; `s` with each string in `from` replaced by its partner in `to` |
 | `lib.strings.levenshtein a b`, `lib.strings.levenshteinAtMost k a b` | how many single-letter edits turn `a` into `b`; whether that is at most `k` |

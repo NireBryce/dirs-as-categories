@@ -13,6 +13,8 @@ checked. Skill `record-a-lesson` adds to this page.
 - [Options declared by a module imported twice](#options-declared-by-a-module-imported-twice)
 - [What `builtins.tryEval` catches](#what-builtinstryeval-catches)
 - [Calling a user's file early](#calling-a-users-file-early)
+- [A flake-parts module's keys can't depend on `config`](#a-flake-parts-modules-keys-cant-depend-on-config)
+- [Comparing two `tryEval` results](#comparing-two-tryeval-results)
 
 ## Evaluating without GitHub tarballs
 
@@ -132,11 +134,49 @@ keys. Two Nix facts decide what such a call can do:
   error: function 'anonymous lambda' called without required argument 'config'
   ```
 
-  The same file imports cleanly into flake-parts directly. On 2026-10-19
-  `canCallEarly` in `nix/scan.nix` treated such a function as callable
-  early.
+  The same file imports cleanly into flake-parts directly. Until
+  2026-10-19 `callEarly` in `nix/scan.nix` called such a function with
+  only `lib` and `inputs`; it now passes throwing stand-ins (`openCall`).
 - Each early call evaluates the file's top level once more. A
   `builtins.trace` there prints twice, once from the scan and once from
   flake-parts.
 
 Checked on 2026-10-19 with probe trees in a scratch directory.
+
+## A flake-parts module's keys can't depend on `config`
+
+A fixture meant to show a module whose keys `nix/scan.nix` can't see
+stopped evaluation in flake-parts itself:
+
+```
+error: infinite recursion encountered
+```
+
+The module system reads every module's top-level keys (`imports`,
+`options`, `config`) before `config` exists. A module that builds its
+top level from `config`, such as
+`{ config, lib, ... }: lib.optionalAttrs (config.systems != [ ]) { … }`,
+is never valid, with or without dirs-as-categories. To hide a module's
+keys from the scan in a valid way, make them depend on `self`, a
+flake-parts argument that exists early but is a stand-in during the scan
+(`tests/fixtures/main/modules/general/_wrapped.nix`). Checked on
+2026-10-19.
+
+## Comparing two `tryEval` results
+
+`(builtins.tryEval e).value` is `false` whenever `e` throws, so a test
+written `evaluates a == evaluates b` passes when both `a` and `b` fail. On
+2026-10-19 the first draft of the `two-trees-checks` test in
+`tests/default.nix` compared the graph of a tree imported twice with the
+graph of the tree imported once, and both failed. Check that one side
+succeeds before comparing:
+
+```nix
+let
+    evaluates = value: (builtins.tryEval (builtins.deepSeq value value)).value;
+    once      = evaluates (throw "both fail");
+in
+once != false && evaluates (throw "both fail") == once   # false, as it should be
+```
+
+Checked on 2026-10-19 with Nix 2.34.6.

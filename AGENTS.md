@@ -76,7 +76,8 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 | `nix/default.nix` | `lib.tree`, `lib.tree.addClasses` and `lib.tree.withClasses` |
 | `nix/scan.nix` | the rules: shapes, names, categories, flags, errors |
 | `nix/module.nix` | `flake.modules`: includes, enables, defaults, `key`s |
-| `nix/publish.nix` | `flake.moduleGraph` |
+| `nix/publish.nix` | one tree's `flake.moduleGraph` |
+| `nix/shared.nix` | what a flake gets once however many trees it imports: the options, `flake.moduleGraph`, the orphan check |
 | `tests/` | fixtures, expected results, and the scripts behind `just errors`, `docs`, `expected-*`, `new-error` |
 | `example-flake/` | two example flakes, `default` and `home-manager`, to read, evaluate and draw (not configurations to switch to, and not `nix flake init` templates); their trees are checked by `just check` |
 | `doc/` | the exact rules (`convention.md`) and format (`format.md`); `style.md` for all docs |

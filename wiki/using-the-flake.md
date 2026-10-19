@@ -1,6 +1,6 @@
 # Using the flake
 
-_Last modified: 2026-10-18_
+_Last modified: 2026-10-19_
 
 This page walks through how dirs-as-categories works on an example
 flake, adds it to your flake, explains a tree with hosts and Home Manager, then covers checks, migrating a flake that
@@ -448,6 +448,7 @@ folder and what is wrong.
 | `<file>: expected an attribute set (a module) or a function (a module of lib/inputs, or a flake-parts module)` | the file evaluates to something else, such as a list or a string; make the file a set of class keys |
 | `flake.modules has no type: add inputs.flake-parts.flakeModules.modules to imports, beside lib.tree` | add `inputs.flake-parts.flakeModules.modules` to the flake's `imports`, as in [Setting it up](#setting-it-up) |
 | `default.nix: a default.nix needs a folder to take its name from` | a `default.nix` in the tree's root has no folder to name it; move the file into a folder, or rename it |
+| `flake.moduleGraph describes one modules tree, and this flake imports 2: …` | the flake imports two trees, and a tool such as flake-module-graph read the graph; the graph format covers one tree, so import one tree when you want the graph |
 
 An import-tree older than 2026-07-16 stops with
 `You need to call withLib before trying to read the tree.` before

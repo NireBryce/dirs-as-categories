@@ -53,7 +53,11 @@ dirs-as-categories looks at the function's required arguments:
   the result has a class or reserved key, the file is a module file (or, for
   `defaults.nix`, a defaults file). Otherwise dirs-as-categories imports the
   file unchanged as a flake-parts module, so `{ lib, ... }: { perSystem = …; }`
-  stays a flake-parts module.
+  stays a flake-parts module. A function that names no arguments
+  (`args: …` or `{ ... }@args: …`) also gets the stand-ins described
+  below, because Nix can't tell what such a function reads; if its result's
+  keys can't be seen without them (`args: import ./_hosts.nix args`), the
+  file is a flake-parts module.
 - If the function requires anything else, such as `config` or `withSystem`,
   the file is a flake-parts module, imported unchanged -- with two
   exceptions, both mistakes. dirs-as-categories calls the function with
@@ -206,14 +210,17 @@ Each error stops evaluation with `dirs-as-categories: <path>: <what>`.
 | `expected an attribute set (a module) or a function` | a file evaluates to neither |
 | `flake.modules has no type: add inputs.flake-parts.flakeModules.modules to imports, beside lib.tree` | the flake doesn't import `flake-parts.flakeModules.modules` |
 | `a default.nix needs a folder to take its name from` | a `default.nix` sits directly in the tree's root |
+| `flake.moduleGraph describes one modules tree, and this flake imports <n>: <roots>` | something reads `flake.moduleGraph` in a flake that imports more than one tree |
 
 dirs-as-categories checks `includes` and `enables` names whenever the flake
 evaluates, not only when a host that uses those names does.
 
 ## Limits
 
-- A flake can use only one `lib.tree`, because `lib.tree` declares the
-  `flake.moduleGraph` option.
+- `flake.moduleGraph` describes one tree. A flake that imports two trees
+  gets `flake.modules` and the orphan check from both, but reading
+  `flake.moduleGraph` stops with an error. A tree imported twice counts
+  once.
 - You must import `flake-parts.flakeModules.modules`, because that module
   declares `flake.modules`. Without it, reading `flake.modules` stops with
   an error.

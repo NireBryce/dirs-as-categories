@@ -138,12 +138,13 @@ let
     canCallEarly = raw:
         builtins.isFunction raw && lib.all (arg: elem arg (attrNames earlyArgs)) (requiredArgs raw);
 
-    # A function written `args: …` instead of `{ lib, ... }: …` lists no
-    # arguments, so it gets all of them. One with a list gets only those it
-    # names, because a function without `...` rejects any others.
+    # A function with a list of arguments gets only those it names, because
+    # a function without `...` rejects any others. One written `args: …` (or
+    # `{ ... }@args: …`) lists none, so Nix can't tell what it will read: it
+    # gets `lib`, `inputs` and the stand-ins below, as `openCall`.
     callEarly = raw:
         let wanted = lib.functionArgs raw; in
-        raw (if wanted == { } then earlyArgs else builtins.intersectAttrs wanted earlyArgs);
+        if wanted == { } then openCall raw else raw (builtins.intersectAttrs wanted earlyArgs);
 
     # ── a function that can't be called early ──
     # A function asking for `config` is usually an ordinary flake-parts
@@ -166,15 +167,29 @@ let
     classModuleArgs = [ "pkgs" "modulesPath" "osConfig" "nixosConfig" "darwinConfig" "utils" ];
 
     standIn  = name: throw "dirs-as-categories read `${name}` while scanning";
+    withStandIns = raw: lib.genAttrs (flakePartsArgs ++ requiredArgs raw) standIn // earlyArgs;
     peekKeys = raw:
         let
             wanted  = lib.functionArgs raw;
-            all     = lib.genAttrs (flakePartsArgs ++ requiredArgs raw) standIn // earlyArgs;
+            all     = withStandIns raw;
             args    = if wanted == { } then all else builtins.intersectAttrs wanted all;
             result  = raw args;
             peeked  = builtins.tryEval (if builtins.isAttrs result then attrNames result else [ ]);
         in
         if peeked.success then peeked.value else [ ];
+
+    # A function written `args: …`, called with stand-ins. It may hand its
+    # arguments to a flake-parts module that reads `config`
+    # (`args: import ./_hosts.nix args`); then a stand-in throws when the
+    # result's keys are read, and the file stays a function -- a flake-parts
+    # module, imported unchanged. `tryEval` catches only a `throw`, which is
+    # why the stand-ins throw rather than being left out.
+    openCall = raw:
+        let
+            result = raw (withStandIns raw);
+            seen   = builtins.tryEval (builtins.isAttrs result && builtins.deepSeq (attrNames result) true);
+        in
+        if seen.success && seen.value then result else raw;
 
     # Fails with advice when a function that can't be called early is one
     # of the two mistakes above; otherwise it is an ordinary flake-parts

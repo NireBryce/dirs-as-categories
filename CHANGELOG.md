@@ -12,6 +12,21 @@ is not part of what a release keeps; their meaning is.
 
 ## Unreleased
 
+### Fixed
+
+- A flake that imports a tree twice, or two trees, evaluates again. Before,
+  each import declared `dirsAsCategories.checkOrphans` and
+  `flake.moduleGraph` again, so every `checks.<system>` and
+  `flake.moduleGraph` stopped with ``The option `…' … is already
+  declared``. A tree imported twice now loads once; with two trees,
+  reading `flake.moduleGraph` stops with
+  `flake.moduleGraph describes one modules tree`, because the format
+  describes one tree.
+- A flake-parts module written `args: …` that hands its arguments on
+  (`args: import ./_hosts.nix args`) loads as a flake-parts module. Before,
+  dirs-as-categories called it with only `lib` and `inputs`, and evaluation
+  stopped with `called without required argument`.
+
 ## v0.2.0 — 2026-10-18
 
 A flake on `v0.1.1` may have to change: read **Breaks**.

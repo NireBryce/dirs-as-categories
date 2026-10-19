@@ -1,10 +1,9 @@
 # Example flake: one host, one category
 
-A small flake whose modules come from the folder tree under `modules/`. It uses
-[dirs-as-categories](../../README.md), which is **experimental**, and is
-here to read, evaluate and draw: not a configuration to copy or switch a
-machine to, since its host has placeholder file systems and no user to
-log in as.
+This flake illustrates the smallest tree: one host and one category, with all
+modules coming from the folder tree under `modules/` through
+[dirs-as-categories](../../README.md). The host has placeholder file systems
+and no user.
 [How it works, on the example flake](../../wiki/using-the-flake.md#how-it-works-on-the-example-flake)
 walks through the larger example beside this one, [`../home-manager/`](../home-manager/).
 

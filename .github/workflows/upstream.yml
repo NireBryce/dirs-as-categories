@@ -1,12 +1,12 @@
 # Weekly: does dirs-as-categories still work with what users will get?
 #
 # A flake using dirs-as-categories follows its own flake-parts and
-# import-tree, not this repository's flake.lock, and `nix flake init` gives
-# a template the latest nixpkgs and home-manager. So this job tests both at
+# import-tree, not this repository's flake.lock, and the example flakes
+# have no lock file, so they take the latest nixpkgs and home-manager. So this job tests both at
 # their latest, without committing anything:
 #   1. `nix flake update`, then `just preflight` -- upstream flake-parts and
 #      import-tree against every fixture;
-#   2. `just templates` -- each template's host evaluated with today's
+#   2. `just examples` -- each example flake's host evaluated with today's
 #      nixpkgs and home-manager, which catches a renamed option.
 # It runs on Sundays, the day before update-flake-lock opens its Monday PRs,
 # so a red result is on its issue before a lock bump needs reviewing.
@@ -36,8 +36,8 @@ jobs:
         run: nix flake update && git diff --stat flake.lock
       - name: just preflight against the latest flake-parts and import-tree
         run: nix develop ./dev --command just preflight
-      - name: just templates with the latest nixpkgs and home-manager
-        run: nix develop ./dev --command just templates
+      - name: just examples with the latest nixpkgs and home-manager
+        run: nix develop ./dev --command just examples
       - name: Notice on failure
         if: ${{ failure() && github.event_name == 'schedule' }}
         env:

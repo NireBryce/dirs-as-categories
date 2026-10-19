@@ -103,19 +103,19 @@ let
             };
         in (evalHost flake "nixos" "ssh").config.probe;
 
-    # ── the templates' trees ────────────────────────────────────────────────
+    # ── the example flakes' trees ───────────────────────────────────────────
     # Only the trees: building a host needs nixpkgs, which these tests don't
     # fetch.
-    templateGraph = name:
+    exampleGraph = name:
         (flake-parts.lib.mkFlake {
-            inputs = { self = { outPath = ../templates + "/${name}"; }; inherit flake-parts; };
+            inputs = { self = { outPath = ../example-flake + "/${name}"; }; inherit flake-parts; };
         } {
             systems = [ ];
-            imports = [ flake-parts.flakeModules.modules (tree (../templates + "/${name}/modules")) ];
+            imports = [ flake-parts.flakeModules.modules (tree (../example-flake + "/${name}/modules")) ];
         }).moduleGraph;
 
-    template = name:
-        let graph = templateGraph name; in {
+    example = name:
+        let graph = exampleGraph name; in {
             categories = lib.mapAttrs (_: category: category.members) graph.categories;
             inherit (graph) includes enables admin orphans;
         };
@@ -126,8 +126,8 @@ in
     # every published graph the tests build, for tests/schema.py
     graphs = {
         main                  = main.graph;
-        template-default      = templateGraph "default";
-        template-home-manager = templateGraph "home-manager";
+        example-default      = exampleGraph "default";
+        example-home-manager = exampleGraph "home-manager";
     };
 
     checks = {
@@ -157,25 +157,25 @@ in
             ok     = lib.sort lib.lessThan twoTreesProbe == [ "ssh from tree a" "ssh from tree b" ];
             detail = "two trees with an `ssh` module each, tree a imported twice: ${builtins.toJSON twoTreesProbe}";
         };
-        template = {
-            ok = template "default" == {
+        example-default = {
+            ok = example "default" == {
                 categories = { base = [ "locale" "ssh" ]; };
                 includes   = { example.nixos = [ "base" ]; };
                 enables    = { };
                 admin      = [ "hosts/hosts.nix" ];
                 orphans    = [ ];
             };
-            detail = "templates/default/modules: ${builtins.toJSON (template "default")}";
+            detail = "example-flake/default/modules: ${builtins.toJSON (example "default")}";
         };
-        template-home-manager = {
-            ok = template "home-manager" == {
+        example-home-manager = {
+            ok = example "home-manager" == {
                 categories = { base = [ "enable-home-manager" "locale" "ssh" ]; desktop = [ "plasma" ]; shell = [ "bash" "git" ]; };
                 includes   = { laptop.nixos = [ "base" "desktop" ]; me-home.homeManager = [ "shell" ]; };
                 enables    = { enable-home-manager.homeManager = [ "me-home" ]; };
                 admin      = [ "hosts/hosts.nix" ];
                 orphans    = [ ];
             };
-            detail = "templates/home-manager/modules: ${builtins.toJSON (template "home-manager")}";
+            detail = "example-flake/home-manager/modules: ${builtins.toJSON (example "home-manager")}";
         };
     };
 }

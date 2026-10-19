@@ -61,7 +61,7 @@ just preflight       # all of the above -- what CI runs
 just expected-diff   # how the main fixture's result differs from tests/expected/main.json
 just expected-accept # record it, once every difference is one you meant
 just new-error <name> '<message>'   # start an error fixture and its tests/errors.json entry
-just templates       # each template's host with real nixpkgs and home-manager (network; not in preflight)
+just examples        # each example flake's host with real nixpkgs and home-manager (network; not in preflight)
 nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 ```
 
@@ -75,7 +75,7 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 | `nix/module.nix` | `flake.modules`: includes, enables, defaults, `key`s |
 | `nix/publish.nix` | `flake.moduleGraph` |
 | `tests/` | fixtures, expected results, and the scripts behind `just errors`, `docs`, `expected-*`, `new-error` |
-| `templates/` | the `nix flake init -t` starters, `default` and `home-manager`; their trees are checked by `just check` |
+| `example-flake/` | two example flakes, `default` and `home-manager`, to read, evaluate and draw (not configurations to switch to, and not `nix flake init` templates); their trees are checked by `just check` |
 | `doc/` | the exact rules (`convention.md`) and format (`format.md`); `style.md` for all docs |
 | `wiki/` | guides: `using-the-flake.md`; `styleguide.md` before adding a page |
 | `dev/` | the development shell's own flake (kept out of the main flake's inputs) |

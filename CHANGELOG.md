@@ -14,6 +14,11 @@ is not part of what a release keeps; their meaning is.
 
 ### Breaks
 
+- `nix flake init -t github:NireBryce/dirs-as-categories` no longer
+  works: the flake has no templates. dirs-as-categories is for a flake
+  you already have; the wiki's "Setting it up" walks through adding it.
+  The example trees moved to `example-flake/`, to read and evaluate, and
+  the wiki's new "How it works, on the example flake" walks through one.
 - A module file named `outPath.nix`, or a category folder named `outPath`,
   is now an error: `` `outPath` can't be a name ``. Before, it evaluated,
   but `flake.moduleGraph.modules` held only that module's record, because
@@ -28,7 +33,7 @@ is not part of what a release keeps; their meaning is.
   name (say `ssh`) now both reach a configuration that includes it. Before,
   the module system kept the first and silently dropped the other, because
   their keys were the same.
-- The templates' `ssh.nix` also sets `KbdInteractiveAuthentication = false`.
+- The example flakes' `ssh.nix` also sets `KbdInteractiveAuthentication = false`.
   With only `PasswordAuthentication = false`, sshd still accepted
   passwords through keyboard-interactive login.
 - The wiki says that a leading `_` hides a file only from

@@ -10,14 +10,14 @@ when_to_use: Asked to bump, update or refresh flake.lock or dev/flake.lock.
 
 Changing `flake.lock` (import-tree, flake-parts and the nixpkgs-lib inside
 it) or `dev/flake.lock` (the development shell's nixpkgs). Not the
-templates: they have no lock file, and a user's `nix flake init` locks
-theirs.
+example flakes: they have no lock file, so each evaluation takes their
+inputs at the latest.
 
 ## Where updates come from
 
 `.github/workflows/update-flake-lock.yml` opens one PR per lock file every
 Monday (it needs the `FLAKE_LOCK_TOKEN` secret; its header says how). The
-weekly `upstream` workflow (Sundays) already ran the fixtures and templates against
+weekly `upstream` workflow (Sundays) already ran the fixtures and example flakes against
 the newest inputs, so a red `upstream` issue is the first sign an update
 will break something. Reviewing such a PR is this skill; so is a bump by
 hand.

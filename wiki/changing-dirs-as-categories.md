@@ -32,7 +32,7 @@ use it, and the [CHANGELOG](../CHANGELOG.md) says how.
 | check the docs | `just docs` |
 | check every published graph against the schema | `just schema` |
 | check evaluation time grows with the tree, not faster | `just bench` |
-| evaluate the templates' hosts with real nixpkgs | `just templates` |
+| evaluate the example flakes' hosts with real nixpkgs | `just examples` |
 
 ## Setting up
 
@@ -53,7 +53,7 @@ dirs-as-categories never inherits its nixpkgs input.
 **Run `git add` on every new file before any check.** A flake sees only
 the files git knows, so an untracked fixture doesn't exist to
 `nix flake check`. `just docs` fails while anything under `nix/`, `tests/`
-or `templates/` is untracked.
+or `example-flake/` is untracked.
 
 ## Where things are
 
@@ -67,7 +67,7 @@ files in `nix/` fit together and explains the Nix they use. In short:
 | `nix/publish.nix` | builds `flake.moduleGraph` |
 | `tests/fixtures/main/` | one tree exercising every behaviour; `tests/expected/main.json` is its result |
 | `tests/fixtures/err-*/` | one tree per error; `tests/errors.json` holds the message each must produce |
-| `templates/` | the starters `nix flake init -t` copies; `nix flake check` checks their trees |
+| `example-flake/` | the example flakes, to read, evaluate and draw; `nix flake check` checks their trees |
 
 ## The loop: test, change, check
 
@@ -107,7 +107,7 @@ message so it says how to fix the mistake, not only what the mistake is.
 ## Before you open a pull request
 
 - `just preflight` passes. CI runs the same recipe on Linux and macOS.
-- For a change a template could notice, `just templates` passes too.
+- For a change an example flake could notice, `just examples` passes too.
 - The pull request fills in the template's sections, including
   **Breaks**.
 - The [CHANGELOG](../CHANGELOG.md)'s `Unreleased` section says what

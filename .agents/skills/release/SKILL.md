@@ -28,9 +28,9 @@ On a branch from `origin/main`:
   new, empty `## Unreleased` above it. Update the example tag in the
   file's introduction.
 - Every pin: `git grep -n 'github:NireBryce/dirs-as-categories/v'` -- the
-  README, `wiki/using-the-flake.md` and both templates' `flake.nix`.
+  README, `wiki/using-the-flake.md` and both example flakes' `flake.nix`.
   `just docs` fails until all of them name the new version.
-- `just preflight`, and `just templates` (the hosts with real nixpkgs).
+- `just preflight`, and `just examples` (the hosts with real nixpkgs).
 
 Then the usual PR, green CI, one confirmation, merge.
 
@@ -57,8 +57,8 @@ release.
 
 ```sh
 nix flake metadata github:NireBryce/dirs-as-categories/vX.Y.Z
-nix flake init -t github:NireBryce/dirs-as-categories/vX.Y.Z    # in an empty folder
+nix eval --json --no-write-lock-file 'github:NireBryce/dirs-as-categories/vX.Y.Z?dir=example-flake/default#moduleGraph'
 ```
 
-Say what you ran: "tagged", "released", and "a fresh `nix flake init`
-from the tag evaluates" are different claims.
+Say what you ran: "tagged", "released", and "the example flake at the
+tag evaluates" are different claims.

@@ -38,6 +38,9 @@ fills `flake.modules.<class>.<name>`. It also publishes what it built as
   `change-a-rule`).
 - **Never file anything outside this repository** without the user saying
   so explicitly (skill `propose-issue`).
+- **Write down what surprised you** about Nix, flake-parts or the inputs
+  before ending a task, unasked (skill `record-a-lesson`); read
+  `wiki/agents-lessons-learned.md` before probing or fetching inputs.
 - **Say which rung you reached**: evaluates, `nix flake check` passes, CI
   is green. Never more than you saw.
 - **A change that makes a doc stale fixes it in the same change** (skill
@@ -77,7 +80,7 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 | `tests/` | fixtures, expected results, and the scripts behind `just errors`, `docs`, `expected-*`, `new-error` |
 | `example-flake/` | two example flakes, `default` and `home-manager`, to read, evaluate and draw (not configurations to switch to, and not `nix flake init` templates); their trees are checked by `just check` |
 | `doc/` | the exact rules (`convention.md`) and format (`format.md`); `style.md` for all docs |
-| `wiki/` | guides: `using-the-flake.md`; `styleguide.md` before adding a page |
+| `wiki/` | guides: `using-the-flake.md`; `agents-lessons-learned.md` for agents; `styleguide.md` before adding a page |
 | `dev/` | the development shell's own flake (kept out of the main flake's inputs) |
 | `CONTRIBUTING.md` | where a person starts: issues, the contributor wiki page, the code guide |
 | `CHANGELOG.md` | what changed for users, and what breaks; `Unreleased`, then each release |
@@ -117,6 +120,7 @@ format is a change to both repositories.
 | `help-a-user` | someone's own flake erroring or missing a module |
 | `update-inputs` | bumping `flake.lock` or `dev/flake.lock` |
 | `propose-issue` | filing a bug found along the way |
+| `record-a-lesson` | writing down what Nix or the inputs taught you |
 | `git-archaeology` | when and why something changed |
 | `boyscouting` | small fixes beside a change |
 | `explain-tricky-code` | comments that teach a hard mechanism |

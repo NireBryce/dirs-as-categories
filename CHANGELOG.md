@@ -12,6 +12,29 @@ is not part of what a release keeps; their meaning is.
 
 ## Unreleased
 
+### Breaks
+
+- A module file named `outPath.nix`, or a category folder named `outPath`,
+  is now an error: `` `outPath` can't be a name ``. Before, it evaluated,
+  but `flake.moduleGraph.modules` held only that module's record, because
+  Nix reads a set with an `outPath` as a path. Rename the file or folder.
+- The `key` of every module dirs-as-categories creates now names the
+  tree's root. A configuration that set one of these keys itself, to stop
+  a module loading, no longer matches it.
+
+### Fixed
+
+- Two trees imported into one flake that both have a module with the same
+  name (say `ssh`) now both reach a configuration that includes it. Before,
+  the module system kept the first and silently dropped the other, because
+  their keys were the same.
+- The templates' `ssh.nix` also sets `KbdInteractiveAuthentication = false`.
+  With only `PasswordAuthentication = false`, sshd still accepted
+  passwords through keyboard-interactive login.
+- The wiki says that a leading `_` hides a file only from
+  dirs-as-categories: every file git tracks is copied to the
+  world-readable `/nix/store`, so secrets stay out of the tree.
+
 ## v0.1.1 — 2026-10-18
 
 Nothing breaks: a flake on `v0.1.0` can move to this release unchanged.

@@ -44,6 +44,9 @@ let
     #   key    -- a module with the same `key` is loaded only once per
     #             configuration, however many routes import it. This is what
     #             lets a host include both a category and a module inside it.
+    #             Each key names the tree's root, so two trees that both
+    #             have an `ssh` module both load: the module system would
+    #             otherwise keep whichever came first and drop the other.
     #   _file  -- the file named in error messages and in
     #             `options.<x>.definitionsWithLocations`: the user's file,
     #             not this one.
@@ -52,7 +55,7 @@ let
     # category's folder), for one class.
     defaultsFor = target: class:
         map (defaultsFile: {
-            key     = "dirs-as-categories:defaults:${defaultsFile.path}:${class}";
+            key     = "dirs-as-categories:${scan.rootStr}:defaults:${defaultsFile.path}:${class}";
             _file   = toString defaultsFile.file;
             imports = [ defaultsFile.value.${class} ];
         }) (filter (defaultsFile: defaultsFile.value ? ${class} && scan.appliesTo defaultsFile target) scan.defaults);
@@ -60,7 +63,7 @@ let
     # A module file, in one class: its own class part (if it has one), what
     # it includes, and the defaults.nix files that apply to it.
     moduleFor = class: mod: {
-        key     = "dirs-as-categories:module:${class}:${mod.name}";
+        key     = "dirs-as-categories:${scan.rootStr}:module:${class}:${mod.name}";
         _file   = toString mod.file;
         imports = optional (mod.value ? ${class}) (withEnabled mod mod.value.${class})
                ++ map (get class) (mod.value.includes.${class} or [ ])
@@ -70,7 +73,7 @@ let
     # A category, in one class: its own modules, the categories directly
     # nested in it (which import theirs in turn), and its defaults.nix files.
     categoryFor = class: category: {
-        key     = "dirs-as-categories:category:${class}:${category}";
+        key     = "dirs-as-categories:${scan.rootStr}:category:${class}:${category}";
         _file   = "${scan.rootStr}/${category}";
         imports = map (mod: get class mod.name) (filter (scan.hasClass class) (scan.ownModules category))
                ++ map (nested: get class (baseNameOf nested)) (scan.nestedIn category)

@@ -46,14 +46,14 @@ body:
     id: tree
     attributes:
       label: The modules tree
-      description: The output of `find modules -name '*.nix' | sort`, and the contents of the files involved. Rename anything private; generic names (`laptop`, `base`) are fine.
+      description: The output of `find modules -name '*.nix' | sort`, and the contents of the files involved. Rename anything private, and remove passwords, password hashes, keys and tokens; generic names (`laptop`, `base`) are fine.
       render: text
 
   - type: textarea
     id: output
     attributes:
       label: Error output
-      description: The whole error, to the bottom -- Nix prints the innermost cause last. Add `--show-trace` if the cause isn't named.
+      description: The whole error, to the bottom -- Nix prints the innermost cause last. Add `--show-trace` if the cause isn't named. Check it for values you'd rather not post: a trace can print them.
       render: shell
 
   - type: input

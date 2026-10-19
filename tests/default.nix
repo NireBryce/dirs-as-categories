@@ -88,6 +88,21 @@ let
             };
         in { inherit (flake.moduleGraph) classes; names = lib.mapAttrs (_: builtins.attrNames) flake.modules; };
 
+    # ── two trees ───────────────────────────────────────────────────────────
+    # Two trees that both have an `ssh` module: the host gets both, and a
+    # tree imported twice still counts once. The module system loads one
+    # module per `key`, so a key that didn't name its tree would drop one.
+    twoTreesProbe =
+        let
+            treeA = tree ./fixtures/two-trees/a/modules;
+            flake = flake-parts.lib.mkFlake {
+                inputs = { self = { outPath = ./fixtures/two-trees; }; inherit flake-parts; };
+            } {
+                systems = [ ];
+                imports = [ flake-parts.flakeModules.modules treeA treeA (tree ./fixtures/two-trees/b/modules) ];
+            };
+        in (evalHost flake "nixos" "ssh").config.probe;
+
     # ── the templates' trees ────────────────────────────────────────────────
     # Only the trees: building a host needs nixpkgs, which these tests don't
     # fetch.
@@ -137,6 +152,10 @@ in
                 }
               && (classesWith (tree.withClasses [ "nixos" "nixOnDroid" ])).classes == [ "nixos" "nixOnDroid" ];
             detail = "addClasses [ \"nixOnDroid\" ]: ${builtins.toJSON (classesWith (tree.addClasses [ "nixOnDroid" ]))}";
+        };
+        two-trees = {
+            ok     = lib.sort lib.lessThan twoTreesProbe == [ "ssh from tree a" "ssh from tree b" ];
+            detail = "two trees with an `ssh` module each, tree a imported twice: ${builtins.toJSON twoTreesProbe}";
         };
         template = {
             ok = template "default" == {

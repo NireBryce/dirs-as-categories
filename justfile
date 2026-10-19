@@ -10,9 +10,9 @@ check:
 errors:
     python3 tests/errors.py
 
-# statix and deadnix over the Nix code (fixtures excluded: some are wrong on purpose), actionlint over the workflows
+# statix and deadnix over the Nix code (fixtures excluded: some are wrong on purpose), actionlint over the workflows (needs the dev shell)
 lint:
-    nix shell nixpkgs#statix nixpkgs#deadnix nixpkgs#actionlint -c sh -c 'statix check . && deadnix --fail --exclude tests/fixtures -- . && actionlint'
+    statix check . && deadnix --fail --exclude tests/fixtures -- . && actionlint
 
 # Mechanical doc checks: skills listed, links resolve, errors documented and tested, nix blocks parse
 docs:

@@ -3,6 +3,10 @@ on:
   push:
     branches: [main]
   pull_request:
+# Every action is pinned by full SHA, the release named beside it;
+# Dependabot proposes newer ones.
+permissions:
+  contents: read
 jobs:
   check:
     strategy:
@@ -12,8 +16,10 @@ jobs:
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: cachix/install-nix-action@v31
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@448cde739abec1eaf0646249e3d25bb8d9bc7702 # v31.11.2
       - name: just preflight (flake check, error messages, doc checks, lint)
         run: nix develop ./dev --command just preflight
   oldest:
@@ -22,8 +28,10 @@ jobs:
     # Raising a floor changes both places.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: cachix/install-nix-action@v31
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@448cde739abec1eaf0646249e3d25bb8d9bc7702 # v31.11.2
         with:
           install_url: https://releases.nixos.org/nix/nix-2.18.9/install
           extra_nix_config: experimental-features = nix-command flakes
@@ -40,12 +48,15 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: CHANGELOG.md changes with nix/
+        env:
+          BASE: ${{ github.base_ref }}
         run: |
-          changed=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          changed=$(git diff --name-only "origin/${BASE}...HEAD")
           if echo "$changed" | grep -q '^nix/.*\.nix$' && ! echo "$changed" | grep -qx 'CHANGELOG.md'; then
             echo "::error::this pull request changes nix/*.nix but not CHANGELOG.md; add a line under Unreleased"
             exit 1

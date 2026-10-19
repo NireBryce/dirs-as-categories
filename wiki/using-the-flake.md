@@ -279,6 +279,13 @@ unchanged, as an ordinary flake-parts module:
 import-tree skips every path with a component starting with `_`. Put
 helpers that other files `import` there.
 
+`_` hides a file from dirs-as-categories, not from the Nix store. Every
+file git tracks in a flake is copied to `/nix/store`, which every user on
+the machine can read, whether anything imports it or not. Keep passwords,
+keys and tokens out of the tree: use a secrets tool such as sops-nix or
+agenix, or an option that reads a file at run time, such as
+`users.users.<name>.hashedPasswordFile`.
+
 ### A NixOS module you want to keep as it is
 
 `nixos-generate-config` writes `hardware-configuration.nix` as a NixOS
@@ -316,7 +323,7 @@ so import-tree skips it, and import it from the host's class part:
   defaults and orphans ([format](../doc/format.md)).
 - **A picture**:
   [flake-module-graph](https://github.com/NireBryce/flake-module-graph)
-  draws the graph: `nix run github:NireBryce/flake-module-graph -- html --flake . > modules.html`.
+  draws the graph: `nix run github:NireBryce/flake-module-graph/v0.1.0 -- html --flake . > modules.html`.
 
 ## Migrating a flake that names its modules by hand
 
@@ -350,6 +357,7 @@ folder and what is wrong.
 | Message | Fix |
 |---|---|
 | `names used more than once: x (a/one/x.nix, a/two/x.nix)` | rename one of the files; modules and categories share one namespace, and `x/default.nix` beside `x.nix` counts as a clash too |
+| `` a/outPath.nix: `outPath` can't be a name: … `` | rename the file or folder; Nix gives `outPath` a meaning of its own |
 | `` <file>: unknown key `nixOS`; expected one of: … `` | correct the typo in the class or reserved key |
 | `` <file>: includes.nixos: unknown name `nope` `` | no module or category has that name |
 | `` <file>: includes.nixos: unknown name `one` (a/c/one is a plain folder, which has no name; …) `` | you can't include a plain folder: include the folder's category, or make the folder a category |

@@ -14,10 +14,14 @@
 # Until the secret exists, each run fails at the preflight step and says
 # so on one issue.
 #
-# Third-party actions are pinned by full SHA, each its repository's main
-# branch on the date beside it: they run with `contents: write`.
-# Dependabot proposes newer pins; check that each is on that repository's
-# main branch, and correct the date, which Dependabot doesn't.
+# Every action is pinned by full SHA, because the update job hands them
+# the token: actions/checkout at the release beside it, the others at
+# their repository's main branch on the date beside it. Dependabot
+# proposes newer pins; check that each is on that repository's main
+# branch (or a release), and correct the date, which Dependabot doesn't.
+#
+# Each job gets only the permissions it uses. The update job opens its PR
+# with FLAKE_LOCK_TOKEN, so its GITHUB_TOKEN only reads.
 
 name: update-flake-lock
 
@@ -26,16 +30,14 @@ on:
   schedule:
     - cron: '17 9 * * 1' # Mondays 09:17 UTC
 
-permissions:
-  contents: write
-  pull-requests: write
-  issues: write # only for the notice job
+permissions: {}
 
 jobs:
   # Fail fast and legibly on a missing, revoked or expiring token, before
   # spending a Nix install on a run that can't open a PR.
   preflight:
     runs-on: ubuntu-latest
+    permissions: {}
     outputs:
       state: ${{ steps.token.outputs.state }}
       days: ${{ steps.token.outputs.days }}
@@ -53,11 +55,14 @@ jobs:
             echo "state=missing" >> "${GITHUB_OUTPUT}"
             exit 1
           fi
+          # A public repository answers any live token, so this shows the
+          # token is neither expired nor revoked -- not that it can still
+          # write here. A token that lost its scope fails at the update job.
           headers="$(curl -sS -D - -o /dev/null -H "Authorization: Bearer ${TOKEN}" \
             -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${REPO}")"
           status="$(printf '%s' "${headers}" | awk '/^HTTP/{code=$2} END{print code}')"
           if [[ "${status}" != "200" ]]; then
-            echo "::error title=FLAKE_LOCK_TOKEN rejected::GitHub answered HTTP ${status} for ${REPO}: the token is expired, revoked, or no longer scoped to this repository."
+            echo "::error title=FLAKE_LOCK_TOKEN rejected::GitHub answered HTTP ${status} for ${REPO}: the token is expired or revoked."
             echo "state=invalid" >> "${GITHUB_OUTPUT}"
             exit 1
           fi
@@ -84,6 +89,8 @@ jobs:
   update:
     needs: preflight
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -95,7 +102,7 @@ jobs:
             branch: update-dev-flake-lock
             title: "chore: update dev/flake.lock"
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: DeterminateSystems/nix-installer-action@2cb76beab460be7e44442c7ebdcbc30b638416df # 2026-10-08
       - uses: DeterminateSystems/update-flake-lock@94ec8663aab64b7339b58aae321906a0e3b9f01f # 2026-10-08
         with:
@@ -120,6 +127,8 @@ jobs:
     needs: [preflight, update]
     if: ${{ always() && (contains(needs.*.result, 'failure') || needs.preflight.outputs.state == 'expiring') }}
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
       - env:
           GH_TOKEN: ${{ github.token }}
@@ -134,7 +143,7 @@ jobs:
           case "${STATE}" in
             expiring) body="FLAKE_LOCK_TOKEN expires in ${DAYS} days (${EXPIRY}). Replace the secret before then, or the weekly lock PRs stop opening." ;;
             missing)  body="The Actions secret FLAKE_LOCK_TOKEN doesn't exist, so the weekly lock PRs can't open. Create a fine-grained token scoped to ${REPO} with Contents and Pull requests read/write; see the header of .github/workflows/update-flake-lock.yml." ;;
-            invalid)  body="FLAKE_LOCK_TOKEN is expired, revoked, or no longer scoped to ${REPO}. Replace the secret." ;;
+            invalid)  body="FLAKE_LOCK_TOKEN is expired or revoked. Replace the secret." ;;
             *)        body="The weekly update-flake-lock run failed after its token check passed. Read the run's log." ;;
           esac
           body="${body}

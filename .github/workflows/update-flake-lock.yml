@@ -14,13 +14,6 @@
 # Until the secret exists, each run fails at the preflight step and says
 # so on one issue.
 #
-# The Actions *variable* `FLAKE_LOCK_TOKEN_EXPIRES` (a date, YYYY-MM-DD,
-# not secret) records when the token lapses. GitHub sends the expiry as a
-# response header only for some tokens -- it sent none for the one minted
-# 2026-10-19 -- so the preflight falls back to the variable. Re-minting
-# the token means setting both: `gh secret set FLAKE_LOCK_TOKEN` and
-# `gh variable set FLAKE_LOCK_TOKEN_EXPIRES --body <date>`.
-#
 # Third-party actions are pinned by full SHA, each its repository's main
 # branch on the date beside it: they run with `contents: write`.
 # Dependabot proposes newer pins; check that each is on that repository's
@@ -52,7 +45,6 @@ jobs:
         id: token
         env:
           TOKEN: ${{ secrets.FLAKE_LOCK_TOKEN }}
-          RECORDED: ${{ vars.FLAKE_LOCK_TOKEN_EXPIRES }}
           REPO: ${{ github.repository }}
         run: |
           set -uo pipefail
@@ -69,22 +61,16 @@ jobs:
             echo "state=invalid" >> "${GITHUB_OUTPUT}"
             exit 1
           fi
-          # GitHub's header when it sends one, else the recorded variable.
-          header="$(printf '%s' "${headers}" | tr -d '\r' \
+          # Present only for a token with an expiry; absent means "can't tell".
+          expiry="$(printf '%s' "${headers}" | tr -d '\r' \
             | awk -F': ' 'tolower($1)=="github-authentication-token-expiration"{print $2}')"
-          expiry="${header:-${RECORDED}}"
-          if [[ -n "${header}" && -n "${RECORDED}" ]] \
-             && [[ "$(date -u -d "${header}" +%F 2>/dev/null)" != "${RECORDED}" ]]; then
-            echo "::warning title=FLAKE_LOCK_TOKEN_EXPIRES is stale::GitHub says the token expires ${header}; the variable says ${RECORDED}. Update the variable."
-          fi
           if [[ -z "${expiry}" ]] || ! then_ts="$(date -u -d "${expiry}" +%s 2>/dev/null)"; then
-            echo "::notice title=Token expiry unknown::FLAKE_LOCK_TOKEN works, but GitHub sent no expiry and the variable FLAKE_LOCK_TOKEN_EXPIRES is unset or not a date: set it with gh variable set FLAKE_LOCK_TOKEN_EXPIRES --body YYYY-MM-DD."
+            echo "::notice title=Token expiry unknown::FLAKE_LOCK_TOKEN works; this run can't tell when it lapses."
             echo "state=ok" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
           days=$(( (then_ts - $(date -u +%s)) / 86400 ))
-          if [[ -n "${header}" ]]; then from="GitHub's expiry header"; else from="the FLAKE_LOCK_TOKEN_EXPIRES variable"; fi
-          echo "FLAKE_LOCK_TOKEN expires ${expiry} (${days} days; from ${from})"
+          echo "FLAKE_LOCK_TOKEN expires ${expiry} (${days} days)"
           echo "days=${days}" >> "${GITHUB_OUTPUT}"
           echo "expiry=${expiry}" >> "${GITHUB_OUTPUT}"
           # Weekly runs: 30 days gives four chances to notice.
@@ -146,7 +132,7 @@ jobs:
           set -uo pipefail
           title="update-flake-lock: weekly lock PRs need attention"
           case "${STATE}" in
-            expiring) body="FLAKE_LOCK_TOKEN expires in ${DAYS} days (${EXPIRY}). Mint a replacement, then set both the secret and the date: gh secret set FLAKE_LOCK_TOKEN, and gh variable set FLAKE_LOCK_TOKEN_EXPIRES --body YYYY-MM-DD. Otherwise the weekly lock PRs stop opening." ;;
+            expiring) body="FLAKE_LOCK_TOKEN expires in ${DAYS} days (${EXPIRY}). Replace the secret before then, or the weekly lock PRs stop opening." ;;
             missing)  body="The Actions secret FLAKE_LOCK_TOKEN doesn't exist, so the weekly lock PRs can't open. Create a fine-grained token scoped to ${REPO} with Contents and Pull requests read/write; see the header of .github/workflows/update-flake-lock.yml." ;;
             invalid)  body="FLAKE_LOCK_TOKEN is expired, revoked, or no longer scoped to ${REPO}. Replace the secret." ;;
             *)        body="The weekly update-flake-lock run failed after its token check passed. Read the run's log." ;;

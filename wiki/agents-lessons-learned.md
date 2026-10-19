@@ -10,6 +10,7 @@ checked. Skill `record-a-lesson` adds to this page.
 
 - [Evaluating without GitHub tarballs](#evaluating-without-github-tarballs)
 - [Probing a tree outside the flake](#probing-a-tree-outside-the-flake)
+- [Running the linters without the dev shell](#running-the-linters-without-the-dev-shell)
 - [Options declared by a module imported twice](#options-declared-by-a-module-imported-twice)
 - [What `builtins.tryEval` catches](#what-builtinstryeval-catches)
 - [Calling a user's file early](#calling-a-users-file-early)
@@ -77,6 +78,31 @@ scratch directory needs no `git add`; the rule in `AGENTS.md` applies to
 fixtures under `tests/`. Run the file with
 `nix eval --impure --file <file> <attribute>`. Checked on 2026-10-19 with
 flake-parts `024633c`.
+
+## Running the linters without the dev shell
+
+`nix develop ./dev` needs nixpkgs as a GitHub tarball, which the cloud
+session's proxy refuses, so `just lint` can't run there. On 2026-10-19
+that let a push fail CI with statix's
+`[20] Warning: Avoid repeated keys in attribute sets`: `nix/shared.nix`
+assigned `options.…` three times at the top level.
+
+The binary cache is reachable even when GitHub tarballs are not. Fetch
+the nixpkgs revision `dev/flake.lock` pins with git, then build the tools
+from it; Nix copies them from `cache.nixos.org` instead of compiling:
+
+```sh
+git init -q <scratch>/nixpkgs
+git -C <scratch>/nixpkgs fetch -q --depth 1 https://github.com/NixOS/nixpkgs <rev from dev/flake.lock>
+git -C <scratch>/nixpkgs checkout -q FETCH_HEAD
+nix build --no-link --print-out-paths -f <scratch>/nixpkgs statix deadnix
+```
+
+Then run `statix check .` and `deadnix --fail --exclude tests/fixtures -- .`
+from those store paths, as `just lint` does. Statix flagged the key
+assigned three times, not the two `options.…` that `nix/module.nix` had
+before; group repeated keys into one set (`options = { … };`) either way.
+Checked on 2026-10-19 with statix 0.5.8 and deadnix 1.3.2.
 
 ## Options declared by a module imported twice
 

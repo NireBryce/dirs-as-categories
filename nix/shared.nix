@@ -19,28 +19,30 @@ let
         + "or a category above it): " + lib.concatStringsSep ", " orphans;
 in
 {
-    options.dirsAsCategories.checkOrphans = lib.mkOption {
-        description = ''
-            Add `checks.<system>.module-orphans`, which fails while any module
-            inside a category is reached by no `includes` or `enables` --
-            valid, evaluated, and installing nothing. The list is
-            `flake.moduleGraph.orphans` either way.
-        '';
-        type    = lib.types.bool;
-        default = false;
-    };
+    options = {
+        dirsAsCategories.checkOrphans = lib.mkOption {
+            description = ''
+                Add `checks.<system>.module-orphans`, which fails while any module
+                inside a category is reached by no `includes` or `enables` --
+                valid, evaluated, and installing nothing. The list is
+                `flake.moduleGraph.orphans` either way.
+            '';
+            type    = lib.types.bool;
+            default = false;
+        };
 
-    options.dirsAsCategories.trees = lib.mkOption {
-        description = "What each imported tree built, by tree key. Internal: read `flake.moduleGraph`.";
-        type        = lib.types.lazyAttrsOf lib.types.raw;
-        default     = { };
-        internal    = true;
-    };
+        dirsAsCategories.trees = lib.mkOption {
+            description = "What each imported tree built, by tree key. Internal: read `flake.moduleGraph`.";
+            type        = lib.types.lazyAttrsOf lib.types.raw;
+            default     = { };
+            internal    = true;
+        };
 
-    options.flake.moduleGraph = lib.mkOption {
-        description = "What dirs-as-categories built from the modules tree. Format: doc/format.md in dirs-as-categories.";
-        type        = lib.types.raw;
-        readOnly    = true;
+        flake.moduleGraph = lib.mkOption {
+            description = "What dirs-as-categories built from the modules tree. Format: doc/format.md in dirs-as-categories.";
+            type        = lib.types.raw;
+            readOnly    = true;
+        };
     };
 
     config = {

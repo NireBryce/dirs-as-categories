@@ -220,7 +220,9 @@ evaluates, not only when a host that uses those names does.
 - `flake.moduleGraph` describes one tree. A flake that imports two trees
   gets `flake.modules` and the orphan check from both, but reading
   `flake.moduleGraph` stops with an error. A tree imported twice counts
-  once.
+  once. A graph covering several trees would need a new format version;
+  until then, one tree per graph (decided 2026-10-19,
+  [issue 20](https://github.com/NireBryce/dirs-as-categories/issues/20)).
 - You must import `flake-parts.flakeModules.modules`, because that module
   declares `flake.modules`. Without it, reading `flake.modules` stops with
   an error.

@@ -53,7 +53,11 @@ dirs-as-categories looks at the function's required arguments:
   the result has a class or reserved key, the file is a module file (or, for
   `defaults.nix`, a defaults file). Otherwise dirs-as-categories imports the
   file unchanged as a flake-parts module, so `{ lib, ... }: { perSystem = …; }`
-  stays a flake-parts module.
+  stays a flake-parts module. A function that names no arguments
+  (`args: …` or `{ ... }@args: …`) also gets the stand-ins described
+  below, because Nix can't tell what such a function reads; if its result's
+  keys can't be seen without them (`args: import ./_hosts.nix args`), the
+  file is a flake-parts module.
 - If the function requires anything else, such as `config` or `withSystem`,
   the file is a flake-parts module, imported unchanged -- with two
   exceptions, both mistakes. dirs-as-categories calls the function with
@@ -206,14 +210,26 @@ Each error stops evaluation with `dirs-as-categories: <path>: <what>`.
 | `expected an attribute set (a module) or a function` | a file evaluates to neither |
 | `flake.modules has no type: add inputs.flake-parts.flakeModules.modules to imports, beside lib.tree` | the flake doesn't import `flake-parts.flakeModules.modules` |
 | `a default.nix needs a folder to take its name from` | a `default.nix` sits directly in the tree's root |
+| `flake.moduleGraph describes one modules tree, and this flake imports <n>: <roots>` | something reads `flake.moduleGraph` in a flake that imports more than one tree |
 
 dirs-as-categories checks `includes` and `enables` names whenever the flake
 evaluates, not only when a host that uses those names does.
 
 ## Limits
 
-- A flake can use only one `lib.tree`, because `lib.tree` declares the
-  `flake.moduleGraph` option.
+- A flake can import more than one tree only when no tree refers to
+  another. Each tree checks names against its own files, so a host in one
+  tree that includes another tree's category stops with
+  ``includes.nixos: unknown name `base` ``; the orphan check sees only each
+  tree's own `includes`; and one name in two trees (even a category in one
+  and a module in the other) is no error: the two merge into one
+  `flake.modules.<class>.<name>`, and a host that includes the name gets
+  both. A tree imported twice counts once.
+- `flake.moduleGraph` describes one tree: with two trees, reading it stops
+  with an error. Trees that see each other's names, and a graph covering
+  several trees, would need a new format version; until then, one tree per
+  graph (decided 2026-10-19,
+  [issue 20](https://github.com/NireBryce/dirs-as-categories/issues/20)).
 - You must import `flake-parts.flakeModules.modules`, because that module
   declares `flake.modules`. Without it, reading `flake.modules` stops with
   an error.

@@ -6,7 +6,8 @@
       "general/cat1/admin.nix",
       "general/cat1/config-admin.nix",
       "general/forcing-admin.nix",
-      "general/plain-admin.nix"
+      "general/plain-admin.nix",
+      "general/wrapper-admin.nix"
     ],
     "categories": {
       "cat1": {
@@ -15,6 +16,7 @@
         "members": [
           "fn-module",
           "hm-enable",
+          "open-module",
           "x",
           "y"
         ],
@@ -261,6 +263,12 @@
         ],
         "path": "general/editors/micro/default.nix"
       },
+      "open-module": {
+        "classes": [
+          "nixos"
+        ],
+        "path": "general/cat1/open-module.nix"
+      },
       "x": {
         "classes": [
           "nixos"
@@ -305,6 +313,7 @@
         "general/cat1/hm-enable.nix",
         "general/cat1/y.nix",
         "general/cat1/sub/x.nix",
+        "general/cat1/open-module.nix",
         "general/cat1/hm-enable.nix",
         "general/cat1/fn-module.nix",
         "general/cat1/sub/defaults.nix",
@@ -317,6 +326,7 @@
         "special-arg import",
         "y",
         "x",
+        "open-module (from inputs)",
         "enabled:enabled-thing,hm-agg",
         "pkgs:from _module.args",
         "fn-module:from inputs",
@@ -343,6 +353,7 @@
       "files": [
         "general/cat1/hm-enable.nix",
         "general/cat1/y.nix",
+        "general/cat1/open-module.nix",
         "general/cat1/hm-enable.nix",
         "general/cat1/fn-module.nix",
         "general/cat1/nested/defaults.nix",
@@ -354,6 +365,7 @@
       "probe": [
         "special-arg import",
         "y",
+        "open-module (from inputs)",
         "enabled:enabled-thing,hm-agg",
         "pkgs:from _module.args",
         "fn-module:from inputs",
@@ -424,10 +436,12 @@
       "lonely-module",
       "m",
       "nested",
+      "open-module",
       "x",
       "y",
       "z"
     ]
   },
-  "plainAdmin": "plain admin loaded"
+  "plainAdmin": "plain admin loaded",
+  "wrapperAdmin": "wrapper admin loaded"
 }

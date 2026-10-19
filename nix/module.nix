@@ -2,13 +2,14 @@
 #
 # nix/scan.nix has decided what every file is; this file builds the result:
 #   flake.modules.<class>.<name>  one module per module file and per category
-#   flake.moduleGraph             the same tree as data (nix/publish.nix)
 #   imports                       every other file, as an ordinary flake-parts module
+#   dirsAsCategories.trees        this tree's graph (nix/publish.nix) and orphans,
+#                                 which nix/shared.nix publishes once per flake
 #
 # The first line takes what nix/default.nix passes in; the second is the
 # flake-parts module itself, which the module system calls with `config`
 # and the rest.
-{ settings, root, files }:
+{ settings, root, files, treeKey }:
 { lib, config, options, inputs, ... }:
 let
     inherit (lib) filter optional listToAttrs nameValuePair genAttrs;
@@ -91,34 +92,17 @@ let
     needsModulesImport = "dirs-as-categories: flake.modules has no type: "
         + "add inputs.flake-parts.flakeModules.modules to imports, beside lib.tree";
 
-    # ── the orphan check ────────────────────────────────────────────────────
+    # ── the orphans, for the orphan check in nix/shared.nix ─────────────────
     pathOf = name: (lib.findFirst (mod: mod.name == name) null modules).path;
-    orphanReport = "dirs-as-categories: reached by no includes or enables (include it, "
-        + "or a category above it): "
-        + lib.concatMapStringsSep ", " (name: "${name} (${pathOf name})") scan.orphans;
 in
 # Raise the errors that need the whole tree (name clashes, unknown names in
 # `includes`/`enables`) before anything else is built.
 assert scan.checked;
 {
-    imports = map (entry: entry.file) scan.admin;
-
-    options.dirsAsCategories.checkOrphans = lib.mkOption {
-        description = ''
-            Add `checks.<system>.module-orphans`, which fails while any module
-            inside a category is reached by no `includes` or `enables` --
-            valid, evaluated, and installing nothing. The list is
-            `flake.moduleGraph.orphans` either way.
-        '';
-        type    = lib.types.bool;
-        default = false;
-    };
-
-    options.flake.moduleGraph = lib.mkOption {
-        description = "What dirs-as-categories built from the modules tree. Format: doc/format.md in dirs-as-categories.";
-        type        = lib.types.raw;
-        readOnly    = true;
-    };
+    # nix/shared.nix declares the options every tree shares; its `key` loads
+    # it once however many trees import it.
+    imports = [ { key = "dirs-as-categories:shared"; imports = [ ./shared.nix ]; } ]
+           ++ map (entry: entry.file) scan.admin;
 
     config = {
         # flake.modules.<class> = { <module name> = …; <category name> = …; }
@@ -126,21 +110,10 @@ assert scan.checked;
             listToAttrs (map (mod: nameValuePair mod.name (moduleFor class mod)) (scan.modulesOf class)
                       ++ map (category: nameValuePair (baseNameOf category) (categoryFor class category)) categories)));
 
-        flake.moduleGraph = import ./publish.nix { inherit lib classes scan; };
-
-        # A derivation that only writes $out, or fails naming the orphans: no
-        # nixpkgs needed, so it costs a flake using this nothing.
-        perSystem = { system, ... }: {
-            checks = lib.mkIf config.dirsAsCategories.checkOrphans {
-                module-orphans = builtins.derivation {
-                    inherit system;
-                    name    = "module-orphans";
-                    builder = "/bin/sh";
-                    args    = [ "-c" (
-                        if scan.orphans == [ ] then "echo none > $out"
-                        else "echo ${lib.escapeShellArg orphanReport} >&2; exit 1") ];
-                };
-            };
+        dirsAsCategories.trees.${treeKey} = {
+            root    = scan.rootStr;
+            graph   = import ./publish.nix { inherit lib classes scan; };
+            orphans = map (name: "${name} (${pathOf name})") scan.orphans;
         };
     };
 }

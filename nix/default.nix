@@ -12,11 +12,15 @@ let
     defaults = { classes = [ "nixos" "homeManager" "darwin" ]; };
 
     # import-tree's `pipeTo` collects the files under `root`, then calls the
-    # function with the list instead of importing each one.
+    # function with the list instead of importing each one. The `key` makes
+    # the module system load a tree imported twice (with the same classes)
+    # once; `treeKey` also names the tree in `dirsAsCategories.trees`.
     make = settings: root:
+        let treeKey = "dirs-as-categories:tree:${toString root}:${builtins.concatStringsSep "," settings.classes}"; in
         importTree.pipeTo (files: {
+            key     = treeKey;
             _file   = "${toString root} (dirs-as-categories)";
-            imports = [ (import ./module.nix { inherit settings root files; }) ];
+            imports = [ (import ./module.nix { inherit settings root files treeKey; }) ];
         }) root;
 in
 {

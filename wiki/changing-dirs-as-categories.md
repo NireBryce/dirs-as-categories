@@ -1,6 +1,6 @@
 # Changing dirs-as-categories
 
-_Last modified: 2026-10-17_
+_Last modified: 2026-10-20_
 
 This page is for someone changing dirs-as-categories itself: fixing a bug,
 adding a rule, improving an error message. It covers the development
@@ -30,6 +30,9 @@ use it, and the [CHANGELOG](../CHANGELOG.md) says how.
 | record the new result | `just expected-accept` |
 | start an error fixture | `just new-error <name> '<message>'` |
 | check the docs | `just docs` |
+| scan the workflows and history for security problems | `just security` |
+| check the links in the Markdown | `just links` |
+| update one lock file and see whether anything moved | `just update-inputs` |
 | check every published graph against the schema | `just schema` |
 | check evaluation time grows with the tree, not faster | `just bench` |
 | evaluate the example flakes' hosts with real nixpkgs | `just examples` |

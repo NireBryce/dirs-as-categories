@@ -2,7 +2,7 @@
 default:
     @just --list
 
-# nix flake check: the main fixture, every error fixture, the template
+# nix flake check: the main fixture, every error fixture, every example tree
 check:
     nix flake check
 

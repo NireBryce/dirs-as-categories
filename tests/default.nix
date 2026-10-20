@@ -135,6 +135,7 @@ in
         main                  = main.graph;
         example-default      = exampleGraph "default";
         example-home-manager = exampleGraph "home-manager";
+        example-multi-host   = exampleGraph "multi-host";
     };
 
     checks = {
@@ -189,6 +190,31 @@ in
                 orphans    = [ ];
             };
             detail = "example-flake/home-manager/modules: ${builtins.toJSON (example "home-manager")}";
+        };
+        example-multi-host = {
+            ok = example "multi-host" == {
+                categories = {
+                    base       = [ "boot-generations" "enable-home-manager" "locale" "flakes" ];
+                    desktop    = [ "kde-base" "kde-desktop" ];
+                    editors    = [ "micro" ];
+                    homelab    = [ "backup" "reverse-proxy" ];
+                    macos      = [ "dock" ];
+                    packages   = [ "git" ];
+                    shell-apps = [ "fzf" "ripgrep" ];
+                    text-tools = [ "bat" "less" ];
+                };
+                includes   = {
+                    kde-desktop.nixos = [ "kde-base" ];
+                    laptop.nixos = [ "base" "packages" "kde-desktop" ];
+                    mac.darwin = [ "base" "macos" ];
+                    me-home.homeManager = [ "shell-apps" "editors" ];
+                    server.nixos = [ "base" "homelab" ];
+                };
+                enables    = { enable-home-manager.homeManager = [ "me-home" ]; };
+                admin      = [ "hosts/hosts.nix" ];
+                orphans    = [ ];
+            };
+            detail = "example-flake/multi-host/modules: ${builtins.toJSON (example "multi-host")}";
         };
     };
 }

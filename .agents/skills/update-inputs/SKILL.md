@@ -33,6 +33,10 @@ nix flake update                     # flake.lock
 nix flake update --flake ./dev       # dev/flake.lock
 ```
 
+`just update-inputs <lock>` (`flake.lock` or `dev/flake.lock`) wraps one
+of these with `git diff --stat` and `just expected-diff`; reading the
+diff and running `just preflight` stay yours.
+
 ## What to look at
 
 1. **What changed upstream**: `git diff flake.lock` names the old and new

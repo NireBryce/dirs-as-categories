@@ -9,6 +9,10 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    # A release younger than a week isn't proposed: a bad action version
+    # gets a week to burn in public before it can reach a pin here.
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns: ["*"]

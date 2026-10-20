@@ -57,12 +57,15 @@ just                 # list recipes
 just check           # nix flake check: the main fixture, every error fixture, every example tree
 just errors          # each error fixture's message (a Nix check can only see that it failed)
 just lint            # statix and deadnix over the Nix code, actionlint over the workflows (needs the dev shell)
+just security        # zizmor over the workflows, gitleaks over the history (on demand; not in preflight)
+just links           # lychee over the links in the Markdown (needs the dev shell and the network; not in preflight)
 just docs            # skills listed, links resolve, every error documented and tested, nix blocks parse
 just schema          # every published graph against doc/format.schema.json (needs the dev shell)
 just bench           # evaluation time at 500 and 2,000 modules; fails when it grows faster than the tree
 just preflight       # all of the above -- what CI runs
 just expected-diff   # how the main fixture's result differs from tests/expected/main.json
 just expected-accept # record it, once every difference is one you meant
+just update-inputs   # nix flake update for one lock file, then the diff and expected-diff (skill `update-inputs`; network)
 just new-error <name> '<message>'   # start an error fixture and its tests/errors.json entry
 just examples        # each example flake's host with real nixpkgs and home-manager (network; not in preflight)
 nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd

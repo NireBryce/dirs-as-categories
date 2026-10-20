@@ -24,6 +24,11 @@ Each check prints what it found wrong and where. The checks:
             sees only files git knows, so an untracked fixture silently
             doesn't exist -- and an error fixture that doesn't exist still
             "fails", for the wrong reason.
+- examples: every example-flake/*/ flake appears in tests/default.nix's
+            graphs (so `just check` and `just schema` see it) and in
+            tests/examples.sh, so a new example can't ship untested.
+- fixtures: every tests/fixtures/ tree is a tests/errors.json case or named
+            in tests/default.nix, so no fixture is silently never evaluated.
 """
 import json
 import pathlib
@@ -212,8 +217,39 @@ def check_tracked():
         problem(path, 'untracked: the flake can\'t see it until you `git add` it')
 
 
+# ── examples ────────────────────────────────────────────────────────────────
+def strip_nix_comments(text):
+    return re.sub(r'#.*', '', re.sub(r'/\*.*?\*/', '', text, flags=re.S))
+
+
+def check_examples():
+    on_disk = {path.name for path in (ROOT / 'example-flake').iterdir()
+               if (path / 'flake.nix').exists()}
+    tests = strip_nix_comments((ROOT / 'tests' / 'default.nix').read_text())
+    graphs = re.findall(r'exampleGraph "([^"]+)"', tests)
+    script = (ROOT / 'tests' / 'examples.sh').read_text()
+    pairs = re.search(r'^for pair in (.+?); do$', script, re.M).group(1).split()
+    in_graphs = set(graphs)
+    in_script = {pair.split(':')[0] for pair in pairs}
+    for name in sorted(on_disk - in_graphs):
+        problem('tests/default.nix', f'example-flake/{name} is in no graphs entry, so `just check` and `just schema` skip it')
+    for name in sorted(on_disk - in_script):
+        problem('tests/examples.sh', f'example-flake/{name} has no host in the pair list, so `just examples` skips it')
+
+
+# ── fixtures ────────────────────────────────────────────────────────────────
+def check_fixtures():
+    on_disk = {path.name for path in (ROOT / 'tests' / 'fixtures').iterdir() if path.is_dir()}
+    in_json = set(json.loads((ROOT / 'tests' / 'errors.json').read_text()))
+    tests = strip_nix_comments((ROOT / 'tests' / 'default.nix').read_text())
+    for name in sorted(on_disk - in_json):
+        if f'"{name}"' not in tests and f'fixtures/{name}' not in tests:
+            problem('tests/fixtures', f'{name} is in no test: add it to tests/errors.json or name it in tests/default.nix')
+
+
 def main():
-    for check in (check_skills, check_links, check_errors, check_nix_blocks, check_wiki, check_release, check_tracked):
+    for check in (check_skills, check_links, check_errors, check_nix_blocks, check_wiki, check_release, check_tracked,
+                  check_examples, check_fixtures):
         check()
     for line in problems:
         print(f'FAIL  {line}')

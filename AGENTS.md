@@ -54,7 +54,7 @@ fills `flake.modules.<class>.<name>`. It also publishes what it built as
 
 ```sh
 just                 # list recipes
-just check           # nix flake check: the main fixture, every error fixture, the template
+just check           # nix flake check: the main fixture, every error fixture, every example tree
 just errors          # each error fixture's message (a Nix check can only see that it failed)
 just lint            # statix and deadnix over the Nix code, actionlint over the workflows (needs the dev shell)
 just docs            # skills listed, links resolve, every error documented and tested, nix blocks parse
@@ -79,7 +79,7 @@ nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
 | `nix/publish.nix` | one tree's `flake.moduleGraph` |
 | `nix/shared.nix` | what a flake gets once however many trees it imports: the options, `flake.moduleGraph`, the orphan check |
 | `tests/` | fixtures, expected results, and the scripts behind `just errors`, `docs`, `expected-*`, `new-error` |
-| `example-flake/` | two example flakes, `default` and `home-manager`, to read, evaluate and draw (not configurations to switch to, and not `nix flake init` templates); their trees are checked by `just check` |
+| `example-flake/` | three example flakes, `default`, `home-manager` and `multi-host`, to read, evaluate and draw (not configurations to switch to, and not `nix flake init` templates); their trees are checked by `just check`, and `just examples` evaluates the hosts each one builds |
 | `doc/` | the exact rules (`convention.md`) and format (`format.md`); `style.md` for all docs |
 | `wiki/` | guides: `using-the-flake.md`; `agents-lessons-learned.md` for agents; `styleguide.md` before adding a page |
 | `dev/` | the development shell's own flake (kept out of the main flake's inputs) |

@@ -66,7 +66,7 @@ it):
 
 To see how it works first,
 [How it works, on the example flake](wiki/using-the-flake.md#how-it-works-on-the-example-flake)
-walks through [`example-flake/`](example-flake/), a flake in this
+walks through [`example-flake/`](example-flake/), flakes in this
 repository to read and evaluate.
 
 ## A module file

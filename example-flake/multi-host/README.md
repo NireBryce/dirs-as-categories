@@ -29,7 +29,10 @@ modules/
    └─ macos/dock.nix            a category because the file sets `folderIsCategory`
 ```
 
-To evaluate it from a clone of this repository:
+`just examples`, from the repository root, evaluates the `laptop` and
+`server` hosts of this flake with real nixpkgs and home-manager. `mac`
+needs nix-darwin, so nothing builds it. To evaluate by hand, from a
+clone of this repository:
 
 ```sh
 nix eval --json --no-write-lock-file --override-input dirs-as-categories "path:$PWD" \

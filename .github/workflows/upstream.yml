@@ -22,7 +22,6 @@ on:
 
 permissions:
   contents: read
-  issues: write # only for the notice step
 
 jobs:
   latest:
@@ -38,16 +37,25 @@ jobs:
         run: nix develop ./dev --command just preflight
       - name: just examples with the latest nixpkgs and home-manager
         run: nix develop ./dev --command just examples
-      - name: Notice on failure
-        if: ${{ failure() && github.event_name == 'schedule' }}
-        env:
+
+  # A failure lands on one reused issue. This is the only job with
+  # issues: write; `latest` gets no write access at all. On schedule runs
+  # only: a workflow_dispatch failure emails whoever ran it.
+  notice:
+    needs: [latest]
+    if: ${{ failure() && github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -uo pipefail
           title="upstream: the weekly check against the latest inputs failed"
-          body="The weekly run of .github/workflows/upstream.yml failed: a new flake-parts, import-tree, nixpkgs or home-manager breaks a fixture or a template. Users get these inputs, so this likely affects them. The step that failed says which; skill \`update-inputs\` says what to read.
+          body="The weekly run of .github/workflows/upstream.yml failed: a new flake-parts, import-tree, nixpkgs or home-manager breaks a fixture or an example flake. Users get these inputs, so this likely affects them. The job that failed says which; skill \`update-inputs\` says what to read.
 
           Run: ${RUN_URL}"
           existing="$(gh issue list --repo "${REPO}" --state open \

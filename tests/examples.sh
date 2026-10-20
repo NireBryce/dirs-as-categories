@@ -13,8 +13,8 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 scratch="$(cd "$(mktemp -d)" && pwd -P)"
 trap 'rm -rf -- "${scratch:?}"' EXIT
 
-# example:host
-for pair in default:example home-manager:laptop; do
+# example:host (a host the example's own flake builds; `mac` needs nix-darwin, so multi-host brings two)
+for pair in default:example home-manager:laptop multi-host:laptop multi-host:server; do
     example="${pair%%:*}" host="${pair##*:}"
     cp -r "$root/example-flake/$example" "$scratch/$example"
     drv="$(nix eval --raw --no-write-lock-file \

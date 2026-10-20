@@ -103,6 +103,11 @@ jobs:
             title: "chore: update dev/flake.lock"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        # The PR is opened with FLAKE_LOCK_TOKEN (the update-flake-lock
+        # action pushes and calls the API with its `token` input), so the
+        # checkout's GITHUB_TOKEN never needs to reach git.
+        with:
+          persist-credentials: false
       - uses: DeterminateSystems/nix-installer-action@2cb76beab460be7e44442c7ebdcbc30b638416df # 2026-10-08
       - uses: DeterminateSystems/update-flake-lock@94ec8663aab64b7339b58aae321906a0e3b9f01f # 2026-10-08
         with:

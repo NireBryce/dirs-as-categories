@@ -4,7 +4,7 @@
 > dirs-as-categories is young, and anything here can change without notice:
 > the module file shape, which folders count as categories, the reserved
 > keys, the error messages, and `flake.moduleGraph`'s format. If you use
-> dirs-as-categories anyway, pin a release tag (`github:NireBryce/dirs-as-categories/v0.2.0`),
+> dirs-as-categories anyway, pin a release tag (`github:NireBryce/dirs-as-categories/v0.3.0`),
 > read the [CHANGELOG](CHANGELOG.md) before you move to a newer one, and compare what your hosts build before and
 > after; the
 > [migration steps](wiki/using-the-flake.md#migrating-a-flake-that-names-its-modules-by-hand)
@@ -49,7 +49,7 @@ it):
 ```nix
 {
     inputs.dirs-as-categories = {
-        url = "github:NireBryce/dirs-as-categories/v0.2.0";   # a release tag: see CHANGELOG.md before moving it
+        url = "github:NireBryce/dirs-as-categories/v0.3.0";   # a release tag: see CHANGELOG.md before moving it
         inputs.import-tree.follows = "import-tree";   # if you have them
         inputs.flake-parts.follows = "flake-parts";
     };
@@ -112,8 +112,9 @@ checks in files like these.
 - `defaults.nix` is never a module. A `defaults.nix`'s class parts apply
   whenever a configuration reaches anything in the file's folder's subtree,
   either through the nearest category at or above the folder or by
-  including something inside the folder directly. Each `defaults.nix` loads
-  once, however many routes reach the file.
+  including something inside the folder directly; one in the tree's root
+  reaches everything. Each `defaults.nix` loads once, however many routes
+  reach the file.
 - dirs-as-categories skips `_`-prefixed files and folders, as import-tree does.
 
 On a mistake, dirs-as-categories stops evaluation, names the file, and
@@ -131,7 +132,7 @@ error means, read [wiki/using-the-flake.md](wiki/using-the-flake.md).
 
 `flake.moduleGraph` describes what dirs-as-categories built: categories,
 folders, modules and their classes, includes, enables, defaults, the other
-files, and any module nothing reaches (`orphans`). Setting
+files, and any module inside a category that nothing reaches (`orphans`). Setting
 `dirsAsCategories.checkOrphans = true` makes `nix flake check` fail on an
 orphan. [doc/format.md](doc/format.md) specifies the format, and
 [flake-module-graph](https://github.com/NireBryce/flake-module-graph) draws
@@ -149,7 +150,7 @@ through the checks and the test-first loop.
 
 ```sh
 nix develop ./dev        # a shell with just, python3 and the linters
-just preflight           # everything CI runs: flake check, error messages, doc checks, lint
+just preflight           # everything CI runs: flake check, error messages, doc checks, schema, bench, lint
 just                     # every recipe
 ```
 

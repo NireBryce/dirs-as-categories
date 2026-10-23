@@ -1,6 +1,6 @@
 # Changing dirs-as-categories
 
-_Last modified: 2026-10-20_
+_Last modified: 2026-10-23_
 
 This page is for someone changing dirs-as-categories itself: fixing a bug,
 adding a rule, improving an error message. It covers the development
@@ -42,7 +42,7 @@ use it, and the [CHANGELOG](../CHANGELOG.md) says how.
 ```sh
 git clone https://github.com/NireBryce/dirs-as-categories
 cd dirs-as-categories
-nix develop ./dev     # just, python3, statix, deadnix, nixd
+nix develop ./dev     # just, python3, the linters and scanners, nixd
 just preflight
 ```
 
@@ -60,14 +60,16 @@ or `example-flake/` is untracked.
 
 ## Where things are
 
-Read [`../nix/README.md`](../nix/README.md) first: it shows how the four
+Read [`../nix/README.md`](../nix/README.md) first: it shows how the five
 files in `nix/` fit together and explains the Nix they use. In short:
 
 | Path | Holds |
 |---|---|
+| `nix/default.nix` | `lib.tree`, `addClasses` and `withClasses`: hands import-tree's file list to `module.nix` |
 | `nix/scan.nix` | every rule: what each file is, which folders are categories, every error. Never reads `config` |
 | `nix/module.nix` | builds `flake.modules` from the scan |
-| `nix/publish.nix` | builds `flake.moduleGraph` |
+| `nix/publish.nix` | builds one tree's `flake.moduleGraph` |
+| `nix/shared.nix` | loaded once per flake: the options, `flake.moduleGraph`, the orphan check |
 | `tests/fixtures/main/` | one tree exercising every behaviour; `tests/expected/main.json` is its result |
 | `tests/fixtures/err-*/` | one tree per error; `tests/errors.json` holds the message each must produce |
 | `example-flake/` | the example flakes, to read, evaluate and draw; `nix flake check` checks their trees |
@@ -92,10 +94,10 @@ files in `nix/` fit together and explains the Nix they use. In short:
 ## Adding an error
 
 ```sh
-just new-error typo-only 'a/c/one/y.nix: unknown key `nixOS` (did you mean `nixos`?)'
+just new-error enables-class 'a/c/one/y.nix: enables.nixOS: unknown class'
 ```
 
-The recipe creates `tests/fixtures/err-typo-only/modules/a/c/one/x.nix`
+The recipe creates `tests/fixtures/err-enables-class/modules/a/c/one/x.nix`
 (one valid module) and adds the message to `tests/errors.json`. Make the
 tree wrong in exactly one way, `git add` it, and run `just errors`: the
 new case fails until the code raises that message. `tests/errors.json`

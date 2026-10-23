@@ -4,13 +4,33 @@ This file lists what changed for a flake using dirs-as-categories, newest
 first. dirs-as-categories is **experimental** (see the
 [README](README.md)), so any release may break a flake: **Breaks** says
 what you have to change. Pin a release tag
-(`github:NireBryce/dirs-as-categories/v0.2.0`) and read the entries
+(`github:NireBryce/dirs-as-categories/v0.3.0`) and read the entries
 between yours and the one you move to. Until `1.0`, a release that
-breaks something increments the minor number (`v0.2.0`); one that breaks
+breaks something increments the minor number (`v0.3.0`); one that breaks
 nothing increments the patch number (`v0.1.1`). Error messages' wording
 is not part of what a release keeps; their meaning is.
 
 ## Unreleased
+
+## v0.3.0 — 2026-10-23
+
+A flake on `v0.2.0` may have to change: read **Breaks**.
+
+### Breaks
+
+- **A `defaults.nix` directly in the tree's root now applies to every
+  module and category.** Before, it applied to nothing. If your tree has
+  one, keep it only if you meant those settings for every host, and
+  compare each host's `drvPath` before and after.
+- **A module file with `enables` and no class part stops evaluation** with
+  `` `enables` hands modules to the file's class parts, and the file has none``.
+  Before, the file declared nothing, yet kept the modules it named out of
+  `flake.moduleGraph.orphans`. Add a class part that takes `enabled`
+  (`nixos = { enabled, ... }: …`), or delete the file; then
+  `dirsAsCategories.checkOrphans` may name modules it used to hide.
+- **`folderIsCategory = true` in a file directly in the tree's root stops
+  evaluation** with `folderIsCategory = true in the tree's root, which is
+  never a category`. Before, it was ignored: delete the line.
 
 ### Fixed
 
@@ -32,6 +52,10 @@ is not part of what a release keeps; their meaning is.
 
 - Comments in `nix/`, the wiki and the agent skills are reworded to say
   plainly who does what. Behaviour is unchanged.
+- The README, wiki and example READMEs match the code again, and
+  `doc/convention.md` now states two rules it left out: `hm` counts as a
+  near miss of `homeManager`, and the error ``read `config` while
+  scanning`` from an `args: …` module file.
 
 ## v0.2.0 — 2026-10-18
 

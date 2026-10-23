@@ -1,5 +1,5 @@
 # Lessons agents learned the hard way
-_Last modified: 2026-10-19_
+_Last modified: 2026-10-23_
 
 This page collects what surprised agent sessions about Nix, flake-parts and
 this repository's inputs, so the next session doesn't relearn it. Each
@@ -78,6 +78,16 @@ scratch directory needs no `git add`; the rule in `AGENTS.md` applies to
 fixtures under `tests/`. Run the file with
 `nix eval --impure --file <file> <attribute>`. Checked on 2026-10-19 with
 flake-parts `024633c`.
+
+A user's flake usually has inputs the session can't fetch (nixpkgs,
+nix-darwin), and its `flake.nix` may import their flake modules, so
+`mkFlake` on it fails before any tree is read. To see what the scan makes
+of the user's tree, skip flake-parts: call `nix/scan.nix` and
+`nix/publish.nix` directly, with `inputs = { }` and every `.nix` file
+under the root whose path has no `_` component as `files`. The scan only
+reads keys, so a file's `inputs.home-manager…` inside a class part is never
+evaluated. Comparing that JSON before and after a change to `nix/` showed
+on 2026-10-23 that the change left a 227-module tree's graph unchanged.
 
 ## Running the linters without the dev shell
 

@@ -108,6 +108,12 @@ let
     twoTrees = twoTreesFlake [ treeA treeA ./fixtures/two-trees/b/modules ];
     twoTreesProbe = (evalHost twoTrees "nixos" "ssh").config.probe;
 
+    # ── a defaults.nix in the tree's root ───────────────────────────────────
+    # Its folder's subtree is the whole tree, so it reaches every module and
+    # category, once each.
+    rootDefaults = lib.genAttrs [ "host" "c" ] (name:
+        lib.sort lib.lessThan (evalHost (mkFlake "root-defaults") "nixos" name).config.probe);
+
     # Evaluates a flake's checks and graph fully; gives false when they fail.
     evaluates = value: (builtins.tryEval (builtins.deepSeq value value)).value;
 
@@ -171,6 +177,10 @@ in
                  evaluates (builtins.attrNames twoTrees.checks.x86_64-linux) == [ "module-orphans" ]
               && onceGraph != false && evaluates (twoTreesFlake [ treeA treeA ]).moduleGraph == onceGraph;
             detail = "two trees: the orphan check should evaluate, and a tree imported twice should publish the graph it publishes once";
+        };
+        root-defaults = {
+            ok     = rootDefaults == { host = [ "host" "root defaults" "x" ]; c = [ "root defaults" "x" "y" ]; };
+            detail = "a defaults.nix in the root should reach every module and category once: ${builtins.toJSON rootDefaults}";
         };
         example-default = {
             ok = example "default" == {

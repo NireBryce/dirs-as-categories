@@ -1,0 +1,1 @@
+{ enables.nixos = [ "x" ]; }

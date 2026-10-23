@@ -20,10 +20,10 @@ modules/
    ├─ base/                     a category
    │  ├─ defaults.nix           applies whenever anything in base/ is used
    │  └─ boot/, nix/, home-manager/, locale.nix
-   ├─ packages/                 a category containing three more
-   │  ├─ shell-apps/            a category containing text-tools/ (and pagers/ below it)
-   │  ├─ editors/
-   │  └─ development/
+   ├─ packages/                 a category containing two more, and the module git
+   │  ├─ shell-apps/            a category containing the category text-tools/ (with pagers/ inside)
+   │  ├─ editors/               a category: micro/micro.nix
+   │  └─ development/git.nix    a plain folder: git belongs to packages
    ├─ desktop/kde/              kde-desktop includes kde-base
    ├─ homelab/services/         a category only the server uses
    └─ macos/dock.nix            a category because the file sets `folderIsCategory`

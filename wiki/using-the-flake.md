@@ -1,6 +1,6 @@
 # Using the flake
 
-_Last modified: 2026-10-19_
+_Last modified: 2026-10-23_
 
 This page shows how dirs-as-categories works on an example flake, how to
 add it to your flake, and how to lay out a tree with hosts and Home
@@ -433,7 +433,7 @@ folder and what is wrong.
 |---|---|
 | `names used more than once: x (a/one/x.nix, a/two/x.nix)` | rename one of the files; modules and categories share one namespace, and `x/default.nix` beside `x.nix` counts as a clash too |
 | `` a/outPath.nix: `outPath` can't be a name: … `` | rename the file or folder; Nix gives `outPath` a meaning of its own |
-| `` <file>: unknown key `nixOS`; expected one of: … `` | correct the typo in the class or reserved key |
+| `` <file>: unknown key `nixOS` (did you mean `nixos`?); expected one of: … `` | correct the typo in the class or reserved key |
 | `` <file>: includes.nixos: unknown name `nope` `` | no module or category has that name |
 | `` <file>: includes.nixos: unknown name `one` (a/c/one is a plain folder, which has no name; …) `` | you can't include a plain folder: include the folder's category, or make the folder a category |
 | `` <file>: includes.nixos: `x` has no nixos module `` | the name exists, but not in that class |

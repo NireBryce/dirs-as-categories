@@ -68,7 +68,7 @@ just expected-accept # record it, once every difference is one you meant
 just update-inputs   # nix flake update for one lock file, then the diff and expected-diff (skill `update-inputs`; network)
 just new-error <name> '<message>'   # start an error fixture and its tests/errors.json entry
 just examples        # each example flake's host with real nixpkgs and home-manager (network; not in preflight)
-nix develop ./dev    # a shell with just, python3, statix, deadnix, nixd
+nix develop ./dev    # a shell with just, python3, the linters and scanners, nixd
 ```
 
 ## Layout

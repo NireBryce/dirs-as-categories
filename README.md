@@ -131,7 +131,7 @@ error means, read [wiki/using-the-flake.md](wiki/using-the-flake.md).
 
 `flake.moduleGraph` describes what dirs-as-categories built: categories,
 folders, modules and their classes, includes, enables, defaults, the other
-files, and any module nothing reaches (`orphans`). Setting
+files, and any module inside a category that nothing reaches (`orphans`). Setting
 `dirsAsCategories.checkOrphans = true` makes `nix flake check` fail on an
 orphan. [doc/format.md](doc/format.md) specifies the format, and
 [flake-module-graph](https://github.com/NireBryce/flake-module-graph) draws
@@ -149,7 +149,7 @@ through the checks and the test-first loop.
 
 ```sh
 nix develop ./dev        # a shell with just, python3 and the linters
-just preflight           # everything CI runs: flake check, error messages, doc checks, lint
+just preflight           # everything CI runs: flake check, error messages, doc checks, schema, bench, lint
 just                     # every recipe
 ```
 

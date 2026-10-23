@@ -13,7 +13,7 @@ one says how in the [CHANGELOG](CHANGELOG.md).
   [Changing dirs-as-categories](wiki/changing-dirs-as-categories.md). In
   short: `nix develop ./dev`, write the failing test first, then
   `just preflight`, and a CHANGELOG line under `Unreleased`.
-- **Reading the code**: [`nix/README.md`](nix/README.md) explains the four
+- **Reading the code**: [`nix/README.md`](nix/README.md) explains the five
   files and the Nix they use.
 
 Pull requests use the template's sections, including **Breaks**: what a

@@ -14,8 +14,8 @@ when_to_use: Writing "confirmed", "as of <date>", a version, or a claim about an
 2. **A "status as of `<date>`" snapshot** of something mutable. The date
    reads as freshly checked; nothing re-verifies it.
 3. **A cross-reference to something else in this repo** stated as currently
-   true in a comment or doc ("both X and Y do Z"). A later rename can't know
-   the sentence exists.
+   true in a comment or doc ("both X and Y do Z"). A later rename doesn't
+   update the sentence.
 
 Not this skill -- write freely: design rationale, **event dates** ("on
 `<date>` X was decided"), plans and hypotheses labelled as such, and plain
@@ -39,10 +39,10 @@ comments describing the code in front of you.
 1. For each specific noun in a claim (path, version, flag), name what showed
    it this session. Otherwise mark it inferred, or leave it out.
 2. Don't fuse two separately-true facts into one never-observed claim.
-3. Precision beyond what you checked is a liability: the vaguer true
-   statement outlives the sharper false one.
-4. Condensing text strips qualifiers first, as if they were hedging. They
-   are facts about the claim; carry them verbatim, or drop the claim.
+3. Don't state more precisely than you checked: a vaguer true statement
+   stays true longer than a sharper false one.
+4. When condensing text, don't strip qualifiers as if they were hedging.
+   They are facts about the claim; carry them verbatim, or drop the claim.
 
 ## When a claim turns out wrong
 

@@ -3,8 +3,8 @@
     nixos = {
         services.openssh = {
             enable = true;
-            # Keys only. Both are needed: with PAM, keyboard-interactive login
-            # asks for a password too. Add your key to
+            # Allow key login only. Both settings are needed: with PAM,
+            # keyboard-interactive login asks for a password too. Add your key to
             # users.users.<name>.openssh.authorizedKeys.keys before relying on it.
             settings.PasswordAuthentication = false;
             settings.KbdInteractiveAuthentication = false;

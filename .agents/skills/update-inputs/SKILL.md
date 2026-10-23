@@ -9,8 +9,8 @@ when_to_use: Asked to bump, update or refresh flake.lock or dev/flake.lock.
 ## Applies to
 
 Changing `flake.lock` (import-tree, flake-parts and the nixpkgs-lib inside
-it) or `dev/flake.lock` (the development shell's nixpkgs). Not the
-example flakes: they have no lock file, so each evaluation takes their
+it) or `dev/flake.lock` (the development shell's nixpkgs). It does not
+cover the example flakes: they have no lock file, so each evaluation takes their
 inputs at the latest.
 
 ## Where updates come from
@@ -19,14 +19,14 @@ inputs at the latest.
 Monday (it needs the `FLAKE_LOCK_TOKEN` secret; its header says how). The
 weekly `upstream` workflow (Sundays) already ran the fixtures and example flakes against
 the newest inputs, so a red `upstream` issue is the first sign an update
-will break something. Reviewing such a PR is this skill; so is a bump by
+will break something. This skill covers reviewing such a PR and bumping by
 hand.
 
 ## Two lock files, two commits
 
 The main flake's lock decides what the tests run against; the dev shell's
-only which tools are in `nix develop ./dev`. Update them separately, so a
-failure points at one:
+lock decides only which tools are in `nix develop ./dev`. Update them
+separately, so a failure points at one:
 
 ```sh
 nix flake update                     # flake.lock
@@ -34,8 +34,8 @@ nix flake update --flake ./dev       # dev/flake.lock
 ```
 
 `just update-inputs <lock>` (`flake.lock` or `dev/flake.lock`) wraps one
-of these with `git diff --stat` and `just expected-diff`; reading the
-diff and running `just preflight` stay yours.
+of these with `git diff --stat` and `just expected-diff`; you still
+read the diff and run `just preflight`.
 
 ## What to look at
 
@@ -45,12 +45,11 @@ diff and running `just preflight` stay yours.
    `flake.modules` or `flakeModules.modules`. Say what you read, or that
    you didn't.
 2. **`just preflight`**, then `just expected-diff`: an input update should
-   move nothing. A difference is a finding to explain, never something to
-   accept.
-3. **The `lib` functions `nix/` uses** still exist: `nix/README.md`'s
-   tables list them.
-4. **A template host still evaluates** when flake-parts or import-tree
-   changed (skill `change-a-rule`, its templates step).
+   move nothing. Explain any difference as a finding; never accept it.
+3. **Check that the `lib` functions `nix/` uses still exist**:
+   `nix/README.md`'s tables list them.
+4. **Check that a template host still evaluates** when flake-parts or
+   import-tree changed (skill `change-a-rule`, its templates step).
 
 ## The floors
 

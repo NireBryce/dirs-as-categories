@@ -26,7 +26,7 @@ notice before you rely on dirs-as-categories.
 | module | a piece of configuration that the module system merges with others. NixOS, Home Manager and nix-darwin configurations are all made of modules |
 | flake-parts | a library that writes a flake's `outputs` as modules too, so a flake can be split across files |
 | import-tree | a library that hands flake-parts every `.nix` file in a folder, so you never list them |
-| dirs-as-categories | an import-tree preset: it reads the same folder and also names your modules and groups them, from where the files are |
+| dirs-as-categories | an import-tree preset: it reads the same folder, then names your modules and groups them according to where the files are |
 
 ## What a modules tree holds
 

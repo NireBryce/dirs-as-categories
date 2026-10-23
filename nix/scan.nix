@@ -332,7 +332,7 @@ let
     pathsByName = lib.groupBy' (paths: item: paths ++ [ item.path ]) [ ] (item: item.name) named;
     clashes     = lib.filterAttrs (_: paths: length paths > 1) pathsByName;
 
-    # A name Nix itself gives a meaning to. `builtins.toJSON` and string
+    # A name that Nix itself treats specially. `builtins.toJSON` and string
     # interpolation read a set with an `outPath` as that one value, so a
     # module called `outPath` would replace all of `moduleGraph.modules`
     # with its own record. (Names starting with `_`, such as `__functor`,

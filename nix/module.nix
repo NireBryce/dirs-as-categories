@@ -85,9 +85,9 @@ let
     # `flake.modules` gets its type -- modules that merge -- from
     # flake-parts.flakeModules.modules. Without that import, a tree alone
     # happens to work, but the first other definition of `flake.modules`
-    # ends in a bare "infinite recursion encountered". Checked lazily, when
-    # something reads `flake.modules`: `options`, like `config`, can't be
-    # read at the top of a module.
+    # ends in a bare "infinite recursion encountered". The check is lazy and
+    # runs when something reads `flake.modules`, because `options`, like
+    # `config`, can't be read at the top of a module.
     hasModulesOption = options.flake.type.getSubOptions [ ] ? modules;
     needsModulesImport = "dirs-as-categories: flake.modules has no type: "
         + "add inputs.flake-parts.flakeModules.modules to imports, beside lib.tree";

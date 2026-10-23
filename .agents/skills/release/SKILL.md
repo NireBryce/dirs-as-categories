@@ -8,17 +8,18 @@ when_to_use: Asked to release, tag, cut a version, or publish what is on main.
 
 ## Applies to
 
-Publishing what is on `main` as `vX.Y.Z`. Not landing a change (skill
-`ship`): a release only names changes that have already landed. A tag and
+Publishing what is on `main` as `vX.Y.Z`. This skill does not land
+changes (skill `ship`); a release only names changes that have already
+landed. A tag and
 a GitHub release are public and notify watchers, so cut one only when the
 user asks, naming the version or agreeing to the one you propose.
 
 ## Which number
 
-Until `1.0` (`CHANGELOG.md`'s introduction): anything under **Breaks** in
-`Unreleased` increments the minor number (`v0.1.0` -> `v0.2.0`); no
-breaks, the patch number (`v0.1.0` -> `v0.1.1`). `flake.moduleGraph`'s
-`version` is separate and moves only by `doc/format.md`'s rule.
+Until `1.0` (`CHANGELOG.md`'s introduction), anything under **Breaks** in
+`Unreleased` increments the minor number (`v0.1.0` -> `v0.2.0`); with no
+breaks, it increments the patch number (`v0.1.0` -> `v0.1.1`).
+`flake.moduleGraph`'s `version` is separate and moves only by `doc/format.md`'s rule.
 
 ## 1. The release PR (skill `ship`)
 
@@ -49,9 +50,9 @@ gh release create vX.Y.Z --title vX.Y.Z --notes-file /tmp/notes.md
 ```
 
 Check the notes file before publishing: it must be that release's
-section and nothing else. Never move or delete a pushed tag: a flake that
-pinned it would silently change. A wrong release gets a new patch
-release.
+section and nothing else. Never move or delete a pushed tag, because a
+flake that pinned it would silently change. Fix a wrong release with a new
+patch release.
 
 ## 3. Check it as a user would
 
@@ -60,5 +61,5 @@ nix flake metadata github:NireBryce/dirs-as-categories/vX.Y.Z
 nix eval --json --no-write-lock-file 'github:NireBryce/dirs-as-categories/vX.Y.Z?dir=example-flake/default#moduleGraph'
 ```
 
-Say what you ran: "tagged", "released", and "the example flake at the
+Say what you ran. "Tagged", "released" and "the example flake at the
 tag evaluates" are different claims.

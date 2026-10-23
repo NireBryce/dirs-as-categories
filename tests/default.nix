@@ -69,7 +69,8 @@ let
     unexpectedlyFine = lib.filter (name: (builtins.tryEval (force name)).success) errorCases;
 
     # ── the orphan check ────────────────────────────────────────────────────
-    # Present only when asked for, and naming each orphan with its path.
+    # The check exists only when asked for, and names each orphan with its
+    # path.
     orphanCheck = on:
         let flake = flake-parts.lib.mkFlake {
                 inputs = { self = { outPath = ./fixtures/main; }; inherit flake-parts; testMarker = "x"; };
@@ -107,12 +108,12 @@ let
     twoTrees = twoTreesFlake [ treeA treeA ./fixtures/two-trees/b/modules ];
     twoTreesProbe = (evalHost twoTrees "nixos" "ssh").config.probe;
 
-    # What a flake's checks and graph evaluate to, or false when they fail.
+    # Evaluates a flake's checks and graph fully; gives false when they fail.
     evaluates = value: (builtins.tryEval (builtins.deepSeq value value)).value;
 
     # ── the example flakes' trees ───────────────────────────────────────────
-    # Only the trees: building a host needs nixpkgs, which these tests don't
-    # fetch.
+    # These tests build only the trees: building a host needs nixpkgs, which
+    # they don't fetch.
     exampleGraph = name:
         (flake-parts.lib.mkFlake {
             inputs = { self = { outPath = ../example-flake + "/${name}"; }; inherit flake-parts; };

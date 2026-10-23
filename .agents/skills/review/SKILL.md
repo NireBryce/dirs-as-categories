@@ -8,8 +8,8 @@ when_to_use: Review a PR, branch, or commit here, or before saying done on your 
 
 ## Applies to
 
-Reviewing a PR, branch or commit here, yours or another's, or the last
-step before saying "done".
+Use this skill to review a PR, branch or commit here, yours or another's,
+and as the last step before saying "done".
 
 ## Run first
 
@@ -22,25 +22,26 @@ step before saying "done".
 ## Read for
 
 - **Anything in `nix/scan.nix` reading `config`**, directly or through a
-  function it calls -- an infinite recursion waiting for the right tree.
+  function it calls: it is an infinite recursion that some tree will hit.
 - **A search repeated per file in `nix/scan.nix`** (`elem`, `filter`,
   `lib.unique` inside a `map` over files or folders): `just bench` should
   catch it, but read for it too.
 - **A new behaviour without a fixture**, or a new error without an
   `err-*` tree and a message in `tests/errors.json`.
-- **A check that was never seen failing.** Ask how it was broken on purpose.
-- **Expected output recorded wholesale**: `tests/expected/main.json` changed
-  in lines the description doesn't explain.
+- **A check that was never seen failing.** Ask how the author broke it on
+  purpose.
+- **Expected output recorded wholesale**: `tests/expected/main.json` has
+  changed lines that the description doesn't explain.
 - **`flake.moduleGraph` changed** without `doc/format.md` and
   `doc/format.schema.json`, or a breaking
-  change without a `version` bump.
+  change to it without a `version` bump.
 - **A rule changed** without `doc/convention.md` (its errors table too).
 - **A user-visible change** without a `CHANGELOG.md` line, or a break not
   under **Breaks**: a flake that worked before and fails after is a break,
   however small.
 - **Examples naming real machines or people** (`doc/style.md`).
 - **Public text about a security fix** that says what got past the old
-  version instead of what is now enforced.
+  version instead of what the check now enforces.
 
 ## Saying the outcome
 

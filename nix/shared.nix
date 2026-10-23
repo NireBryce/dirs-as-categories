@@ -49,8 +49,8 @@ in
         flake.moduleGraph =
             if lib.length trees == 1 then (builtins.head trees).graph else throw onlyOneTree;
 
-        # A derivation that only writes $out, or fails naming the orphans: no
-        # nixpkgs needed, so it costs a flake using this nothing.
+        # A derivation that only writes $out, or fails naming the orphans. It
+        # needs no nixpkgs, so a flake using this pays nothing for it.
         perSystem = { system, ... }: {
             checks = lib.mkIf config.dirsAsCategories.checkOrphans {
                 module-orphans = builtins.derivation {

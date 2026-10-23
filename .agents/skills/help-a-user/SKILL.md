@@ -51,6 +51,6 @@ a missing error: propose one (skill `propose-issue`).
 
 ## 4. Say what you checked
 
-Their flake isn't here: say which advice comes from the message alone and
-which you reproduced. Examples you give use the user's paths; examples you
+You don't have their flake: say which advice comes from the message alone
+and which you reproduced. Examples you give use the user's paths; examples you
 write into this repository use generic names (`doc/style.md`).

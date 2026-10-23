@@ -10,7 +10,7 @@ when_to_use: Before committing any change to behaviour, a name, a command, an er
 
 Every change that alters behaviour, a name, an option, a command, an error
 message or where a file lives. Run it before the commit, not after: a doc
-fixed in a later change is a doc that was wrong in between.
+fixed in a later change is wrong until that change lands.
 
 ## Find what the change touched
 

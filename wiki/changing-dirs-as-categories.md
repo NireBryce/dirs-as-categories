@@ -99,7 +99,7 @@ The recipe creates `tests/fixtures/err-typo-only/modules/a/c/one/x.nix`
 (one valid module) and adds the message to `tests/errors.json`. Make the
 tree wrong in exactly one way, `git add` it, and run `just errors`: the
 new case fails until the code raises that message. `tests/errors.json`
-holds a part of the message; the real one must contain it.
+holds part of the message; the message the code raises must contain it.
 
 Each error then needs a row in two tables, or `just docs` fails: the
 errors table in [`../doc/convention.md`](../doc/convention.md#errors), and

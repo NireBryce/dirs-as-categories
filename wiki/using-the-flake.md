@@ -2,10 +2,11 @@
 
 _Last modified: 2026-10-19_
 
-This page walks through how dirs-as-categories works on an example
-flake, adds it to your flake, explains a tree with hosts and Home Manager, then covers checks, migrating a flake that
-names its modules by hand, and what each error means. For
-the exact rules, see [`../doc/convention.md`](../doc/convention.md).
+This page shows how dirs-as-categories works on an example flake, how to
+add it to your flake, and how to lay out a tree with hosts and Home
+Manager. It also covers checks, migrating a flake that names its modules by
+hand, and what each error means. For the exact rules, see
+[`../doc/convention.md`](../doc/convention.md).
 
 **dirs-as-categories is experimental** and may change without notice; read
 the [README](../README.md)'s notice before using dirs-as-categories on
@@ -303,8 +304,8 @@ delivers the named module as the argument `enabled`:
 }
 ```
 
-`enabled` holds only the names you list in `enables`, so the declaration
-can't drift from its use, and the published graph records the link. In the
+`enabled` holds only the names you list in `enables`, so a module can use
+only what it declares, and the published graph records the link. In the
 example, the laptop's `home-manager.users.me` gets `shell`'s git and bash
 settings.
 
@@ -338,7 +339,8 @@ By default, the subfolder rule decides. To choose yourself, put a
 Set `folderIsCategory = true` to make a flat folder of files a category.
 Promoting or demoting a folder changes which names exist, and promoting a
 folder can change the order of list options such as package lists: the
-same packages, a different hash. Compare your hosts before and after.
+packages stay the same but the hash changes. Compare your hosts before
+and after.
 
 ## Files that are not modules
 

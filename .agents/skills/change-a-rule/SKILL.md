@@ -28,9 +28,9 @@ categories, a reserved key, `defaults.nix`, an error message, or a field of
 
 The scan decides `imports` and the attribute *names* of `flake.modules`.
 The module system needs both before `config` exists; reading it there is an
-infinite recursion. A file may be called only with `lib` and `inputs` --
-both exist first (`inputs` is a flake-parts special argument). `config` is
-for values, in `module.nix`, lazily.
+infinite recursion. The scan calls a user's file with only `lib` and
+`inputs`, which both exist first (`inputs` is a flake-parts special
+argument). Read `config` only for values, in `module.nix`, lazily.
 
 ## Test first
 

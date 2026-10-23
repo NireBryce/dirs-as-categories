@@ -14,15 +14,15 @@ errors:
 lint:
     statix check . && deadnix --fail --exclude tests/fixtures -- . && actionlint
 
-# zizmor over the workflows and gitleaks over the history: beside an audit or a review of .github/ (needs the dev shell; not in preflight)
+# zizmor over the workflows and gitleaks over the history: run when auditing or reviewing .github/ (needs the dev shell; not in preflight)
 security:
     zizmor -q . && gitleaks git .
 
-# lychee over every link in the Markdown: beside a docs change or a release (needs the dev shell and the network; not in preflight)
+# lychee over every link in the Markdown: run with a docs change or a release (needs the dev shell and the network; not in preflight)
 links:
     lychee --no-progress --max-retries 2 .
 
-# `nix flake update` for one lock file (flake.lock or dev/flake.lock), then what moved and whether the tests noticed: the lock diff and preflight stay yours (skill `update-inputs`; network)
+# `nix flake update` for one lock file (flake.lock or dev/flake.lock), then show the lock diff and run expected-diff; you still review the diff and run preflight (skill `update-inputs`; network)
 update-inputs lock="flake.lock":
     nix flake update --flake $(dirname {{quote(lock)}})
     git diff --stat {{quote(lock)}}

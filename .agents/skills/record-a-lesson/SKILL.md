@@ -16,12 +16,12 @@ Before ending a task in which any of these happened:
 - Getting the inputs, the dev shell or an evaluation to work at all needed
   a workaround.
 
-Do it without being asked: the user asked for lessons to be recorded as a
-matter of course (2026-10-19). Not for a bug in this repository's code --
-that is a fix or an issue (skill `propose-issue`); record only the general
-behaviour the bug taught. Not for anything already on the page or in
-`AGENTS.md`, `doc/` or another skill: point to it instead, or sharpen the
-existing lesson.
+Record lessons without being asked: the user asked for this on 2026-10-19.
+Do not record a bug in this repository's code; that is a fix or an issue
+(skill `propose-issue`), and you record only the general behaviour the bug
+taught. Do not record anything already on the page or in `AGENTS.md`,
+`doc/` or another skill: point to it instead, or sharpen the existing
+lesson.
 
 ## Where
 
@@ -46,10 +46,10 @@ specific bug's fix don't belong; the commit log and the issue hold those.
 
 ## When a lesson becomes a rule
 
-If a lesson would have prevented a mistake every session can make, it may
-belong in `AGENTS.md`'s hard rules or in the skill for that task. Propose
-the move to the user rather than making it: the lesson page records,
-`AGENTS.md` instructs.
+If a lesson would have prevented a mistake that any session can make, it
+may belong in `AGENTS.md`'s hard rules or in the skill for that task. Propose
+the move to the user rather than making it: the lesson page records what
+happened, and `AGENTS.md` instructs.
 
 ## Then
 

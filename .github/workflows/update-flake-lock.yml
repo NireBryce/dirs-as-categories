@@ -2,8 +2,8 @@
 # adapted from NireBryce/nixos-configs on 2026-10-17. One PR per lock file
 # (skill `update-inputs`): flake.lock decides what the tests run against,
 # dev/flake.lock only which tools `nix develop ./dev` has, so a failure
-# points at one. The PR is a decision, not an auto-merge: review the lock
-# diff and merge through skill `ship`.
+# points at one. A person reviews each PR; nothing auto-merges. Review the
+# lock diff and merge through skill `ship`.
 #
 # NEEDS the repo secret `FLAKE_LOCK_TOKEN`: a fine-grained personal access
 # token scoped to this repository with `Contents: read/write` and
@@ -126,8 +126,9 @@ jobs:
             skill `ship`; close unmerged if the timing is wrong.
 
   # A red scheduled run only emails the owner. Any failure, or a token
-  # inside 30 days of expiry, also lands on one reused issue. Uses
-  # GITHUB_TOKEN, which can file issues; files only in this repository.
+  # inside 30 days of expiry, also lands on one reused issue. This job
+  # uses GITHUB_TOKEN, which can file issues, and files only in this
+  # repository.
   notice:
     needs: [preflight, update]
     if: ${{ always() && (contains(needs.*.result, 'failure') || needs.preflight.outputs.state == 'expiring') }}

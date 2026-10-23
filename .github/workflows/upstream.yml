@@ -39,8 +39,8 @@ jobs:
         run: nix develop ./dev --command just examples
 
   # A failure lands on one reused issue. This is the only job with
-  # issues: write; `latest` gets no write access at all. On schedule runs
-  # only: a workflow_dispatch failure emails whoever ran it.
+  # issues: write; `latest` gets no write access at all. It files issues
+  # on schedule runs only: a workflow_dispatch failure emails whoever ran it.
   notice:
     needs: [latest]
     if: ${{ failure() && github.event_name == 'schedule' }}

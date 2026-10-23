@@ -6,7 +6,8 @@ docs follow [`../doc/style.md`](../doc/style.md); this page adds what is
 particular to the wiki. Read this page before adding, splitting or renaming
 a wiki page.
 
-This is more here for automated submissions than humans.
+This page is written mainly for agents that submit wiki changes, and less
+for people.
 
 ## Contents
 

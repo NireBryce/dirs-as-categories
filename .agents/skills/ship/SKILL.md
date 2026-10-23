@@ -18,8 +18,9 @@ An ask to get changes onto `main`: a bare "push", "ship it", "land this",
 | "commit this" | Commit. Pushing was not asked for. |
 | another branch named outright | Push directly there. |
 
-If unsure whether an ask means `main`, ask. Assuming *no* is the mistake
-this flow exists to prevent: `main` never takes a direct push from an agent.
+If unsure whether an ask means `main`, ask; don't assume it doesn't.
+`main` never takes a direct push from an agent, and this flow is how a
+change reaches it.
 
 **One** confirmation, asked once CI is green, covers both actions: "merge,
 and delete the branch afterward?" On yes, both happen in the same turn.
@@ -31,8 +32,8 @@ git fetch origin
 just preflight          # what CI runs
 ```
 
-A change a flake using dirs-as-categories would notice has a line in
-`CHANGELOG.md`'s `Unreleased` section, and under **Breaks** whatever such
+A change that a flake using dirs-as-categories would notice needs a line in
+`CHANGELOG.md`'s `Unreleased` section. List under **Breaks** whatever such
 a flake has to change. CI fails a pull request that touches `nix/*.nix` without
 touching `CHANGELOG.md`; a refactor with no effect on users says so in
 one line.
@@ -58,8 +59,9 @@ git push -u origin feat/<thing>
 gh pr create --base main --title "<subject>" --body-file <file>
 ```
 
-- First commit line and branch name get a `feat/`/`fix/`/`docs:` prefix.
-- The message says what this commit contains, never a note or fix still
+- Start the first commit line and the branch name with a
+  `feat/`/`fix/`/`docs:` prefix.
+- The message says what this commit contains, not a note or fix still
   to come. Messages go in a quoted heredoc or a file, so backticks are not
   executed.
 - Trailer `Co-Authored-By: Claude` -- the agent's name only, no model, no
@@ -80,17 +82,17 @@ gh pr view <n> --json mergeStateStatus,commits,files --jq '.mergeStateStatus'
 Only `CLEAN` is ready (`MERGEABLE` means only "no conflicts"). `main`'s
 branch protection requires `check (ubuntu-latest)`, `check (ubuntu-24.04-arm)`,
 `check (macos-latest)`, `oldest` and `changelog`; `gh pr merge` refuses
-until they pass. Those names live in GitHub's settings, not in this
-repository: a PR that renames or removes one of those jobs in
+until they pass. GitHub's settings hold those names, not this
+repository. A PR that renames or removes one of those jobs in
 `.github/workflows/check.yml` leaves every later PR waiting for a check
-that never reports. Such a PR says so, and the protection is updated
+that never reports. Such a PR says so, and you update the protection
 (`gh api repos/NireBryce/dirs-as-categories/branches/main/protection`)
 in the same turn as its merge, with the user's yes. A red check:
 `gh run view <run> --log-failed`, fix, push, wait again; if `just preflight`
 passed locally, the step it missed belongs in `preflight` too.
 
-Ready: show the title, URL, commit list and diff stat, and ask the one
-combined question. No: leave the PR open, say so, stop.
+When ready, show the title, URL, commit list and diff stat, and ask the one
+combined question. If not ready, leave the PR open, say so, and stop.
 
 ## 3. Merge, then delete -- on yes only
 
@@ -101,6 +103,6 @@ git branch -d feat/<thing>
 git push origin --delete feat/<thing>
 ```
 
-Not `gh pr merge --delete-branch`: it removes only the remote branch.
+Do not use `gh pr merge --delete-branch`: it removes only the remote branch.
 Report the merge commit and the branch's fate. A failed merge deletes
-nothing; raise it, don't retry silently.
+nothing. Report the failure to the user instead of retrying silently.

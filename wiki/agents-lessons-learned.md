@@ -83,7 +83,7 @@ flake-parts `024633c`.
 
 `nix develop ./dev` needs nixpkgs as a GitHub tarball, which the cloud
 session's proxy refuses, so `just lint` can't run there. On 2026-10-19
-that let a push fail CI with statix's
+a push failed CI for that reason, with statix's
 `[20] Warning: Avoid repeated keys in attribute sets`: `nix/shared.nix`
 assigned `options.…` three times at the top level.
 
@@ -144,8 +144,8 @@ error stops evaluation, `tryEval` or not:
 | `abort "x"` | error |
 
 Code that calls a user's function to look at the result must make every
-stand-in it passes `throw`, and must not pass too few arguments: the
-second is an error `tryEval` can't catch. Checked on 2026-10-19 with
+stand-in it passes `throw`, and must not pass too few arguments: a missing
+argument is an error `tryEval` can't catch. Checked on 2026-10-19 with
 Nix 2.34.6.
 
 ## Calling a user's file early

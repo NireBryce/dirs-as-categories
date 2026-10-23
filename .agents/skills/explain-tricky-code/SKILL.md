@@ -14,9 +14,8 @@ it from the code alone; the questions are "why is it shaped like this" and
 rewrite keeps coming back "still confusing". Ordinary code keeps short,
 dense comments.
 
-This is the opposite trade from short comments: a header in this style is
-several times longer. Use it only where the mechanism earns it, and say so
-when offering.
+A header in this style is several times longer than a short comment.
+Use it only where the mechanism earns it, and say so when offering.
 
 ## The shape
 

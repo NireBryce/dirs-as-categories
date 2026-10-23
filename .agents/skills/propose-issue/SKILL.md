@@ -18,7 +18,7 @@ says so explicitly, in those words.
 
 - Search first: `gh issue list --search "<keywords>" --state all`.
 - Reproduce it, or say plainly that you didn't.
-- Check the repo isn't already handling it (an open PR, a TODO with an
+- Check that the repo isn't already handling it (an open PR, a TODO with an
   issue number).
 
 ## Propose, then file only on a yes

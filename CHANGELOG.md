@@ -28,6 +28,11 @@ is not part of what a release keeps; their meaning is.
   dirs-as-categories called it with only `lib` and `inputs`, and evaluation
   stopped with `called without required argument`.
 
+### No change for users
+
+- Comments in `nix/`, the wiki and the agent skills are reworded to say
+  plainly who does what. Behaviour is unchanged.
+
 ## v0.2.0 — 2026-10-18
 
 A flake on `v0.1.1` may have to change: read **Breaks**.

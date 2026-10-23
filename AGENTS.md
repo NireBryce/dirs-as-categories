@@ -129,4 +129,5 @@ format is a change to both repositories.
 | `boyscouting` | small fixes beside a change |
 | `explain-tricky-code` | comments that teach a hard mechanism |
 | `trim-docs` | tightening prose |
+| `plain-prose` | rewording mannered or indirect prose |
 | `new-skill` | writing a skill |

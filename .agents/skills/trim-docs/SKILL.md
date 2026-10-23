@@ -10,7 +10,8 @@ when_to_use: Asked to lint, tighten, trim, or make the docs more concise.
 
 Asked to "tighten", "trim" or "make more concise" `README.md`, `doc/`, `wiki/`,
 `.agents/skills/*/SKILL.md` or `AGENTS.md`. Do not use it to fix a stale
-fact (skill `docs-sync`) or to edit code comments.
+fact (skill `docs-sync`), to edit code comments, or to reword mannered
+prose (skill `plain-prose`).
 
 ## Keep
 

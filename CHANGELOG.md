@@ -12,6 +12,19 @@ is not part of what a release keeps; their meaning is.
 
 ## Unreleased
 
+### Breaks
+
+- A `defaults.nix` directly in the tree's root now applies to every module
+  and category. Before, it applied to nothing. If you have one, compare
+  your hosts before and after.
+- A module file with `enables` and no class part stops with
+  `` `enables` hands modules to the file's class parts, and the file has none``.
+  Before, it declared nothing, but still kept the modules it named out of
+  `flake.moduleGraph.orphans`.
+- `folderIsCategory = true` in a file directly in the tree's root stops
+  with `folderIsCategory = true in the tree's root, which is never a
+  category`. Before, it was ignored.
+
 ### Fixed
 
 - A flake that imports a tree twice, or two trees that don't refer to each

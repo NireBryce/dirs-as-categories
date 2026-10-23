@@ -59,6 +59,8 @@ across modules and categories.
 | `admin` | files dirs-as-categories loads as ordinary flake-parts modules |
 | `orphans` | modules inside a category that no `includes`/`enables` reaches ([convention](convention.md#orphans)); optional when reading, because this field arrived after version 1's first release |
 
-The first component of every path is a top-level folder (an area).
+The first component of every path is a top-level folder (an area), except
+for a file directly in the tree's root: a root `defaults.nix` has `dir`
+`"."` and `category` `null`.
 
 A host or a home configuration is usually a module with `includes`.

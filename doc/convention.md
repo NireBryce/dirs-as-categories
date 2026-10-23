@@ -57,7 +57,10 @@ dirs-as-categories looks at the function's required arguments:
   (`args: …` or `{ ... }@args: …`) also gets the stand-ins described
   below, because Nix can't tell what such a function reads; if its result's
   keys can't be seen without them (`args: import ./_hosts.nix args`), the
-  file is a flake-parts module.
+  file is a flake-parts module. If its keys can be seen, the file is a
+  module file, and a class part that reads a stand-in
+  (`args: { nixos = args.config.foo; }`) stops with
+  ``dirs-as-categories read `config` while scanning``.
 - If the function requires anything else, such as `config` or `withSystem`,
   the file is a flake-parts module, imported unchanged -- with two
   exceptions, both mistakes. dirs-as-categories calls the function with
@@ -73,8 +76,10 @@ dirs-as-categories looks at the function's required arguments:
   a class.
 
 A key that differs from a class or reserved key only in case or spelling
-(`nixOS`, `home-manager`, `include`) is an error, naming the key it
-resembles, even when it is the file's only key. Without that check, such a
+(`nixOS`, `home-manager`, `include`), or is `hm`, read as short for
+`homeManager`, is an error, naming the key it resembles, even when it is
+the file's only key. So a flake-parts module can't have a top-level `hm`
+option. Without that check, such a
 file would have no class key and load as a flake-parts module.
 
 ## Module files
@@ -121,7 +126,8 @@ class module must be a function to receive `enabled`:
 ```
 
 `enabled` holds only the names you declare, so the declaration can't drift
-from the use. `flake.moduleGraph` records the link.
+from the use. `flake.moduleGraph` records the link. A file with `enables`
+must have a class part to receive `enabled`; one without is an error.
 
 ## Folders and categories
 
@@ -133,7 +139,9 @@ A folder below the top level is a **category** when:
    declaring a module.
 
 Top-level folders are **areas**. Areas are never categories; setting
-`folderIsCategory = true` in an area is an error.
+`folderIsCategory = true` in an area is an error. The tree's root is never
+a category either: `folderIsCategory = true` in a file directly in the root
+is an error, and `false` there changes nothing.
 
 A category is a module named after its folder, in every class. A category
 imports:
@@ -160,6 +168,9 @@ anything in the file's folder's subtree:
 - through the nearest category at or above the folder (so a `defaults.nix`
   in a plain folder moves up to the category that holds the folder), or
 - by including any module or category inside the folder directly.
+
+A `defaults.nix` directly in the tree's root reaches every module and
+category in the tree.
 
 Each `defaults.nix` loads once per configuration, however many routes reach
 the file, because every module dirs-as-categories creates carries a `key`.
@@ -191,7 +202,8 @@ adds a check to your flake.
 
 ## Errors
 
-Each error stops evaluation with `dirs-as-categories: <path>: <what>`.
+Each error stops evaluation with `dirs-as-categories: <path>: <what>`,
+except ``dirs-as-categories read `<arg>` while scanning``, which names no file.
 
 | Error | Raised when |
 |---|---|
@@ -206,6 +218,9 @@ Each error stops evaluation with `dirs-as-categories: <path>: <what>`.
 | `files disagree on folderIsCategory` | two files in one folder set different values |
 | `folderIsCategory must be true or false` | `folderIsCategory` has any other value |
 | `a top-level folder is an area and can't be a category` | `folderIsCategory = true` at the top level |
+| `folderIsCategory = true in the tree's root, which is never a category` | a file directly in the tree's root sets `folderIsCategory = true` |
+| `` `enables` hands modules to the file's class parts, and the file has none `` | a module file has `enables` but no class key |
+| ``read `<arg>` while scanning`` | a function naming no arguments (`args: …`) is a module file, and a class part reads a flake-parts argument such as `config`; name the arguments (`{ lib, ... }:`) and ask for `config` inside the class |
 | `defaults.nix must be an attribute set, or a function of lib/inputs returning one` | a `defaults.nix` is anything else, such as a function asking for `config` |
 | `expected an attribute set (a module) or a function` | a file evaluates to neither |
 | `flake.modules has no type: add inputs.flake-parts.flakeModules.modules to imports, beside lib.tree` | the flake doesn't import `flake-parts.flakeModules.modules` |

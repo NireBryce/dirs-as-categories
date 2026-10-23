@@ -86,7 +86,8 @@ let
         if parent == "." then [ ] else [ parent ] ++ ancestors parent;
 
     # Whether `path` is strictly beneath the folder `dir` (not `dir` itself).
-    within = dir: path: hasPrefix "${dir}/" path;
+    # Every path is beneath the tree's root, ".".
+    within = dir: path: dir == "." || hasPrefix "${dir}/" path;
 
     isDefaults = path: baseNameOf path == "defaults.nix";
 
@@ -410,11 +411,28 @@ let
         target == reach.dir || within reach.dir target || target == reach.category;
 
     # ── 7. Errors that need the whole tree ──────────────────────────────────
+    # The root is never a category, like an area. `flagOf "."` also raises
+    # the errors any folder's flags can.
+    rootFlagged = flagOf "." == true;
+    rootFlagMessage =
+        let file = lib.findFirst (entry: entry.value.folderIsCategory or null == true) null filesByDir.".";
+        in "${file.path}: folderIsCategory = true in the tree's root, which is never a category; "
+         + "set it in a folder below the top level";
+
+    # `enables` hands modules to the file's own class parts as `enabled`, so
+    # a file with no class part has nothing to hand them to.
+    enablesWithoutClass = filter (entry: entry.value ? enables && !(lib.any (class: entry.value ? ${class}) classes))
+                                 moduleFiles;
+    enablesMessage = entry: "${entry.path}: `enables` hands modules to the file's class parts, and the file has none; "
+        + "add one that takes `enabled`: `${builtins.head classes} = { enabled, ... }: { … };`";
+
     # nix/module.nix asserts this, so these errors stop evaluation even
     # when nothing else happens to look at the names involved.
     clashMessages = lib.mapAttrsToList (name: paths: "${name} (${concatStringsSep ", " paths})") clashes;
     checked =
         if reservedUses != [ ] then fail (reservedMessage (builtins.head reservedUses))
+        else if rootFlagged then fail rootFlagMessage
+        else if enablesWithoutClass != [ ] then fail (enablesMessage (builtins.head enablesWithoutClass))
         else if clashes != { } then fail "names used more than once: ${concatStringsSep "; " clashMessages}"
         else if referenceProblems != [ ] then fail (concatStringsSep "; " referenceProblems)
         else true;

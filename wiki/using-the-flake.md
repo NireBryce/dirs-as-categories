@@ -325,7 +325,8 @@ settings.
 parts apply whenever a configuration reaches anything in the file's folder,
 either through the category (here, `base`) or by including a module inside
 the folder by name. The file loads once, however many routes reach it. Use
-`mkDefault` so a host can override each setting.
+`mkDefault` so a host can override each setting. A `defaults.nix` directly
+in `modules/` applies to every module and category in the tree.
 
 ## Choosing which folders are categories
 
@@ -427,7 +428,7 @@ convert the flake one file at a time:
 ## When evaluation stops
 
 Each message starts `error: dirs-as-categories:`, followed by the file or
-folder and what is wrong.
+folder and what is wrong; ``read `config` while scanning`` names no file.
 
 | Message | Fix |
 |---|---|
@@ -442,6 +443,9 @@ folder and what is wrong.
 | `<folder>: files disagree on folderIsCategory` | two files in one folder set different values; make the values agree |
 | `<folder>: folderIsCategory must be true or false` | set `folderIsCategory` to `true` or `false` |
 | `a: a top-level folder is an area and can't be a category` | remove `folderIsCategory = true` from the area |
+| `defaults.nix: folderIsCategory = true in the tree's root, which is never a category; …` | remove `folderIsCategory = true` from the file in the root, or move it into a folder below the top level |
+| `` <file>: `enables` hands modules to the file's class parts, and the file has none; … `` | add a class part that takes `enabled`, as in [Home Manager, through `enables`](#home-manager-through-enables), or remove `enables` |
+| ``dirs-as-categories read `config` while scanning`` | a module file written `args: …` reads `args.config` in a class part; name its arguments (`{ lib, ... }:`) and ask for `config` inside the class: `nixos = { config, ... }: …` |
 | `` <file>: unknown key `nixOS` (did you mean `nixos`?) `` | the file's only class key is mistyped; correct it |
 | `` <file>: asks for `pkgs` at the top of the file, where only `lib` and `inputs` exist; move it into the class: … `` | move `{ pkgs, ... }:` from the top of the file into the class, as the message shows; the top of a module file may ask only for `lib` and `inputs` |
 | `` <file>: asks for `modulesPath`, `pkgs`, which only a NixOS or Home Manager module gets; … `` | the file is a NixOS module; [keep it as it is](#a-nixos-module-you-want-to-keep-as-it-is) |

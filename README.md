@@ -112,8 +112,9 @@ checks in files like these.
 - `defaults.nix` is never a module. A `defaults.nix`'s class parts apply
   whenever a configuration reaches anything in the file's folder's subtree,
   either through the nearest category at or above the folder or by
-  including something inside the folder directly. Each `defaults.nix` loads
-  once, however many routes reach the file.
+  including something inside the folder directly; one in the tree's root
+  reaches everything. Each `defaults.nix` loads once, however many routes
+  reach the file.
 - dirs-as-categories skips `_`-prefixed files and folders, as import-tree does.
 
 On a mistake, dirs-as-categories stops evaluation, names the file, and

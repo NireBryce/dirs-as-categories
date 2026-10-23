@@ -52,6 +52,10 @@ expected-accept:
 new-error name message:
     python3 tests/new_error.py {{quote(name)}} {{quote(message)}}
 
+# The newest CHANGELOG.md release's notes, as the release workflow will publish them (skill `release`)
+release-notes:
+    python3 tests/release_notes.py notes
+
 # Everything CI runs
 preflight: check errors docs schema bench lint
 

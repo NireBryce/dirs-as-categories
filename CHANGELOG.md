@@ -12,6 +12,12 @@ is not part of what a release keeps; their meaning is.
 
 ## Unreleased
 
+### No change for users
+
+- Releases are tagged and published by `.github/workflows/release.yml`
+  when the pull request that names them merges. Tags and release notes
+  look as before.
+
 ## v0.3.0 — 2026-10-23
 
 A flake on `v0.2.0` may have to change: read **Breaks**.

@@ -67,6 +67,7 @@ just expected-diff   # how the main fixture's result differs from tests/expected
 just expected-accept # record it, once every difference is one you meant
 just update-inputs   # nix flake update for one lock file, then the diff and expected-diff (skill `update-inputs`; network)
 just new-error <name> '<message>'   # start an error fixture and its tests/errors.json entry
+just release-notes   # the newest CHANGELOG.md release's notes, as .github/workflows/release.yml publishes them
 just examples        # each example flake's host with real nixpkgs and home-manager (network; not in preflight)
 nix develop ./dev    # a shell with just, python3, the linters and scanners, nixd
 ```
@@ -88,7 +89,7 @@ nix develop ./dev    # a shell with just, python3, the linters and scanners, nix
 | `dev/` | the development shell's own flake (kept out of the main flake's inputs) |
 | `CONTRIBUTING.md` | where a person starts: issues, the contributor wiki page, the code guide |
 | `CHANGELOG.md` | what changed for users, and what breaks; `Unreleased`, then each release |
-| `.github/` | CI (`check`), the weekly test against the latest inputs (`upstream`), Dependabot for Actions, weekly lock PRs (`update-flake-lock`), issue and PR templates |
+| `.github/` | CI (`check`), tagging and publishing each release on merge (`release`), the weekly test against the latest inputs (`upstream`), Dependabot for Actions, weekly lock PRs (`update-flake-lock`), issue and PR templates |
 
 ## Testing discipline
 

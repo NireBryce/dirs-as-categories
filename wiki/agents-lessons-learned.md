@@ -18,6 +18,7 @@ checked. Skill `record-a-lesson` adds to this page.
 - [Comparing two `tryEval` results](#comparing-two-tryeval-results)
 - [A probe tree follows the convention too](#a-probe-tree-follows-the-convention-too)
 - [Test a combination the way a user combines](#test-a-combination-the-way-a-user-combines)
+- [The sandbox pushes only its own branch](#the-sandbox-pushes-only-its-own-branch)
 
 ## Evaluating without GitHub tarballs
 
@@ -249,3 +250,22 @@ imported twice), write the case a user would write, and run the same files
 as a single tree as a control: a difference between the two results is
 either the feature or a bug. Checked on 2026-10-19 with probe trees in a
 scratch directory; the results are in issue 20.
+
+## The sandbox pushes only its own branch
+
+On 2026-10-23, after the `v0.3.0` pull request merged, `git push origin
+v0.3.0` and `git push origin --delete <the session's branch>` from the
+cloud session both printed `Everything up-to-date` and exited 0, yet
+neither reached GitHub. Pushing the tag by its full name,
+`git push origin refs/tags/v0.3.0`, showed the real answer:
+
+```
+error: RPC failed; HTTP 403 curl 22 The requested URL returned error: 403
+```
+
+The session's git proxy accepts pushes to the session's own branch and
+nothing else, `gh` has no valid login there, and the GitHub tools can't
+make a tag. So `.github/workflows/release.yml` tags each release when its
+pull request merges (skill `release`). After any push other than the
+session's branch, confirm it with `git ls-remote origin <ref>` before
+saying it happened.

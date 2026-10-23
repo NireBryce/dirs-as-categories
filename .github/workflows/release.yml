@@ -1,0 +1,54 @@
+# On every push to main: tag and publish the newest release in
+# CHANGELOG.md, unless it is tagged already.
+#
+# A release is a pull request that renames `## Unreleased` to
+# `## vX.Y.Z — <date>` (skill `release`). When it merges, this job finds a
+# version with no tag, tags the merge commit, and publishes the GitHub
+# release with that section as its notes (tests/release_notes.py). Every
+# other push finds the newest version tagged and stops there. main takes
+# only pull requests whose checks pass, so the commit it tags passed CI.
+#
+# The job exists because an agent's sandbox can push only its own branch,
+# never a tag; GITHUB_TOKEN can. A tag made with GITHUB_TOKEN starts no
+# other workflow, and none here runs on tags. The job never moves a tag:
+# a version that is tagged is left alone.
+
+name: release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # gh release create makes the tag and the release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Tag and publish the newest CHANGELOG.md release, unless it is tagged
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          version=$(python3 tests/release_notes.py version)
+          if gh api "repos/${REPO}/git/ref/tags/${version}" --silent 2>/dev/null; then
+            echo "${version} is tagged already: nothing to release"
+            exit 0
+          fi
+          python3 tests/release_notes.py notes > "${RUNNER_TEMP}/notes.md"
+          gh release create "${version}" --repo "${REPO}" --target "${SHA}" \
+            --title "${version}" --notes-file "${RUNNER_TEMP}/notes.md"
+          echo "released ${version} at ${SHA}"

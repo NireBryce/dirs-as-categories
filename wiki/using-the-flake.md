@@ -112,7 +112,7 @@ have.
            import-tree.url = "github:denful/import-tree";
 
            dirs-as-categories = {
-               url = "github:NireBryce/dirs-as-categories/v0.2.0";   # a release tag: see CHANGELOG.md before moving it
+               url = "github:NireBryce/dirs-as-categories/v0.3.0";   # a release tag: see CHANGELOG.md before moving it
                inputs = {
                    import-tree.follows = "import-tree";
                    flake-parts.follows = "flake-parts";

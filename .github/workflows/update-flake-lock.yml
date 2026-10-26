@@ -108,8 +108,8 @@ jobs:
         # checkout's GITHUB_TOKEN never needs to reach git.
         with:
           persist-credentials: false
-      - uses: DeterminateSystems/nix-installer-action@2cb76beab460be7e44442c7ebdcbc30b638416df # 2026-10-08
-      - uses: DeterminateSystems/update-flake-lock@94ec8663aab64b7339b58aae321906a0e3b9f01f # 2026-10-08
+      - uses: DeterminateSystems/nix-installer-action@9383ce2bf08796b65508822f5982f49151badc4e # 2026-10-08
+      - uses: DeterminateSystems/update-flake-lock@f02139a6c0edb4442190a4738c42ccceceb3f6a8 # 2026-10-08
         with:
           token: ${{ secrets.FLAKE_LOCK_TOKEN }}
           base: main

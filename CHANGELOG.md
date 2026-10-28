@@ -4,7 +4,7 @@ This file lists what changed for a flake using dirs-as-categories, newest
 first. dirs-as-categories is **experimental** (see the
 [README](README.md)), so any release may break a flake: **Breaks** says
 what you have to change. Pin a release tag
-(`github:NireBryce/dirs-as-categories/v0.3.1`) and read the entries
+(`github:NireBryce/dirs-as-categories/v0.4.0`) and read the entries
 between yours and the one you move to. Until `1.0`, a release that
 breaks something increments the minor number (`v0.3.0`); one that breaks
 nothing increments the patch number (`v0.1.1`). Error messages' wording
@@ -12,11 +12,19 @@ is not part of what a release keeps; their meaning is.
 
 ## Unreleased
 
+## v0.4.0 — 2026-10-28
+
+A flake on `v0.3.1` may have to change: read **Breaks**. dirs-as-categories
+is still **experimental**: read the [README](README.md)'s notice before you
+rely on it.
+
 ### Breaks
 
 - `dirsAsCategories.checkOrphans` and `checkClassContents` no longer
   accept `true`: they take `false` (the default), `"build"` or `"eval"`.
-  Change `true` to `"build"`, which behaves as `true` did.
+  A flake that sets either to `true` stops evaluating with a type error
+  until you change `true` to `"build"`, which behaves as `true` did (or to
+  `"eval"`, see below).
 
 ### Added
 

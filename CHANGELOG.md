@@ -12,6 +12,20 @@ is not part of what a release keeps; their meaning is.
 
 ## Unreleased
 
+### Added
+
+- `flake.moduleGraph.misplaced` lists the messages behind
+  `checks.<system>.module-class-contents`, with or without the check
+  (a new optional field; the format's `version` stays `1`). Breaks nothing.
+
+### Changed
+
+- The README, `doc/convention.md` and the descriptions of
+  `dirsAsCategories.checkOrphans` and `checkClassContents` say that both
+  checks fail when built, so `nix flake check --no-build` does not run
+  them, and that a flake can throw on `flake.moduleGraph.orphans` or
+  `misplaced` instead. No behaviour changed.
+
 ## v0.3.1 — 2026-10-28
 
 A flake on `v0.3.0` should not have to change. dirs-as-categories is

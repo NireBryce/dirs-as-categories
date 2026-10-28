@@ -27,7 +27,10 @@ in
                     Add `checks.<system>.module-orphans`, which fails while any module
                     inside a category is reached by no `includes` or `enables` --
                     valid, evaluated, and installing nothing. The list is
-                    `flake.moduleGraph.orphans` either way.
+                    `flake.moduleGraph.orphans` either way. The check fails when it
+                    is built, so `nix flake check --no-build` does not run it; a flake
+                    that wants the failure at evaluation time can throw when that list
+                    is not empty.
                 '';
                 type    = lib.types.bool;
                 default = false;
@@ -38,7 +41,11 @@ in
                     Add `checks.<system>.module-class-contents`, which fails while a
                     class part sets an option namespace that only another class has
                     (`home` under `nixos`, say). A heuristic over a short list of
-                    namespaces, so it is off by default.
+                    namespaces, so it is off by default. The list is
+                    `flake.moduleGraph.misplaced` either way. The check fails when it
+                    is built, so `nix flake check --no-build` does not run it; a flake
+                    that wants the failure at evaluation time can throw when that list
+                    is not empty.
                 '';
                 type    = lib.types.bool;
                 default = false;

@@ -4,13 +4,19 @@ This file lists what changed for a flake using dirs-as-categories, newest
 first. dirs-as-categories is **experimental** (see the
 [README](README.md)), so any release may break a flake: **Breaks** says
 what you have to change. Pin a release tag
-(`github:NireBryce/dirs-as-categories/v0.3.0`) and read the entries
+(`github:NireBryce/dirs-as-categories/v0.3.1`) and read the entries
 between yours and the one you move to. Until `1.0`, a release that
 breaks something increments the minor number (`v0.3.0`); one that breaks
 nothing increments the patch number (`v0.1.1`). Error messages' wording
 is not part of what a release keeps; their meaning is.
 
 ## Unreleased
+
+## v0.3.1 — 2026-10-28
+
+A flake on `v0.3.0` should not have to change. dirs-as-categories is
+still **experimental**: read the [README](README.md)'s notice before you
+rely on it.
 
 ### Added
 
@@ -19,23 +25,24 @@ is not part of what a release keeps; their meaning is.
   part that sets an option namespace only another class has (`home` under
   `nixos`). Off by default; breaks nothing.
 
-### Breaks
+### Changed
 
-- **A name clash's message changed**: it says which kind of clash it is
-  (module and module, module and category, category and category, or
-  `x.nix` beside `x/default.nix`), marks each path as a module or a
-  category, says how to fix it, and gives each clash its own line. A
-  script or test that matches the old text `names used more than once`
-  must match the new one. The same clashes stop evaluation as before.
+- A name clash's message says which kind of clash it is (module and
+  module, module and category, category and category, or `x.nix` beside
+  `x/default.nix`), marks each path as a module or a category, says how to
+  fix it, and gives each clash its own line. The same clashes stop
+  evaluation as before. A script or test that matches the old text
+  `names used more than once` must match the new one; error wording is
+  not part of what a release keeps.
 
 ### No change for users
 
 - Docs say what "class" means where a class first appears, and the issue
-  forms' prompts are worded more plainly. The form's fields are the same.
-
+  forms' prompts are worded more plainly. The forms' fields are the same.
 - Releases are tagged and published by `.github/workflows/release.yml`
   when the pull request that names them merges. Tags and release notes
   look as before.
+- The pinned GitHub Actions and the dev shell's `nixpkgs` are updated.
 
 ## v0.3.0 — 2026-10-23
 

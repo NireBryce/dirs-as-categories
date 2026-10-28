@@ -96,6 +96,8 @@ holding it is the one taken.
 | `lib.throwIfNot cond msg value` | `value`, or a `throw msg` when `cond` is false |
 | `lib.findFirst pred default list` | the first element passing `pred`, or `default` |
 | `lib.attrValues set` | the set's values, in the order of `attrNames` |
+| `lib.optionalString cond s` | `s`, or the empty string when `cond` is false |
+| `lib.mkMerge [ a b ]`, `lib.mkIf cond x` | module-system values: the definitions `a` and `b` together; `x` only when `cond` is true |
 | `lib.sort less list` | `list` sorted, `less a b` saying whether `a` goes first |
 | `lib.toLower s`, `lib.replaceStrings from to s` | `s` in lower case; `s` with each string in `from` replaced by its partner in `to` |
 | `lib.strings.levenshtein a b`, `lib.strings.levenshteinAtMost k a b` | how many single-letter edits turn `a` into `b`; whether that is at most `k` |

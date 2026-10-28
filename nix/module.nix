@@ -114,6 +114,7 @@ assert scan.checked;
             root    = scan.rootStr;
             graph   = import ./publish.nix { inherit lib classes scan; };
             orphans = map (name: "${name} (${pathOf name})") scan.orphans;
+            inherit (scan) misplaced;
         };
     };
 }

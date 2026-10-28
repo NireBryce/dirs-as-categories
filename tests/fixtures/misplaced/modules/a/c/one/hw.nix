@@ -1,0 +1,1 @@
+{ darwin = { boot = { }; hardware = { }; }; }

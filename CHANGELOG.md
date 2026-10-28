@@ -12,6 +12,22 @@ is not part of what a release keeps; their meaning is.
 
 ## Unreleased
 
+### Added
+
+- `dirsAsCategories.checkClassContents = true` adds
+  `checks.<system>.module-class-contents`, which fails and names a class
+  part that sets an option namespace only another class has (`home` under
+  `nixos`). Off by default; breaks nothing.
+
+### Breaks
+
+- **A name clash's message changed**: it says which kind of clash it is
+  (module and module, module and category, category and category, or
+  `x.nix` beside `x/default.nix`), marks each path as a module or a
+  category, says how to fix it, and gives each clash its own line. A
+  script or test that matches the old text `names used more than once`
+  must match the new one. The same clashes stop evaluation as before.
+
 ### No change for users
 
 - Releases are tagged and published by `.github/workflows/release.yml`

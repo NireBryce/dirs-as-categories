@@ -200,14 +200,43 @@ dirsAsCategories.checkOrphans = true;
 and names each orphan and its path. The check is off by default because it
 adds a check to your flake.
 
+## Class parts in the wrong class
+
+A `nixos` part that sets `home.packages` is a Home Manager mistake that
+evaluation reports only when a host reaches the module, as "option `home`
+does not exist". With
+
+```nix
+dirsAsCategories.checkClassContents = true;
+```
+
+`nix flake check` runs `checks.<system>.module-class-contents`, which fails
+and names each file, class part and top-level option namespace that belongs
+to another class, such as ``a/b/jq.nix: the `nixos` part sets `home`, which
+is a Home Manager option namespace; put it under `homeManager`, …``. The
+check reads only the names a part sets at its top level (a function part is
+called with stand-ins, as for [files that ask for `config`](#errors)), and
+only for `nixos`, `homeManager` and `darwin`. It is a heuristic over
+namespaces the three classes don't share: `home` (Home Manager); `boot`,
+`hardware`, `fileSystems` and `swapDevices` (NixOS); `homebrew` (nix-darwin). A
+part whose names depend on its arguments (`if pkgs.stdenv.isLinux then …`)
+or that is wrapped in `mkIf` is not checked, because reading its names
+would evaluate options. The check is off by default, and the list is not
+configurable.
+
 ## Errors
 
 Each error stops evaluation with `dirs-as-categories: <path>: <what>`,
+except a name clash, which opens with its kind, lists each path as
+`(module)` or `(category)` and ends with the fix, one line per clash; and
 except ``dirs-as-categories read `<arg>` while scanning``, which names no file.
 
 | Error | Raised when |
 |---|---|
-| `names used more than once: <name> (<paths>)` | two modules, two categories, or a module and a category share a name (including `x.nix` beside `x/default.nix`) |
+| `` module and module share the name `<name>` `` | two module files have the same filename in different folders |
+| `` module and category share the name `<name>` `` | a module and a category folder have the same name, including an `x.nix` inside the category `x/` |
+| `` category and category share the name `<name>` `` | two category folders have the same name under different areas |
+| `` `<name>.nix` and `<name>/default.nix` share the name `<name>` `` | `x.nix` sits beside `x/default.nix`, which takes the folder's name |
 | `` `outPath` can't be a name `` | a module file is `outPath.nix`, or a category's folder is `outPath` |
 | `unknown key` | a module file or `defaults.nix` has a key that isn't allowed, or any file has a near miss of one (`nixOS`); the message suggests the key meant |
 | `` asks for <args> at the top of the file, where only `lib` and `inputs` exist `` | a function asking for `config`, `pkgs` or the like returns class keys |

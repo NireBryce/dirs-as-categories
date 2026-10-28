@@ -81,6 +81,19 @@ let
             };
         in flake.checks.x86_64-linux.module-orphans or null;
 
+    # ── the class-contents check ────────────────────────────────────────────
+    # Opt-in like the orphan check; names each module part that sets another
+    # class's namespace, and nothing for namespaces that are fine.
+    contentsCheck = on:
+        let flake = flake-parts.lib.mkFlake {
+                inputs = { self = { outPath = ./fixtures/misplaced; }; inherit flake-parts; };
+            } {
+                systems = [ "x86_64-linux" ];
+                imports = [ flake-parts.flakeModules.modules (tree (fixture "misplaced"))
+                            { dirsAsCategories.checkClassContents = on; } ];
+            };
+        in flake.checks.x86_64-linux.module-class-contents or null;
+
     # ── extra classes ───────────────────────────────────────────────────────
     # addClasses keeps the default classes; withClasses replaces them.
     classesWith = make:
@@ -135,7 +148,7 @@ let
         };
 in
 {
-    inherit main force errorCases orphanCheck;
+    inherit main force errorCases orphanCheck contentsCheck;
 
     # every published graph the tests build, for tests/schema.py
     graphs = {
@@ -159,6 +172,16 @@ in
               && lib.hasInfix "lonely-module (general/lonely/inner/lonely-module.nix)"
                               (builtins.elemAt (orphanCheck true).args 1);
             detail = "checkOrphans: off should add no check, on should name lonely-module with its path";
+        };
+        class-contents-check = {
+            ok = let report = builtins.elemAt (contentsCheck true).args 1; in
+                 contentsCheck false == null
+              && lib.hasInfix "a/c/one/jq.nix: the `nixos` part sets `home`, which is a Home Manager option namespace" report
+              && lib.hasInfix "a/c/one/loader.nix: the `homeManager` part sets `fileSystems`, which is a NixOS option namespace" report
+              && lib.hasInfix "a/c/one/hw.nix: the `darwin` part sets `boot`, which is a NixOS option namespace" report
+              && lib.hasInfix "a/c/one/hw.nix: the `darwin` part sets `hardware`" report
+              && !lib.hasInfix "fine.nix" report;
+            detail = "checkClassContents: off should add no check, on should name jq.nix and loader.nix but not fine.nix";
         };
         classes = {
             ok = classesWith (tree.addClasses [ "nixOnDroid" ]) == {

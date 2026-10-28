@@ -42,6 +42,7 @@ anything you care about.
 | set defaults for a folder | put a `defaults.nix` with class keys in that folder |
 | keep a NixOS module as it is (`hardware-configuration.nix`) | name it `_hardware.nix` and add `nixos.imports = [ ./_hardware.nix ];` |
 | catch modules nothing uses | set `dirsAsCategories.checkOrphans = true;` |
+| catch a `home.*` option under `nixos` and the like | set `dirsAsCategories.checkClassContents = true;` |
 | see what dirs-as-categories built | run `nix eval --json .#moduleGraph` |
 
 ## How it works, on the example flake
@@ -432,7 +433,10 @@ folder and what is wrong; ``read `config` while scanning`` names no file.
 
 | Message | Fix |
 |---|---|
-| `names used more than once: x (a/one/x.nix, a/two/x.nix)` | rename one of the files; modules and categories share one namespace, and `x/default.nix` beside `x.nix` counts as a clash too |
+| `` module and module share the name `x`: a/one/x.nix (module), a/two/x.nix (module); … `` | rename one of the files: a module's name is its filename, so give per-host files a suffix (`laptop-hardware.nix`) |
+| `` module and category share the name `c`: a/b/c.nix (module), a/c (category); … `` | modules and categories share one namespace, so rename the file or the folder |
+| `` category and category share the name `c`: a/c (category), b/c (category); … `` | rename one folder, or set `folderIsCategory = false` in one |
+| `` `x.nix` and `x/default.nix` share the name `x`: …; … `` | keep one of the two files |
 | `` a/outPath.nix: `outPath` can't be a name: … `` | rename the file or folder; Nix gives `outPath` a meaning of its own |
 | `` <file>: unknown key `nixOS` (did you mean `nixos`?); expected one of: … `` | correct the typo in the class or reserved key |
 | `` <file>: includes.nixos: unknown name `nope` `` | no module or category has that name |

@@ -269,3 +269,20 @@ make a tag. So `.github/workflows/release.yml` tags each release when its
 pull request merges (skill `release`). After any push other than the
 session's branch, confirm it with `git ls-remote origin <ref>` before
 saying it happened.
+
+## A table of "this namespace belongs to one class" is short
+
+Issue 32's sketch listed `networking` as NixOS-only. Evaluating the
+top-level option names of NixOS (nixpkgs `31ecbaca1`), Home Manager
+(`1e3ebeb68`) and nix-darwin (`bb0b90dbd`) on 2026-10-27 showed that
+nix-darwin has `networking` too, and that Home Manager has `systemd`
+and `launchd` (as NixOS and nix-darwin do). Only `home` (Home Manager);
+`boot`, `hardware`, `fileSystems` and `swapDevices` (NixOS); and
+`homebrew` (nix-darwin) were in one set, so those are the table in
+`nix/scan.nix` (`namespaceOwner`). Re-check a name against all three
+before adding it: `lib.nixosSystem`, `homeManagerConfiguration` and
+`darwinSystem` each give `.options`, whose `attrNames` are the list.
+
+statix (`just lint`) also rejects three or more `dirsAsCategories.x = …`
+options side by side in one set (W20); `nix/shared.nix` groups them in one
+`dirsAsCategories = { … }`.

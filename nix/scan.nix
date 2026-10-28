@@ -3,7 +3,7 @@
 # In:  `files`, the list of .nix files import-tree found under `root`.
 # Out: the attribute set at the bottom of this file: which files are
 #      modules, which folders are categories, what each module names in
-#      `includes` and `enables`, and the orphans. nix/module.nix turns that
+#      `includes` and `enables`, the orphans, and class parts that look misplaced. nix/module.nix turns that
 #      into `flake.modules`; nix/publish.nix into `flake.moduleGraph`.
 #
 # Every decision here comes from a file's path and from the keys of what
@@ -15,7 +15,7 @@
 # Nix syntax this file uses.
 { lib, inputs, settings, root, files }:
 let
-    inherit (lib) filter concatMap unique hasPrefix optional length elem attrNames concatStringsSep listToAttrs nameValuePair;
+    inherit (lib) filter concatMap unique hasPrefix optional length elem attrNames concatStringsSep listToAttrs nameValuePair optionalString;
     inherit (settings) classes;
 
     # Stops evaluation. Every error message starts the same way, so a user
@@ -326,12 +326,41 @@ let
     # ── 4. Names ────────────────────────────────────────────────────────────
     # Modules and categories share one namespace: a name means one thing.
 
-    named = map (mod: { inherit (mod) name path; }) modules
-         ++ map (dir: { name = baseNameOf dir; path = dir; }) categories;
+    named = map (mod: { inherit (mod) name path; kind = "module"; }) modules
+         ++ map (dir: { name = baseNameOf dir; path = dir; kind = "category"; }) categories;
 
-    # { <name> = [ <path> <path> … ]; } for each name more than one thing has.
-    pathsByName = lib.groupBy' (paths: item: paths ++ [ item.path ]) [ ] (item: item.name) named;
-    clashes     = lib.filterAttrs (_: paths: length paths > 1) pathsByName;
+    # { <name> = [ <item> <item> … ]; } for each name more than one thing has.
+    # An item is { name; path; kind = "module" | "category"; }.
+    itemsByName = lib.groupBy' (items: item: items ++ [ item ]) [ ] (item: item.name) named;
+    clashes     = lib.filterAttrs (_: items: length items > 1) itemsByName;
+
+    # What kind of clash a name's items make, which decides the advice.
+    # `x.nix` beside `x/default.nix` is a module clash with its own message,
+    # since the second file's name is not in its filename.
+    clashKind = items:
+        let
+            kinds     = map (item: item.kind) items;
+            isDefault = item: baseNameOf item.path == "default.nix";
+        in
+        if !(elem "module" kinds) then "category and category"
+        else if !(elem "category" kinds) then
+            (if lib.any isDefault items && !(lib.all isDefault items) then "default twin" else "module and module")
+        else "module and category";
+
+    clashAdvice = {
+        "module and module" = "a module's name is its filename, so rename one; files that are naturally "
+            + "the same (a per-host `hardware.nix`) need a distinguishing suffix";
+        "module and category" = "modules and categories share one namespace, so `includes` and `enables` "
+            + "could not tell them apart; rename the module or the folder";
+        "category and category" = "a category's name is its folder's, so `includes` and `enables` could not "
+            + "tell them apart; rename one folder, or pin one with `folderIsCategory = false`";
+        "default twin" = "a `default.nix` takes its folder's name, so `x.nix` beside `x/default.nix` "
+            + "names one module twice; keep one of the two files";
+    };
+
+    clashTitle = kind: name:
+        if kind == "default twin" then "`${name}.nix` and `${name}/default.nix` share the name ${quote name}"
+        else "${kind} share the name ${quote name}";
 
     # A name that Nix itself treats specially. `builtins.toJSON` and string
     # interpolation read a set with an `outPath` as that one value, so a
@@ -426,18 +455,64 @@ let
     enablesMessage = entry: "${entry.path}: `enables` hands modules to the file's class parts, and the file has none; "
         + "add one that takes `enabled`: `${builtins.head classes} = { enabled, ... }: { … };`";
 
+    # ── 8. Class parts that set another class's options ─────────────────────
+    # Only read when the opt-in check (`dirsAsCategories.checkClassContents`,
+    # nix/shared.nix) asks, so a flake without it pays nothing. A heuristic:
+    # the top-level option namespaces that, as far as is known, only one of
+    # the three built-in classes has, checked against their option sets on
+    # 2026-10-27 (wiki/agents-lessons-learned.md). `networking`, `systemd`
+    # and `launchd` are in two of them, so they are not listed.
+    namespaceOwner = {
+        home          = "homeManager";
+        boot          = "nixos";
+        hardware      = "nixos";
+        fileSystems   = "nixos";
+        swapDevices   = "nixos";
+        homebrew      = "darwin";
+    };
+    classTitle = { nixos = "NixOS"; homeManager = "Home Manager"; darwin = "nix-darwin"; };
+
+    # The top-level names a class part sets, read the way `peekKeys` reads a
+    # file's: a function is called with stand-ins, so no option value is
+    # evaluated. A part that can't be read this way has no names here.
+    partKeys = body:
+        let
+            seen = builtins.tryEval (
+                if builtins.isFunction body then peekKeys body
+                else if builtins.isAttrs body then attrNames body
+                else [ ]);
+        in
+        if seen.success then seen.value else [ ];
+
+    # One message per (file, class part, namespace) set in the wrong class.
+    misplacedIn = mod:
+        concatMap (class:
+            map (key:
+                let owner = namespaceOwner.${key}; in
+                "${mod.path}: the ${quote class} part sets ${quote key}, which is a ${classTitle.${owner}} option namespace; "
+                + "put it under ${quote owner}"
+                + optionalString (class == "nixos" && owner == "homeManager")
+                    ", or into `home-manager.users.<name>` from the `nixos` side")
+                (filter (key: namespaceOwner ? ${key} && namespaceOwner.${key} != class) (partKeys mod.value.${class})))
+            (filter (class: classTitle ? ${class}) (filter (class: mod.value ? ${class}) classes));
+    misplaced = concatMap misplacedIn modules;
+
     # nix/module.nix asserts this, so these errors stop evaluation even
     # when nothing else happens to look at the names involved.
-    clashMessages = lib.mapAttrsToList (name: paths: "${name} (${concatStringsSep ", " paths})") clashes;
+    # One line per clash, kind first, so several clashes read as a list.
+    clashMessages = lib.mapAttrsToList (name: items:
+        let kind = clashKind items; in
+        "${clashTitle kind name}: ${concatStringsSep ", " (map (item: "${item.path} (${item.kind})") items)}; "
+            + clashAdvice.${kind}) clashes;
     checked =
         if reservedUses != [ ] then fail (reservedMessage (builtins.head reservedUses))
         else if rootFlagged then fail rootFlagMessage
         else if enablesWithoutClass != [ ] then fail (enablesMessage (builtins.head enablesWithoutClass))
-        else if clashes != { } then fail "names used more than once: ${concatStringsSep "; " clashMessages}"
+        else if clashes != { } then fail (concatStringsSep "\n" clashMessages)
         else if referenceProblems != [ ] then fail (concatStringsSep "; " referenceProblems)
         else true;
 in
 {
     inherit rootStr isTopLevel admin defaults modules hasClass modulesOf categories isCategoryDir folders flagOf
-            ownModules nestedIn defaultsReach appliesTo orphans checked;
+            ownModules nestedIn defaultsReach appliesTo orphans misplaced checked;
 }

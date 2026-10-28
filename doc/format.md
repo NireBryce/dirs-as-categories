@@ -36,8 +36,7 @@ across modules and categories.
     { "path": "shared/base/defaults.nix", "dir": "shared/base", "category": "shared/base", "classes": ["nixos"] }
   ],
   "admin": ["hosts/hosts.nix"],
-  "orphans": [],
-  "misplaced": []
+  "orphans": []
 }
 ```
 
@@ -59,7 +58,7 @@ across modules and categories.
 | `defaults[].classes` | the classes the defaults file has parts for |
 | `admin` | files dirs-as-categories loads as ordinary flake-parts modules |
 | `orphans` | modules inside a category that no `includes`/`enables` reaches ([convention](convention.md#orphans)); optional when reading, because this field arrived after version 1's first release |
-| `misplaced` | one message for each class part that sets another class's option namespace (`home` under `nixos`), the list behind `checks.<system>.module-class-contents` ([convention](convention.md#class-parts-in-the-wrong-class)); optional when reading, because this field arrived after version 1's first release |
+| `misplaced` | one message for each class part that sets another class's option namespace (`home` under `nixos`), the list behind `checks.<system>.module-class-contents` ([convention](convention.md#class-parts-in-the-wrong-class)); present only while `dirsAsCategories.checkClassContents` is `true`, because finding it calls the class parts' functions; optional when reading, because this field arrived after version 1's first release |
 
 The first component of every path is a top-level folder (an area), except
 for a file directly in the tree's root: a root `defaults.nix` has `dir`

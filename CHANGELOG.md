@@ -12,20 +12,27 @@ is not part of what a release keeps; their meaning is.
 
 ## Unreleased
 
+### Breaks
+
+- `dirsAsCategories.checkOrphans` and `checkClassContents` no longer
+  accept `true`: they take `false` (the default), `"build"` or `"eval"`.
+  Change `true` to `"build"`, which behaves as `true` did.
+
 ### Added
 
+- `checkOrphans = "eval"` and `checkClassContents = "eval"` throw while
+  the check is evaluated, so `nix flake check --no-build` fails on an
+  orphan or a misplaced class part. `"build"` fails only when the check is
+  built, which `--no-build` never does.
 - `flake.moduleGraph.misplaced` lists the messages behind
   `checks.<system>.module-class-contents` while
-  `dirsAsCategories.checkClassContents` is `true`, and is absent otherwise
-  (a new optional field; the format's `version` stays `1`). Breaks nothing.
+  `dirsAsCategories.checkClassContents` is `"build"` or `"eval"`, and is
+  absent otherwise (a new optional field; the format's `version` stays `1`).
 
 ### Changed
 
-- The README, `doc/convention.md` and the descriptions of
-  `dirsAsCategories.checkOrphans` and `checkClassContents` say that both
-  checks fail when built, so `nix flake check --no-build` does not run
-  them, and that a flake can throw on `flake.moduleGraph.orphans` or
-  `misplaced` instead. No behaviour changed.
+- The README, `doc/convention.md` and the option descriptions say a check
+  that fails in its builder is not run by `nix flake check --no-build`.
 
 ## v0.3.1 — 2026-10-28
 

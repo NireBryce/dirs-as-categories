@@ -41,8 +41,8 @@ anything you care about.
 | hand a module of another class over | add `enables.homeManager = [ "name" ];`, then use `enabled.homeManager.name` |
 | set defaults for a folder | put a `defaults.nix` with class keys in that folder |
 | keep a NixOS module as it is (`hardware-configuration.nix`) | name it `_hardware.nix` and add `nixos.imports = [ ./_hardware.nix ];` |
-| catch modules nothing uses | set `dirsAsCategories.checkOrphans = true;` |
-| catch a `home.*` option under `nixos` and the like | set `dirsAsCategories.checkClassContents = true;` |
+| catch modules nothing uses | set `dirsAsCategories.checkOrphans = "build";` (`"eval"` also fails under `nix flake check --no-build`) |
+| catch a `home.*` option under `nixos` and the like | set `dirsAsCategories.checkClassContents = "build";` (or `"eval"`) |
 | see what dirs-as-categories built | run `nix eval --json .#moduleGraph` |
 
 ## How it works, on the example flake
@@ -396,10 +396,12 @@ so import-tree skips it, and import it from the host's class part:
 
   ```nix
   # in any flake-parts module, for example hosts.nix
-  dirsAsCategories.checkOrphans = true;
+  dirsAsCategories.checkOrphans = "build";
   ```
 
   `nix flake check` then fails and names each orphan and its path.
+  `"build"` fails when the check is built, so `nix flake check --no-build`
+  passes over an orphan; `"eval"` throws while evaluating and catches it too.
 - **What dirs-as-categories built**: run `nix eval --json .#moduleGraph` to
   print the categories, modules and their classes, includes, enables,
   defaults and orphans ([format](../doc/format.md)).

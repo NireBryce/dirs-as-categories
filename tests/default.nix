@@ -71,27 +71,36 @@ let
     # ── the orphan check ────────────────────────────────────────────────────
     # The check exists only when asked for, and names each orphan with its
     # path.
-    orphanCheck = on:
+    orphanCheck = mode:
         let flake = flake-parts.lib.mkFlake {
                 inputs = { self = { outPath = ./fixtures/main; }; inherit flake-parts; testMarker = "x"; };
             } {
                 systems = [ "x86_64-linux" ];
                 imports = [ flake-parts.flakeModules.modules (tree (fixture "main"))
-                            { dirsAsCategories.checkOrphans = on; } ];
+                            { dirsAsCategories.checkOrphans = mode; } ];
             };
         in flake.checks.x86_64-linux.module-orphans or null;
 
     # ── the class-contents check ────────────────────────────────────────────
     # Opt-in like the orphan check; names each module part that sets another
     # class's namespace, and nothing for namespaces that are fine.
-    contentsFlake = on: flake-parts.lib.mkFlake {
+    contentsFlake = mode: flake-parts.lib.mkFlake {
             inputs = { self = { outPath = ./fixtures/misplaced; }; inherit flake-parts; };
         } {
             systems = [ "x86_64-linux" ];
             imports = [ flake-parts.flakeModules.modules (tree (fixture "misplaced"))
-                        { dirsAsCategories.checkClassContents = on; } ];
+                        { dirsAsCategories.checkClassContents = mode; } ];
         };
-    contentsCheck = on: (contentsFlake on).checks.x86_64-linux.module-class-contents or null;
+    contentsCheck = mode: (contentsFlake mode).checks.x86_64-linux.module-class-contents or null;
+
+    # A tree with nothing misplaced, to see the eval-time check pass.
+    mainChecked = mode: (flake-parts.lib.mkFlake {
+            inputs = { self = { outPath = ./fixtures/main; }; inherit flake-parts; };
+        } {
+            systems = [ "x86_64-linux" ];
+            imports = [ flake-parts.flakeModules.modules (tree (fixture "main"))
+                        { dirsAsCategories.checkClassContents = mode; } ];
+        }).checks.x86_64-linux.module-class-contents;
 
     # ── extra classes ───────────────────────────────────────────────────────
     # addClasses keeps the default classes; withClasses replaces them.
@@ -114,7 +123,7 @@ let
         inputs = { self = { outPath = ./fixtures/two-trees; }; inherit flake-parts; };
     } {
         systems = [ "x86_64-linux" ];
-        imports = [ flake-parts.flakeModules.modules { dirsAsCategories.checkOrphans = true; } ] ++ map tree trees;
+        imports = [ flake-parts.flakeModules.modules { dirsAsCategories.checkOrphans = "build"; } ] ++ map tree trees;
     };
     treeA = ./fixtures/two-trees/a/modules;
     twoTrees = twoTreesFlake [ treeA treeA ./fixtures/two-trees/b/modules ];
@@ -152,7 +161,7 @@ in
     # every published graph the tests build, for tests/schema.py
     graphs = {
         main                  = main.graph;
-        misplaced             = (contentsFlake true).moduleGraph;
+        misplaced             = (contentsFlake "build").moduleGraph;
         example-default      = exampleGraph "default";
         example-home-manager = exampleGraph "home-manager";
         example-multi-host   = exampleGraph "multi-host";
@@ -170,11 +179,16 @@ in
         orphan-check = {
             ok = orphanCheck false == null
               && lib.hasInfix "lonely-module (general/lonely/inner/lonely-module.nix)"
-                              (builtins.elemAt (orphanCheck true).args 1);
-            detail = "checkOrphans: off should add no check, on should name lonely-module with its path";
+                              (builtins.elemAt (orphanCheck "build").args 1);
+            detail = "checkOrphans: off should add no check, \"build\" should name lonely-module with its path";
+        };
+        orphan-check-eval = {
+            ok = !(builtins.tryEval (orphanCheck "eval").drvPath).success
+              && (builtins.tryEval (orphanCheck "build").drvPath).success;
+            detail = "checkOrphans = \"eval\": evaluating the check should fail on lonely-module, which \"build\" leaves to the build";
         };
         class-contents-check = {
-            ok = let report = builtins.elemAt (contentsCheck true).args 1; in
+            ok = let report = builtins.elemAt (contentsCheck "build").args 1; in
                  contentsCheck false == null
               && lib.hasInfix "a/c/one/jq.nix: the `nixos` part sets `home`, which is a Home Manager option namespace" report
               && lib.hasInfix "a/c/one/loader.nix: the `homeManager` part sets `fileSystems`, which is a NixOS option namespace" report
@@ -184,7 +198,7 @@ in
             detail = "checkClassContents: off should add no check, on should name jq.nix and loader.nix but not fine.nix";
         };
         misplaced-published = {
-            ok = let published = (contentsFlake true).moduleGraph.misplaced or null; in
+            ok = let published = (contentsFlake "build").moduleGraph.misplaced or null; in
                  published != null
               && lib.length published == 4
               && lib.any (lib.hasInfix "a/c/one/jq.nix: the `nixos` part sets `home`") published
@@ -192,6 +206,12 @@ in
               && !((contentsFlake false).moduleGraph ? misplaced)
               && !(main.graph ? misplaced);
             detail = "flake.moduleGraph.misplaced: the check's messages while checkClassContents is on, and absent otherwise";
+        };
+        class-contents-check-eval = {
+            ok = !(builtins.tryEval (contentsCheck "eval").drvPath).success
+              && (contentsFlake "eval").moduleGraph ? misplaced
+              && (builtins.tryEval (mainChecked "eval").drvPath).success;
+            detail = "checkClassContents = \"eval\": evaluating the check should fail on the misplaced fixture and pass on a tree with none; the graph still lists misplaced";
         };
         classes = {
             ok = classesWith (tree.addClasses [ "nixOnDroid" ]) == {

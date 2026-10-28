@@ -24,7 +24,7 @@ body:
     id: rung
     attributes:
       label: How far did it get?
-      description: Evaluating, building and running are different claims -- say which you saw.
+      description: Say what you saw: an evaluation, a build or a run. They are different claims.
       options:
         - evaluation stops with a dirs-as-categories error
         - evaluation stops with another error (NixOS, Home Manager, flake-parts, Nix)
@@ -53,11 +53,11 @@ body:
     id: output
     attributes:
       label: Error output
-      description: The whole error, to the bottom -- Nix prints the innermost cause last. Add `--show-trace` if the cause isn't named. Check it for values you'd rather not post: a trace can print them.
+      description: The whole error, to the bottom -- Nix prints the innermost cause last. Add `--show-trace` if the cause isn't named. Remove private values before posting; a trace can print them.
       render: shell
 
   - type: input
     id: searched
     attributes:
       label: Already reported?
-      description: What you searched the issues and the wiki's "When evaluation stops" table for, or "nothing found".
+      description: What you searched for in the issues and the wiki's "When evaluation stops" table, or "nothing found".

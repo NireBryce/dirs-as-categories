@@ -1,6 +1,6 @@
 # Words this project uses
 
-_Last modified: 2026-10-17_
+_Last modified: 2026-10-28_
 
 This page defines each word the other pages use, for someone who hasn't
 used Nix flakes or flake-parts before. Read it first, or come back to it
@@ -32,7 +32,7 @@ notice before you rely on dirs-as-categories.
 
 | Word | Meaning | Example |
 |---|---|---|
-| class | which kind of configuration a module is for: `nixos`, `homeManager` or `darwin` | `nixos = { … };` in a file |
+| class | which kind of configuration a module is for, and the key of `flake.modules` that holds it: `nixos`, `homeManager` or `darwin`. flake-parts' word; it has nothing to do with classes in programming languages | `nixos = { … };` in a file |
 | module file | a file whose keys are classes (or `includes`, `enables`, `folderIsCategory`). It declares one module, named after the file | `shared/base/ssh/ssh.nix` is the module `ssh` |
 | area | a top-level folder. Areas only group files and are never categories | `hosts/`, `shared/` |
 | category | a folder below the top level that groups modules. Including the category includes every module beneath it. A folder is a category when one of its subfolders holds a module, or when it says so with `folderIsCategory = true` | `shared/base/` is the category `base` |

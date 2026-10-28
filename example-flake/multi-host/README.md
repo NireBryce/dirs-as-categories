@@ -3,8 +3,9 @@
 This flake illustrates a tree shaped like a real multi-host flake, built with
 [dirs-as-categories](../../README.md). It shows nested categories, hosts that
 pick categories, Home Manager reached through `enables`, and all three classes
-in one tree. The hosts are placeholders: services are files in `/etc` and the
-only packages are `ripgrep` and `git`, so evaluating a host is quick.
+(`nixos`, `homeManager` and `darwin`: kinds of configuration) in one tree.
+The hosts are placeholders: services are files in `/etc` and the only
+packages are `ripgrep` and `git`, so evaluating a host is quick.
 
 ```
 modules/

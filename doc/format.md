@@ -43,7 +43,7 @@ across modules and categories.
 | Field | Content |
 |---|---|
 | `version` | the format's version, `1` (in every release since `v0.1.0`); any change that breaks readers increments `version` |
-| `classes` | the classes this tree uses |
+| `classes` | the classes this tree uses: kinds of configuration, and keys of `flake.modules`, such as `nixos` |
 | `categories.<name>.dir` | the category's folder |
 | `categories.<name>.members` | modules beneath the category that belong to no nested category |
 | `categories.<name>.nested` | categories directly nested in this category (no other category between) |

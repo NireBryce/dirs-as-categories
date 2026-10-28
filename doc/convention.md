@@ -86,6 +86,11 @@ file would have no class key and load as a flake-parts module.
 
 A module file may use these keys:
 
+> [!NOTE]
+> A **class** is a kind of configuration (`nixos`, `homeManager`, `darwin`),
+> not a programming-language class. [Words this project uses](../wiki/concepts.md#what-a-modules-tree-holds)
+> defines it.
+
 | Key | Value |
 |---|---|
 | a class | that class's module: an attribute set, a function, or a path |

@@ -30,6 +30,9 @@ is not part of what a release keeps; their meaning is.
 
 ### No change for users
 
+- Docs say what "class" means where a class first appears, and the issue
+  forms' prompts are worded more plainly. The form's fields are the same.
+
 - Releases are tagged and published by `.github/workflows/release.yml`
   when the pull request that names them merges. Tags and release notes
   look as before.

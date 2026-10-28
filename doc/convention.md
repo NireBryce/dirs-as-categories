@@ -86,6 +86,13 @@ file would have no class key and load as a flake-parts module.
 
 A module file may use these keys:
 
+> [!NOTE]
+> **Class** here is flake-parts' word for a kind of configuration, not a
+> programming-language class. It is a key of `flake.modules`: `nixos`,
+> `homeManager` or `darwin`. A module file's `nixos = …;` part is that
+> module for the `nixos` class. [Words this project uses](../wiki/concepts.md#what-a-modules-tree-holds)
+> defines it.
+
 | Key | Value |
 |---|---|
 | a class | that class's module: an attribute set, a function, or a path |

@@ -19,7 +19,8 @@ defines each term below.
 
 You file modules in folders. dirs-as-categories names each module after its file,
 turns folders that group modules into importable **categories**, and fills in
-`flake.modules.<class>.<name>`. Hosts pick categories or modules by name.
+`flake.modules.<class>.<name>` (a class is a kind of configuration, such as
+`nixos`). Hosts pick categories or modules by name.
 You register nothing, and no file repeats its own name.
 
 ```
@@ -78,6 +79,13 @@ repository to read and evaluate.
     homeManager = { fonts.fontconfig.enable = true; };
 }
 ```
+
+> [!NOTE]
+> **Class** here is flake-parts' word for a kind of configuration, not a
+> programming-language class. It is a key of `flake.modules`: `nixos`,
+> `homeManager` or `darwin`. A module file's `nixos = …;` part is that
+> module for the `nixos` class. [Words this project uses](wiki/concepts.md#what-a-modules-tree-holds)
+> defines it.
 
 | Key | Meaning |
 |---|---|

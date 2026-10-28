@@ -1,6 +1,6 @@
 # Using the flake
 
-_Last modified: 2026-10-23_
+_Last modified: 2026-10-28_
 
 This page shows how dirs-as-categories works on an example flake, how to
 add it to your flake, and how to lay out a tree with hosts and Home
@@ -219,6 +219,13 @@ the filename. Each key is a class, and a file can carry several:
     homeManager = { programs.bash.enable = true; };
 }
 ```
+
+> [!NOTE]
+> **Class** here is flake-parts' word for a kind of configuration, not a
+> programming-language class. It is a key of `flake.modules`: `nixos`,
+> `homeManager` or `darwin`. A module file's `nixos = …;` part is that
+> module for the `nixos` class. [Words this project uses](concepts.md#what-a-modules-tree-holds)
+> defines it.
 
 A class's value is an ordinary module: an attribute set, or a function
 taking `pkgs`, `config` and the rest from that class's evaluation. When the

@@ -108,7 +108,7 @@ holding it is the one taken.
 | Word | Meaning |
 |---|---|
 | module | a set (or a function returning one) with `imports`, `options` and `config`; NixOS, Home Manager and flake-parts are all built from modules |
-| class | which kind of configuration a module is for: `nixos`, `homeManager`, `darwin` |
+| class | which kind of configuration a module is for, and a key of `flake.modules`: `nixos`, `homeManager`, `darwin`. Not a programming-language class |
 | `imports` | other modules to merge in |
 | `key` | an identity: two imports with one `key` load once |
 | `_file` | the file the module system names in errors |

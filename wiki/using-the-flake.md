@@ -221,10 +221,8 @@ the filename. Each key is a class, and a file can carry several:
 ```
 
 > [!NOTE]
-> **Class** here is flake-parts' word for a kind of configuration, not a
-> programming-language class. It is a key of `flake.modules`: `nixos`,
-> `homeManager` or `darwin`. A module file's `nixos = …;` part is that
-> module for the `nixos` class. [Words this project uses](concepts.md#what-a-modules-tree-holds)
+> A **class** is a kind of configuration (`nixos`, `homeManager`, `darwin`),
+> not a programming-language class. [Words this project uses](concepts.md#what-a-modules-tree-holds)
 > defines it.
 
 A class's value is an ordinary module: an attribute set, or a function

@@ -198,17 +198,21 @@ meant to name entry points, so they are never orphans.
 `flake.moduleGraph.orphans` lists the orphans. With
 
 ```nix
-dirsAsCategories.checkOrphans = true;
+dirsAsCategories.checkOrphans = "build";
 ```
 
 `nix flake check` also runs `checks.<system>.module-orphans`, which fails
-and names each orphan and its path. The check is off by default because it
-adds a check to your flake.
+and names each orphan and its path. The option takes `false` (the default,
+because the check adds a check to your flake), `"build"` and `"eval"`.
+`"build"` fails the check's builder, so `nix flake check --no-build`
+evaluates it, builds nothing and passes over an orphan. `"eval"` throws
+while the check is evaluated, so `--no-build` fails too:
 
-The check fails when it is built. `nix flake check --no-build` evaluates
-it and builds nothing, so it passes over an orphan. A flake that checks
-with `--no-build` can read `flake.moduleGraph.orphans` and `throw` when it
-is not empty.
+```nix
+dirsAsCategories.checkOrphans = "eval";
+```
+
+`true` is not accepted; it was `"build"`.
 
 ## Class parts in the wrong class
 
@@ -217,7 +221,7 @@ evaluation reports only when a host reaches the module, as "option `home`
 does not exist". With
 
 ```nix
-dirsAsCategories.checkClassContents = true;
+dirsAsCategories.checkClassContents = "build";
 ```
 
 `nix flake check` runs `checks.<system>.module-class-contents`, which fails
@@ -234,11 +238,11 @@ or that is wrapped in `mkIf` is not checked, because reading its names
 would evaluate options. The check is off by default, and the list is not
 configurable.
 
-While `checkClassContents` is on, `flake.moduleGraph.misplaced` lists the
-messages; without it the field is absent, because finding them calls the
-class parts' functions. The check fails when it is built, so `nix flake check --no-build`
-does not run it; a flake that checks that way can `throw` when
-`misplaced` is not empty.
+`checkClassContents` takes the same three values as `checkOrphans`
+(`false`, `"build"`, `"eval"`); `"eval"` makes `nix flake check --no-build`
+fail too. With either of the last two, `flake.moduleGraph.misplaced` lists
+the messages; with `false` the field is absent, because finding them calls
+the class parts' functions.
 
 ## Errors
 

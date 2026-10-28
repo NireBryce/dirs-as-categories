@@ -18,6 +18,22 @@ let
 
     orphanReport = "dirs-as-categories: reached by no includes or enables (include it, "
         + "or a category above it): " + lib.concatStringsSep ", " orphans;
+
+    # A derivation that only writes $out, or fails with `report`. It needs no
+    # nixpkgs, so a flake using this pays nothing for it. `"build"` fails in
+    # the builder, so only building the check fails (`nix flake check
+    # --no-build` passes). `"eval"` throws while the derivation's arguments
+    # are evaluated, which `--no-build` does too.
+    checkDerivation = system: name: mode: problems: report: builtins.derivation {
+        inherit system name;
+        builder = "/bin/sh";
+        args    = [ "-c" (
+            if problems == [ ] then "echo none > $out"
+            else if mode == "eval" then throw report
+            else "echo ${lib.escapeShellArg report} >&2; exit 1") ];
+    };
+
+    checkMode = lib.types.enum [ false "build" "eval" ];
 in
 {
     options = {
@@ -26,14 +42,15 @@ in
                 description = ''
                     Add `checks.<system>.module-orphans`, which fails while any module
                     inside a category is reached by no `includes` or `enables` --
-                    valid, evaluated, and installing nothing. The list is
-                    `flake.moduleGraph.orphans` either way. The check fails when it
-                    is built, so `nix flake check --no-build` does not run it; a flake
-                    that wants the failure at evaluation time can throw when that list
-                    is not empty.
+                    valid, evaluated, and installing nothing. `false` (the default)
+                    adds no check. `"build"` fails when the check is built, so
+                    `nix flake check --no-build` passes over an orphan. `"eval"`
+                    fails while the check is evaluated, so `--no-build` catches it
+                    too. The list is `flake.moduleGraph.orphans` in every mode.
                 '';
-                type    = lib.types.bool;
+                type    = checkMode;
                 default = false;
+                example = "eval";
             };
 
             checkClassContents = lib.mkOption {
@@ -41,14 +58,13 @@ in
                     Add `checks.<system>.module-class-contents`, which fails while a
                     class part sets an option namespace that only another class has
                     (`home` under `nixos`, say). A heuristic over a short list of
-                    namespaces, so it is off by default. While this is true,
-                    `flake.moduleGraph.misplaced` lists the messages. The check fails when it
-                    is built, so `nix flake check --no-build` does not run it; a flake
-                    that wants the failure at evaluation time can throw when that list
-                    is not empty.
+                    namespaces, so it is off by default (`false`). `"build"` and
+                    `"eval"` fail as for `checkOrphans`. While either is set,
+                    `flake.moduleGraph.misplaced` lists the messages.
                 '';
-                type    = lib.types.bool;
+                type    = checkMode;
                 default = false;
+                example = "eval";
             };
 
             trees = lib.mkOption {
@@ -67,37 +83,26 @@ in
     };
 
     config = {
-        # `misplaced` is published only when the check is on: finding it calls
-        # the class parts' functions, which a flake without the check never
-        # pays for or risks (see nix/scan.nix, section 8).
+        # `flake.moduleGraph.misplaced` is published only when the check is on: finding it
+        # calls the class parts' functions, which a flake without the check
+        # never pays for or risks (see nix/scan.nix, section 8).
         flake.moduleGraph =
             if lib.length trees == 1
             then (builtins.head trees).graph
-                 // lib.optionalAttrs config.dirsAsCategories.checkClassContents { inherit misplaced; }
+                 // lib.optionalAttrs (config.dirsAsCategories.checkClassContents != false) { inherit misplaced; }
             else throw onlyOneTree;
 
-        # A derivation that only writes $out, or fails naming the orphans. It
-        # needs no nixpkgs, so a flake using this pays nothing for it.
         perSystem = { system, ... }: {
-            checks = lib.mkMerge [ (lib.mkIf config.dirsAsCategories.checkClassContents {
-                module-class-contents = builtins.derivation {
-                    inherit system;
-                    name    = "module-class-contents";
-                    builder = "/bin/sh";
-                    args    = [ "-c" (
-                        if misplaced == [ ] then "echo none > $out"
-                        else "echo ${lib.escapeShellArg (lib.concatStringsSep "\n" misplaced)} >&2; exit 1") ];
-                };
-            }) (lib.mkIf config.dirsAsCategories.checkOrphans {
-                module-orphans = builtins.derivation {
-                    inherit system;
-                    name    = "module-orphans";
-                    builder = "/bin/sh";
-                    args    = [ "-c" (
-                        if orphans == [ ] then "echo none > $out"
-                        else "echo ${lib.escapeShellArg orphanReport} >&2; exit 1") ];
-                };
-            }) ];
+            checks = lib.mkMerge [
+                (lib.mkIf (config.dirsAsCategories.checkClassContents != false) {
+                    module-class-contents = checkDerivation system "module-class-contents"
+                        config.dirsAsCategories.checkClassContents misplaced (lib.concatStringsSep "\n" misplaced);
+                })
+                (lib.mkIf (config.dirsAsCategories.checkOrphans != false) {
+                    module-orphans = checkDerivation system "module-orphans"
+                        config.dirsAsCategories.checkOrphans orphans orphanReport;
+                })
+            ];
         };
     };
 }

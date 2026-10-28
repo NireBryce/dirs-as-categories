@@ -234,8 +234,9 @@ or that is wrapped in `mkIf` is not checked, because reading its names
 would evaluate options. The check is off by default, and the list is not
 configurable.
 
-`flake.moduleGraph.misplaced` lists the messages with or without the
-check. The check fails when it is built, so `nix flake check --no-build`
+While `checkClassContents` is on, `flake.moduleGraph.misplaced` lists the
+messages; without it the field is absent, because finding them calls the
+class parts' functions. The check fails when it is built, so `nix flake check --no-build`
 does not run it; a flake that checks that way can `throw` when
 `misplaced` is not empty.
 

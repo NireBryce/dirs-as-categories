@@ -15,7 +15,8 @@ is not part of what a release keeps; their meaning is.
 ### Added
 
 - `flake.moduleGraph.misplaced` lists the messages behind
-  `checks.<system>.module-class-contents`, with or without the check
+  `checks.<system>.module-class-contents` while
+  `dirsAsCategories.checkClassContents` is `true`, and is absent otherwise
   (a new optional field; the format's `version` stays `1`). Breaks nothing.
 
 ### Changed

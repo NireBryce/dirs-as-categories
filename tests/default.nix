@@ -152,6 +152,7 @@ in
     # every published graph the tests build, for tests/schema.py
     graphs = {
         main                  = main.graph;
+        misplaced             = (contentsFlake true).moduleGraph;
         example-default      = exampleGraph "default";
         example-home-manager = exampleGraph "home-manager";
         example-multi-host   = exampleGraph "multi-host";
@@ -183,13 +184,14 @@ in
             detail = "checkClassContents: off should add no check, on should name jq.nix and loader.nix but not fine.nix";
         };
         misplaced-published = {
-            ok = let published = (contentsFlake false).moduleGraph.misplaced or null; in
+            ok = let published = (contentsFlake true).moduleGraph.misplaced or null; in
                  published != null
-              && published == (contentsFlake true).moduleGraph.misplaced
-              && lib.all (lib.hasInfix "a/c/one/") published
+              && lib.length published == 4
               && lib.any (lib.hasInfix "a/c/one/jq.nix: the `nixos` part sets `home`") published
-              && main.graph.misplaced or null == [ ];
-            detail = "flake.moduleGraph.misplaced: the same messages the check reports, whether or not the check is on, and none for the main fixture";
+              && lib.all (lib.hasInfix "a/c/one/") published
+              && !((contentsFlake false).moduleGraph ? misplaced)
+              && !(main.graph ? misplaced);
+            detail = "flake.moduleGraph.misplaced: the check's messages while checkClassContents is on, and absent otherwise";
         };
         classes = {
             ok = classesWith (tree.addClasses [ "nixOnDroid" ]) == {

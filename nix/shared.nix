@@ -41,8 +41,8 @@ in
                     Add `checks.<system>.module-class-contents`, which fails while a
                     class part sets an option namespace that only another class has
                     (`home` under `nixos`, say). A heuristic over a short list of
-                    namespaces, so it is off by default. The list is
-                    `flake.moduleGraph.misplaced` either way. The check fails when it
+                    namespaces, so it is off by default. While this is true,
+                    `flake.moduleGraph.misplaced` lists the messages. The check fails when it
                     is built, so `nix flake check --no-build` does not run it; a flake
                     that wants the failure at evaluation time can throw when that list
                     is not empty.
@@ -67,8 +67,14 @@ in
     };
 
     config = {
+        # `misplaced` is published only when the check is on: finding it calls
+        # the class parts' functions, which a flake without the check never
+        # pays for or risks (see nix/scan.nix, section 8).
         flake.moduleGraph =
-            if lib.length trees == 1 then (builtins.head trees).graph else throw onlyOneTree;
+            if lib.length trees == 1
+            then (builtins.head trees).graph
+                 // lib.optionalAttrs config.dirsAsCategories.checkClassContents { inherit misplaced; }
+            else throw onlyOneTree;
 
         # A derivation that only writes $out, or fails naming the orphans. It
         # needs no nixpkgs, so a flake using this pays nothing for it.

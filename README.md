@@ -143,8 +143,8 @@ folders, modules and their classes, includes, enables, defaults, the other
 files, and any module inside a category that nothing reaches (`orphans`). Setting
 `dirsAsCategories.checkOrphans = true` makes `nix flake check` fail on an
 orphan, and `dirsAsCategories.checkClassContents = true` makes it fail on a
-class part that sets another class's options (`home` under `nixos`; the list
-is `misplaced`). Both checks fail when built, so `nix flake check --no-build`
+class part that sets another class's options (`home` under `nixos`; with it
+on, `misplaced` lists them). Both checks fail when built, so `nix flake check --no-build`
 does not run them; to fail at evaluation time, throw when `orphans` or
 `misplaced` is not empty.
 [doc/format.md](doc/format.md) specifies the format, and

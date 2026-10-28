@@ -46,7 +46,4 @@ in
 
     # modules inside a category that no `includes`/`enables` reaches
     inherit (scan) orphans;
-
-    # class parts that set another class's option namespace, one message each
-    inherit (scan) misplaced;
 }

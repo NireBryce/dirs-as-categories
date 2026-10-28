@@ -74,6 +74,7 @@
       }
     },
     "admin": { "type": "array", "items": { "$ref": "#/$defs/path" } },
-    "orphans": { "$ref": "#/$defs/names" }
+    "orphans": { "$ref": "#/$defs/names" },
+    "misplaced": { "type": "array", "items": { "type": "string", "minLength": 1 } }
   }
 }

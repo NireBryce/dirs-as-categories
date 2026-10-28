@@ -84,15 +84,14 @@ let
     # ── the class-contents check ────────────────────────────────────────────
     # Opt-in like the orphan check; names each module part that sets another
     # class's namespace, and nothing for namespaces that are fine.
-    contentsCheck = on:
-        let flake = flake-parts.lib.mkFlake {
-                inputs = { self = { outPath = ./fixtures/misplaced; }; inherit flake-parts; };
-            } {
-                systems = [ "x86_64-linux" ];
-                imports = [ flake-parts.flakeModules.modules (tree (fixture "misplaced"))
-                            { dirsAsCategories.checkClassContents = on; } ];
-            };
-        in flake.checks.x86_64-linux.module-class-contents or null;
+    contentsFlake = on: flake-parts.lib.mkFlake {
+            inputs = { self = { outPath = ./fixtures/misplaced; }; inherit flake-parts; };
+        } {
+            systems = [ "x86_64-linux" ];
+            imports = [ flake-parts.flakeModules.modules (tree (fixture "misplaced"))
+                        { dirsAsCategories.checkClassContents = on; } ];
+        };
+    contentsCheck = on: (contentsFlake on).checks.x86_64-linux.module-class-contents or null;
 
     # ── extra classes ───────────────────────────────────────────────────────
     # addClasses keeps the default classes; withClasses replaces them.
@@ -182,6 +181,15 @@ in
               && lib.hasInfix "a/c/one/hw.nix: the `darwin` part sets `hardware`" report
               && !lib.hasInfix "fine.nix" report;
             detail = "checkClassContents: off should add no check, on should name jq.nix and loader.nix but not fine.nix";
+        };
+        misplaced-published = {
+            ok = let published = (contentsFlake false).moduleGraph.misplaced or null; in
+                 published != null
+              && published == (contentsFlake true).moduleGraph.misplaced
+              && lib.all (lib.hasInfix "a/c/one/") published
+              && lib.any (lib.hasInfix "a/c/one/jq.nix: the `nixos` part sets `home`") published
+              && main.graph.misplaced or null == [ ];
+            detail = "flake.moduleGraph.misplaced: the same messages the check reports, whether or not the check is on, and none for the main fixture";
         };
         classes = {
             ok = classesWith (tree.addClasses [ "nixOnDroid" ]) == {

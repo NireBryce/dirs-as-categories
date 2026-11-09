@@ -109,7 +109,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: DeterminateSystems/nix-installer-action@9383ce2bf08796b65508822f5982f49151badc4e # 2026-10-08
-      - uses: DeterminateSystems/update-flake-lock@f02139a6c0edb4442190a4738c42ccceceb3f6a8 # 2026-10-08
+      - uses: DeterminateSystems/update-flake-lock@a6b01882e9290a55d390f352ff11664ceea1661a # 2026-10-08
         with:
           token: ${{ secrets.FLAKE_LOCK_TOKEN }}
           base: main
